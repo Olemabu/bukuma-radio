@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BUKUMA RADIO 📻 - Your Community Voice</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap');
+    
+    :root {
+      --primary: #FF6B35;
+      --primary-dark: #E55A24;
+      --secondary: #1A1A2E;
+      --accent: #FFD700;
+      --bg: #0D0D1A;
+      --card: #1A1A2E;
+      --card2: #16213E;
+      --text: #F0F0F0;
+      --text-muted: #8888AA;
+      --green: #00D084;
+      --red: #FF4757;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        radial-gradient(ellipse at 20% 50%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(0, 208, 132, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+    /* Header */
+    header {
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      position: sticky; top: 0;
+      background: rgba(13, 13, 26, 0.95);
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 4px 20px rgba(255,107,53,0.4);
+      animation: pulse-logo 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-logo {
+      0%, 100% { box-shadow: 0 4px 20px rgba(255,107,53,0.4); }
+      50% { box-shadow: 0 4px 40px rgba(255,107,53,0.8); }
+    }
+
+    .logo-text h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 900;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .logo-text p { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; }
+
+    .on-air-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,71,87,0.15);
+      border: 1px solid rgba(255,71,87,0.4);
+      padding: 8px 16px; border-radius: 50px;
+      font-size: 12px; font-weight: 600; color: var(--red);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    .on-air-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--red);
+      animation: blink 1s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+    /* Hero Section */
+    .hero {
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(255,107,53,0.1);
+      border: 1px solid rgba(255,107,53,0.3);
+      color: var(--primary);
+      padding: 6px 16px; border-radius: 50px;
+      font-size: 12px; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+
+    .hero h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 6vw, 72px);
+      font-weight: 900; line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    .hero h2 span {
+      background: linear-gradient(90deg, var(--primary), var(--accent), var(--green));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 18px; color: var(--text-muted);
+      max-width: 600px; margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+
+    /* Main Player Card */
+    .player-section { padding: 20px 0 60px; }
+
+    .player-card {
+      background: linear-gradient(135deg, var(--card), var(--card2));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    }
+
+    .player-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent), var(--green));
+    }
+
+    .player-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .player-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Vinyl / Album Art */
+    .album-art-wrapper {
+      display: flex; justify-content: center; align-items: center;
+    }
+
+    .vinyl {
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: spin 8s linear infinite paused;
+    }
+
+    .vinyl.playing { animation-play-state: running; }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .vinyl::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 70px; height: 70px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: 0 0 30px rgba(255,107,53,0.5);
+    }
+
+    .vinyl::after {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--bg);
+    }
+
+    .vinyl-rings {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: repeating-radial-gradient(
+        circle,
+        transparent,
+        transparent 8px,
+        rgba(255,255,255,0.03) 8px,
+        rgba(255,255,255,0.03) 9px
+      );
+    }
+
+    /* Track Info */
+    .track-info { text-align: left; }
+
+    .now-playing-label {
+      font-size: 11px; color: var(--primary); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .equalizer {
+      display: flex; align-items: flex-end; gap: 2px; height: 14px;
+    }
+
+    .eq-bar {
+      width: 3px; border-radius: 2px;
+      background: var(--primary);
+      animation: eq 0.8s ease-in-out infinite;
+    }
+
+    .eq-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+    .eq-bar:nth-child(2) { height: 12px; animation-delay: 0.1s; }
+    .eq-bar:nth-child(3) { height: 8px; animation-delay: 0.2s; }
+    .eq-bar:nth-child(4) { height: 14px; animation-delay: 0.3s; }
+    .eq-bar:nth-child(5) { height: 6px; animation-delay: 0.4s; }
+
+    .eq-bar.paused { animation: none; }
+
+    @keyframes eq {
+      0%, 100% { transform: scaleY(0.4); }
+      50% { transform: scaleY(1); }
+    }
+
+    .track-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px; font-weight: 700;
+      margin-bottom: 8px; line-height: 1.2;
+    }
+
+    .track-artist {
+      font-size: 16px; color: var(--text-muted); margin-bottom: 24px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .track-artist::before { content: '♪'; color: var(--primary); }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 50px;
+      font-size: 12px; font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .status-badge.live {
+      background: rgba(0,208,132,0.15);
+      border: 1px solid rgba(0,208,132,0.4);
+      color: var(--green);
+    }
+
+    .status-badge.loading {
+      background: rgba(255,215,0,0.15);
+      border: 1px solid rgba(255,215,0,0.4);
+      color: var(--accent);
+    }
+
+    .status-badge.idle {
+      background: rgba(136,136,170,0.15);
+      border: 1px solid rgba(136,136,170,0.3);
+      color: var(--text-muted);
+    }
+
+    /* Controls */
+    .controls {
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .btn {
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; transition: all 0.2s;
+      font-size: 18px;
+    }
+
+    .btn-play {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 8px 25px rgba(255,107,53,0.5);
+      color: white; font-size: 22px;
+    }
+
+    .btn-play:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px 35px rgba(255,107,53,0.7);
+    }
+
+    .btn-skip {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text); font-size: 18px;
+    }
+
+    .btn-skip:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
+
+    /* Volume */
+    .volume-control {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .volume-icon { color: var(--text-muted); font-size: 16px; }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      flex: 1; height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px; cursor: pointer;
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 2px 10px rgba(255,107,53,0.5);
+    }
+
+    .volume-value { color: var(--text-muted); font-size: 13px; min-width: 35px; }
+
+    /* Listeners */
+    .listeners-info {
+      display: flex; align-items: center; gap: 8px;
+      color: var(--text-muted); font-size: 13px;
+    }
+
+    .listeners-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+
+    /* Audio player */
+    audio { display: none; }
+
+    /* Queue Section */
+    .queue-section { padding: 40px 0; }
+
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px; font-weight: 700;
+    }
+
+    .section-badge {
+      background: rgba(255,107,53,0.1);
+      border: 1px solid rgba(255,107,53,0.3);
+      color: var(--primary);
+      padding: 4px 12px; border-radius: 50px;
+      font-size: 13px; font-weight: 600;
+    }
+
+    .queue-list {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .queue-item {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 16px;
+      transition: all 0.2s;
+    }
+
+    .queue-item:hover { border-color: rgba(255,107,53,0.3); transform: translateX(4px); }
+    .queue-item.active { border-color: var(--primary); background: rgba(255,107,53,0.08); }
+
+    .queue-num {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; color: var(--text-muted); flex-shrink: 0;
+      font-weight: 600;
+    }
+
+    .queue-item.active .queue-num {
+      background: var(--primary);
+      color: white;
+    }
+
+    .queue-info { flex: 1; }
+    .queue-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+    .queue-artist { font-size: 13px; color: var(--text-muted); }
+    .queue-duration { font-size: 13px; color: var(--text-muted); }
+
+    /* Stats Bar */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; margin: 40px 0;
+    }
+
+    @media (max-width: 576px) { .stats-bar { grid-template-columns: 1fr; } }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-number { font-size: 32px; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* About section */
+    .about-section {
+      padding: 60px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .about-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 40px; align-items: center;
+    }
+
+    @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; } }
+
+    .about-content h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px; font-weight: 700; margin-bottom: 16px;
+    }
+
+    .about-content p { color: var(--text-muted); line-height: 1.8; margin-bottom: 16px; }
+
+    .feature-list { list-style: none; }
+    .feature-list li {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+    .feature-list li::before { content: '▸'; color: var(--primary); }
+
+    .about-visual {
+      background: linear-gradient(135deg, var(--card), var(--card2));
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 24px;
+      padding: 32px;
+      text-align: center;
+    }
+
+    .radio-wave {
+      font-size: 80px; margin-bottom: 16px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      text-align: center;
+    }
+
+    footer p { color: var(--text-muted); font-size: 14px; }
+    footer a { color: var(--primary); text-decoration: none; }
+
+    .footer-links {
+      display: flex; justify-content: center; gap: 24px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--text-muted); font-size: 13px;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--primary); }
+
+    /* Loading state */
+    .loading-msg {
+      font-size: 13px; color: var(--accent);
+      margin-top: 8px; min-height: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 576px) {
+      .player-card { padding: 24px; }
+      .track-title { font-size: 24px; }
+      .controls { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <div class="header-inner">
+        <div class="logo">
+          <div class="logo-icon">📻</div>
+          <div class="logo-text">
+            <h1>BUKUMA RADIO</h1>
+            <p>Community Voice</p>
+          </div>
+        </div>
+        <div class="on-air-badge" id="onAirBadge">
+          <div class="on-air-dot"></div>
+          <span id="onAirText">LOADING...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-tag">🎵 Streaming Live 24/7</div>
+      <h2>Your Community's<br><span>Sound & Soul</span></h2>
+      <p>Experience the rhythm of our community — live music, cultural celebrations, and the legendary sounds of Highlife music that connect us all.</p>
+    </div>
+  </section>
+
+  <!-- Player -->
+  <section class="player-section">
+    <div class="container">
+      <div class="player-card">
+        <div class="player-grid">
+          <!-- Album Art -->
+          <div class="album-art-wrapper">
+            <div class="vinyl" id="vinyl">
+              <div class="vinyl-rings"></div>
+            </div>
+          </div>
+
+          <!-- Controls -->
+          <div class="track-info">
+            <div class="now-playing-label">
+              <div class="equalizer" id="equalizer">
+                <div class="eq-bar paused"></div>
+                <div class="eq-bar paused"></div>
+                <div class="eq-bar paused"></div>
+                <div class="eq-bar paused"></div>
+                <div class="eq-bar paused"></div>
+              </div>
+              Now Playing
+            </div>
+
+            <div class="track-title" id="trackTitle">Loading...</div>
+            <div class="track-artist" id="trackArtist">Connecting to station...</div>
+
+            <div class="status-badge loading" id="statusBadge">
+              <span id="statusText">⏳ Connecting...</span>
+            </div>
+
+            <div class="loading-msg" id="loadingMsg"></div>
+
+            <div class="controls">
+              <button class="btn btn-play" id="playBtn" onclick="togglePlay()">▶</button>
+              <button class="btn btn-skip" onclick="skipTrack()" title="Skip">⏭</button>
+            </div>
+
+            <div class="volume-control">
+              <span class="volume-icon">🔊</span>
+              <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
+              <span class="volume-value" id="volumeVal">80%</span>
+            </div>
+
+            <div class="listeners-info">
+              <div class="listeners-dot"></div>
+              <span id="listenersCount">0</span> listeners tuned in
+            </div>
+          </div>
+        </div>
+
+        <audio id="radioAudio" src="/stream" preload="none"></audio>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-number" id="statListeners">0</div>
+          <div class="stat-label">Live Listeners</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="statQueue">0</div>
+          <div class="stat-label">Songs in Queue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Always On Air</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Queue -->
+  <section class="queue-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">🎶 Up Next</h2>
+        <span class="section-badge" id="queueBadge">0 songs</span>
+      </div>
+      <div class="queue-list" id="queueList">
+        <div class="queue-item">
+          <div class="queue-num">♪</div>
+          <div class="queue-info">
+            <div class="queue-title">Loading queue...</div>
+            <div class="queue-artist">Please wait</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="about-section">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-content">
+          <h3>About Bukuma Radio 📻</h3>
+          <p>Bukuma Radio is your community's premier internet radio station, dedicated to celebrating culture, music, and community through the power of sound.</p>
+          <p>We specialize in bringing you the finest Highlife music from legends like Cardinal Rex Lawson, alongside community news, cultural programming, and more.</p>
+          <ul class="feature-list">
+            <li>Live 24/7 streaming music</li>
+            <li>Cardinal Rex Lawson Highlife classics</li>
+            <li>Community-curated playlists</li>
+            <li>DJ-controlled live sessions</li>
+            <li>Cultural programming & events</li>
+            <li>Request your favourite songs</li>
+          </ul>
+        </div>
+        <div class="about-visual">
+          <div class="radio-wave">🎵</div>
+          <h4 style="font-family: Playfair Display, serif; font-size: 22px; margin-bottom: 12px;">Cardinal Rex Lawson</h4>
+          <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">The Maestro of Highlife music — we're proud to feature his legendary catalog as our launch playlist. Experience the joy, rhythm, and soul of Delta Highlife.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/admin.html">Admin Panel</a>
+        <a href="/stream" target="_blank">Direct Stream</a>
+        <a href="mailto:radio@bukuma.com">Contact</a>
+      </div>
+      <p>© 2026 Bukuma Radio — Broadcasting Love, Culture & Music to the World 🌍</p>
+    </div>
+  </footer>
+
+  <script>
+    // WebSocket connection
+    const WS_URL = (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host;
+    let ws = null;
+    let isPlaying = false;
+    let reconnectTimer = null;
+    let audioStarted = false;
+
+    function connect() {
+      try {
+        ws = new WebSocket(WS_URL);
+        
+        ws.onopen = () => {
+          clearTimeout(reconnectTimer);
+          updateOnAir(true);
+          ws.send(JSON.stringify({ action: 'getStatus' }));
+        };
+
+        ws.onmessage = (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            handleMessage(msg);
+          } catch(err) {}
+        };
+
+        ws.onclose = () => {
+          updateOnAir(false);
+          reconnectTimer = setTimeout(connect, 3000);
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+      } catch(e) {
+        reconnectTimer = setTimeout(connect, 5000);
+      }
+    }
+
+    function handleMessage(msg) {
+      switch(msg.type) {
+        case 'status':
+          updateStatus(msg);
+          break;
+        case 'nowPlaying':
+          updateTrack(msg.track);
+          break;
+        case 'loading':
+          document.getElementById('loadingMsg').textContent = msg.message;
+          break;
+        case 'listeners':
+          updateListeners(msg.count);
+          break;
+        case 'volume':
+          document.getElementById('volumeSlider').value = msg.value;
+          document.getElementById('volumeVal').textContent = msg.value + '%';
+          break;
+        case 'error':
+          document.getElementById('loadingMsg').textContent = '⚠ ' + msg.message;
+          setTimeout(() => { document.getElementById('loadingMsg').textContent = ''; }, 3000);
+          break;
+      }
+    }
+
+    function updateStatus(status) {
+      isPlaying = status.isPlaying;
+      updatePlayBtn();
+      updateQueue(status.queue);
+      updateListeners(status.listeners);
+      if (status.volume !== undefined) {
+        document.getElementById('volumeSlider').value = status.volume;
+        document.getElementById('volumeVal').textContent = status.volume + '%';
+      }
+      if (status.currentTrack) updateTrack(status.currentTrack);
+      else {
+        document.getElementById('trackTitle').textContent = isPlaying ? 'Loading...' : 'Ready to Play';
+        document.getElementById('trackArtist').textContent = isPlaying ? 'Please wait...' : 'Click play to start';
+      }
+      updateStatusBadge(status);
+    }
+
+    function updateTrack(track) {
+      if (!track) return;
+      document.getElementById('trackTitle').textContent = track.title || 'Unknown';
+      document.getElementById('trackArtist').textContent = track.artist || 'Unknown Artist';
+      document.getElementById('loadingMsg').textContent = '';
+    }
+
+    function updateStatusBadge(status) {
+      const badge = document.getElementById('statusBadge');
+      const text = document.getElementById('statusText');
+      if (status.isPlaying && status.currentTrack) {
+        badge.className = 'status-badge live';
+        text.textContent = '🔴 LIVE ON AIR';
+      } else if (status.isPlaying) {
+        badge.className = 'status-badge loading';
+        text.textContent = '⏳ Loading track...';
+      } else {
+        badge.className = 'status-badge idle';
+        text.textContent = '⏸ Paused';
+      }
+    }
+
+    function updatePlayBtn() {
+      const btn = document.getElementById('playBtn');
+      const vinyl = document.getElementById('vinyl');
+      const eqBars = document.querySelectorAll('.eq-bar');
+      
+      btn.textContent = isPlaying ? '⏸' : '▶';
+      
+      if (isPlaying) {
+        vinyl.classList.add('playing');
+        eqBars.forEach(b => b.classList.remove('paused'));
+      } else {
+        vinyl.classList.remove('playing');
+        eqBars.forEach(b => b.classList.add('paused'));
+      }
+    }
+
+    function updateOnAir(connected) {
+      const badge = document.getElementById('onAirBadge');
+      const text = document.getElementById('onAirText');
+      if (connected) {
+        text.textContent = 'ON AIR';
+        badge.style.borderColor = 'rgba(255,71,87,0.4)';
+      } else {
+        text.textContent = 'RECONNECTING...';
+        badge.style.borderColor = 'rgba(255,215,0,0.4)';
+        badge.style.color = '#FFD700';
+      }
+    }
+
+    function updateQueue(queue) {
+      if (!queue) return;
+      const list = document.getElementById('queueList');
+      const badge = document.getElementById('queueBadge');
+      const statQueue = document.getElementById('statQueue');
+      
+      badge.textContent = queue.length + ' song' + (queue.length !== 1 ? 's' : '');
+      statQueue.textContent = queue.length;
+
+      if (queue.length === 0) {
+        list.innerHTML = '<div class="queue-item"><div class="queue-num">♪</div><div class="queue-info"><div class="queue-title">Queue is empty</div><div class="queue-artist">Songs will appear here</div></div></div>';
+        return;
+      }
+
+      list.innerHTML = queue.map((song, i) => `
+        <div class="queue-item ${i === 0 && isPlaying ? 'active' : ''}">
+          <div class="queue-num">${i === 0 && isPlaying ? '♫' : (i + 1)}</div>
+          <div class="queue-info">
+            <div class="queue-title">${escHtml(song.title)}</div>
+            <div class="queue-artist">${escHtml(song.artist || 'Unknown')}</div>
+          </div>
+          <div class="queue-duration">${escHtml(song.duration || '')}</div>
+        </div>
+      `).join('');
+    }
+
+    function updateListeners(count) {
+      document.getElementById('listenersCount').textContent = count || 0;
+      document.getElementById('statListeners').textContent = count || 0;
+    }
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function togglePlay() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      if (isPlaying) {
+        ws.send(JSON.stringify({ action: 'pause' }));
+        stopAudio();
+      } else {
+        ws.send(JSON.stringify({ action: 'play' }));
+        startAudio();
+      }
+    }
+
+    function skipTrack() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: 'skip' }));
+      }
+    }
+
+    function setVolume(val) {
+      document.getElementById('volumeVal').textContent = val + '%';
+      const audio = document.getElementById('radioAudio');
+      audio.volume = val / 100;
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: 'volume', value: val }));
+      }
+    }
+
+    function startAudio() {
+      const audio = document.getElementById('radioAudio');
+      audio.src = '/stream?' + Date.now();
+      audio.play().catch(() => {});
+      audioStarted = true;
+    }
+
+    function stopAudio() {
+      const audio = document.getElementById('radioAudio');
+      audio.pause();
+      audio.src = '';
+      audioStarted = false;
+    }
+
+    // Initialize
+    connect();
+  </script>
+</body>
+</html>
