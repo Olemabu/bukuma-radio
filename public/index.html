@@ -805,6 +805,7 @@
     }
 
     function handleMessage(msg) {
+      if (msg.type === 'playJingle') { const a = new Audio(msg.url); a.volume = Math.min(1.0, document.getElementById('volumeSlider').value / 100 * 1.5); a.play(); return; }
       if (msg.action === 'duck') { document.getElementById('radioAudio').volume = msg.active ? 0.2 : (document.getElementById('volumeSlider').value / 100); return; }
       if (msg.type === 'callAccepted') { if (isAwaitingCall) goLiveCaller(); return; }
       if (msg.type === 'callEnded') { stopCallIn(); return; }

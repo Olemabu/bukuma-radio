@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const { exec, spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const multer = require('multer');
 
 const app = express();
 const server = http.createServer(app);
@@ -47,6 +48,11 @@ function loadState() {
 
 function saveQueue() { try { fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2)); } catch(e) {} }
 function saveState() { try { fs.writeFileSync(stateFile, JSON.stringify({ volume, isPlaying, currentTrack }, null, 2)); } catch(e) {} }
+let jingles = [];
+const jinglesFile = path.join(dataDir, 'jingles.json');
+if (fs.existsSync(jinglesFile)) { try { jingles = JSON.parse(fs.readFileSync(jinglesFile, 'utf8')); } catch(e){} }
+function saveJingles() { try { fs.writeFileSync(jinglesFile, JSON.stringify(jingles)); } catch(e){} }
+const upload = multer({ dest: path.join(__dirname, 'public/uploads') });
 
 function broadcast(msg) {
   const data = JSON.stringify(msg);
@@ -202,6 +208,17 @@ app.post('/api/volume', (req, res) => { volume = Math.min(100, Math.max(0, parse
 app.post('/api/queue/skip', (req, res) => { skipTrack(); res.json({ success: true }); });
 app.post('/api/queue/add', (req, res) => { addSong(req.body); res.json({ success: true, queue }); });
 app.delete('/api/queue/:id', (req, res) => { removeSong(req.params.id); res.json({ success: true, queue }); });
+app.get('/api/jingles', (req, res) => res.json({ jingles }));
+app.post('/api/jingles', upload.single('jingle'), (req, res) => {
+  if (!req.file) return res.json({success:false});
+  const j = { id: Date.now().toString(), name: req.body.name || req.file.originalname, url: '/uploads/' + req.file.filename };
+  jingles.push(j); saveJingles(); res.json({success:true, jingles});
+});
+app.post('/api/jingles/:id/play', (req, res) => {
+  const j = jingles.find(x => x.id === req.params.id);
+  if (j) broadcast({ type: 'playJingle', url: j.url });
+  res.json({success:true});
+});
 app.post('/api/queue/rex-lawson', (req, res) => {
   REX_LAWSON_SONGS.forEach(s => { if (!queue.find(q => q.title === s.title)) queue.push({...s, id: (Date.now()*Math.random()).toString()}); });
   saveQueue(); broadcast(getStatus());
