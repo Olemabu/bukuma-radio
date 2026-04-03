@@ -37,10 +37,10 @@ let audioSettings = { fadeIn: 2, fadeOut: 3, crossfade: 2, volume: 85 };
 let playlists = [];
 
 const REX_LAWSON_SONGS = [
-  { id: '1', title: 'Agum Bukuma Selection 1', artist: 'Community Radio', youtubeQuery: 'https://www.youtube.com/watch?v=7bOxEi9RJsg', duration: '5:23' },
-  { id: '2', title: 'Agum Bukuma Selection 2', artist: 'Community Radio', youtubeQuery: 'https://www.youtube.com/watch?v=mhoFozrOGlA', duration: '6:12' },
-  { id: '3', title: 'Agum Bukuma Selection 3', artist: 'Community Radio', youtubeQuery: 'https://www.youtube.com/watch?v=nhta-hYCXJQ', duration: '4:45' },
-  { id: '4', title: 'Agum Bukuma Selection 4', artist: 'Community Radio', youtubeQuery: 'https://www.youtube.com/watch?v=xSsSzuioIWA', duration: '5:58' }
+  { id: '1', title: 'Jolly', artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Jolly highlife', duration: '5:23' },
+  { id: '2', title: 'Warri', artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Warri highlife', duration: '6:12' },
+  { id: '3', title: 'Kelegbe Megbe', artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Kelegbe Megbe', duration: '4:45' },
+  { id: '4', title: 'So Tey', artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson So Tey highlife', duration: '5:58' }
 ];
 
 const dataDir = path.join(__dirname, 'data');

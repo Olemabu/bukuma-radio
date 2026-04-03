@@ -1,0 +1,12 @@
+[
+  {
+    "id": "1",
+    "name": "playlist 1",
+    "tracks": [
+      { "id": "1001", "title": "Ogbologbo by Rex Lawson", "artist": "Requested Track", "youtubeQuery": "https://www.youtube.com/watch?v=7bOxEi9RJsg", "duration": "Unknown" },
+      { "id": "1002", "title": "Jolly Papa by Rex Lawson", "artist": "Requested Track", "youtubeQuery": "https://www.youtube.com/watch?v=mhoFozrOGlA", "duration": "Unknown" },
+      { "id": "1003", "title": "Love Mu Adure by Rex Lawson", "artist": "Requested Track", "youtubeQuery": "https://www.youtube.com/watch?v=nhta-hYCXJQ", "duration": "Unknown" },
+      { "id": "1004", "title": "Yellow Sisi by Rex Lawson", "artist": "Requested Track", "youtubeQuery": "https://www.youtube.com/watch?v=xSsSzuioIWA", "duration": "Unknown" }
+    ]
+  }
+]
