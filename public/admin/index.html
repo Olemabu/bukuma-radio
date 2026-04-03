@@ -5,87 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BUKUMA RADIO - Admin Panel</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0a0a0f; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
-.header { background: linear-gradient(135deg, #1a0533, #0d1f3c); padding: 16px 24px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #ff6b00; }
-.header h1 { color: #ff6b00; font-size: 1.4rem; font-weight: 700; }
-.header .status { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-.login-box { background: #111; border: 1px solid #ff6b00; border-radius: 12px; padding: 40px; width: 360px; text-align: center; }
-.login-box h2 { color: #ff6b00; margin-bottom: 24px; }
-.login-box input { width: 100%; padding: 12px; background: #1a1a2e; border: 1px solid #333; border-radius: 8px; color: #fff; margin-bottom: 16px; font-size: 1rem; }
-.btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; }
-.btn-primary { background: #ff6b00; color: #fff; }
-.btn-primary:hover { background: #e55a00; }
-.btn-success { background: #22c55e; color: #fff; }
-.btn-danger { background: #ef4444; color: #fff; }
-.btn-secondary { background: #374151; color: #fff; }
-.btn:hover { opacity: 0.85; transform: translateY(-1px); }
-.tabs { display: flex; gap: 4px; padding: 12px 24px; background: #111; border-bottom: 1px solid #222; flex-wrap: wrap; }
-.tab { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; color: #999; transition: all 0.2s; border: 1px solid transparent; }
-.tab.active { background: #ff6b00; color: #fff; border-color: #ff6b00; }
-.tab:hover:not(.active) { background: #1a1a2e; color: #fff; }
-.panel { display: none; padding: 24px; }
-.panel.active { display: block; }
-.card { background: #111; border: 1px solid #222; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-.card h3 { color: #ff6b00; margin-bottom: 16px; font-size: 1rem; }
-.form-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-.form-row label { color: #999; min-width: 120px; font-size: 0.85rem; }
-.form-row input, .form-row select, .form-row textarea { flex: 1; padding: 8px 12px; background: #1a1a2e; border: 1px solid #333; border-radius: 6px; color: #fff; font-size: 0.9rem; min-width: 200px; }
-.form-row textarea { min-height: 80px; resize: vertical; }
-.queue-list { max-height: 400px; overflow-y: auto; }
-.queue-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: #1a1a2e; border-radius: 8px; margin-bottom: 6px; }
-.queue-item .title { flex: 1; font-size: 0.9rem; }
-.queue-item .duration { color: #999; font-size: 0.8rem; }
-.now-playing { background: linear-gradient(135deg, #1a0533, #0d1f3c); border: 1px solid #ff6b00; border-radius: 10px; padding: 20px; margin-bottom: 20px; text-align: center; }
-.now-playing h2 { color: #ff6b00; font-size: 1.1rem; }
-.now-playing .track { font-size: 1.2rem; font-weight: 600; margin: 8px 0; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
-.stat-box { background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px; text-align: center; }
-.stat-box .value { font-size: 2rem; font-weight: 700; color: #ff6b00; }
-.stat-box .label { font-size: 0.8rem; color: #999; }
-.mic-btn { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #ff6b00; background: #1a0533; cursor: pointer; font-size: 2rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; transition: all 0.2s; }
-.mic-btn.active { background: #ff6b00; animation: pulse 0.5s infinite; }
-.jingle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-.jingle-pad { padding: 16px 8px; background: #1a1a2e; border: 2px solid #333; border-radius: 8px; text-align: center; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
-.jingle-pad:hover { border-color: #ff6b00; background: #2a1050; }
-.history-item { padding: 10px; background: #1a1a2e; border-radius: 6px; margin-bottom: 6px; display: flex; gap: 12px; align-items: center; }
-.history-item .time { color: #999; font-size: 0.75rem; min-width: 60px; }
-.request-item { padding: 12px; background: #1a1a2e; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
-.request-item .song { flex: 1; }
-.alert { padding: 10px 16px; border-radius: 6px; margin-bottom: 12px; font-size: 0.85rem; }
-.alert-success { background: #14532d; border: 1px solid #22c55e; color: #86efac; }
-.alert-error { background: #450a0a; border: 1px solid #ef4444; color: #fca5a5; }
-.search-results { max-height: 300px; overflow-y: auto; margin-top: 10px; }
-.search-result { display: flex; align-items: center; gap: 12px; padding: 10px; background: #1a1a2e; border-radius: 6px; margin-bottom: 6px; cursor: pointer; transition: all 0.2s; }
-.search-result:hover { background: #2a1050; }
-.search-result img { width: 50px; height: 38px; border-radius: 4px; object-fit: cover; }
-.search-result .info { flex: 1; }
-.search-result .info .title { font-size: 0.85rem; font-weight: 600; }
-.search-result .info .duration { color: #999; font-size: 0.75rem; }
-input[type=range] { width: 100%; accent-color: #ff6b00; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Segoe UI',sans-serif;min-height:100vh}
+.header{background:linear-gradient(135deg,#1a0533,#0d1f3c);padding:16px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid #ff6b00}
+.header h1{color:#ff6b00;font-size:1.4rem;font-weight:700}
+.header .status{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:.85rem}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{background:#111;border:1px solid #ff6b00;border-radius:12px;padding:40px;width:360px;text-align:center}
+.login-box h2{color:#ff6b00;margin-bottom:24px}
+.login-box input{width:100%;padding:12px;background:#1a1a2e;border:1px solid #333;border-radius:8px;color:#fff;margin-bottom:16px;font-size:1rem}
+.btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.9rem;transition:all .2s}
+.btn-primary{background:#ff6b00;color:#fff}.btn-success{background:#22c55e;color:#fff}
+.btn-danger{background:#ef4444;color:#fff}.btn-secondary{background:#374151;color:#fff}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.tabs{display:flex;gap:4px;padding:12px 24px;background:#111;border-bottom:1px solid #222;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.85rem;color:#999;transition:all .2s;border:1px solid transparent}
+.tab.active{background:#ff6b00;color:#fff;border-color:#ff6b00}
+.tab:hover:not(.active){background:#1a1a2e;color:#fff}
+.panel{display:none;padding:24px}.panel.active{display:block}
+.card{background:#111;border:1px solid #222;border-radius:10px;padding:20px;margin-bottom:20px}
+.card h3{color:#ff6b00;margin-bottom:16px;font-size:1rem}
+.form-row{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.form-row label{color:#999;min-width:120px;font-size:.85rem}
+.form-row input,.form-row select,.form-row textarea{flex:1;padding:8px 12px;background:#1a1a2e;border:1px solid #333;border-radius:6px;color:#fff;font-size:.9rem;min-width:200px}
+.form-row textarea{min-height:80px;resize:vertical}
+.queue-list{max-height:400px;overflow-y:auto}
+.queue-item{display:flex;align-items:center;gap:10px;padding:10px;background:#1a1a2e;border-radius:8px;margin-bottom:6px}
+.queue-item .title{flex:1;font-size:.9rem}
+.now-playing{background:linear-gradient(135deg,#1a0533,#0d1f3c);border:1px solid #ff6b00;border-radius:10px;padding:20px;margin-bottom:20px;text-align:center}
+.now-playing h2{color:#ff6b00;font-size:1.1rem}
+.now-playing .track{font-size:1.2rem;font-weight:600;margin:8px 0}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat-box{background:#111;border:1px solid #222;border-radius:8px;padding:16px;text-align:center}
+.stat-box .value{font-size:2rem;font-weight:700;color:#ff6b00}
+.stat-box .label{font-size:.8rem;color:#999}
+.mic-btn{width:100px;height:100px;border-radius:50%;border:3px solid #ff6b00;background:#1a0533;cursor:pointer;font-size:2rem;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;transition:all .2s}
+.mic-btn.active{background:#ff6b00}
+.jingle-pad{padding:16px 8px;background:#1a1a2e;border:2px solid #333;border-radius:8px;text-align:center;cursor:pointer;font-size:.8rem;transition:all .2s}
+.jingle-pad:hover{border-color:#ff6b00;background:#2a1050}
+.jingle-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.history-item{padding:10px;background:#1a1a2e;border-radius:6px;margin-bottom:6px;display:flex;gap:12px;align-items:center}
+.history-item .time{color:#999;font-size:.75rem;min-width:60px}
+.request-item{padding:12px;background:#1a1a2e;border-radius:8px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.request-item .song{flex:1}
+.search-result{display:flex;align-items:center;gap:12px;padding:10px;background:#1a1a2e;border-radius:6px;margin-bottom:6px;cursor:pointer;transition:all .2s}
+.search-result:hover{background:#2a1050}
+.search-result img{width:50px;height:38px;border-radius:4px;object-fit:cover}
+.search-result .info{flex:1}
+.search-result .info .title{font-size:.85rem;font-weight:600}
+.search-result .info .duration{color:#999;font-size:.75rem}
+.search-results{max-height:300px;overflow-y:auto;margin-top:10px}
+input[type=range]{width:100%;accent-color:#ff6b00}
 </style>
 </head>
 <body>
 <div id="login" class="login-screen">
 <div class="login-box">
-<h2>🎙️ BUKUMA RADIO</h2>
-<p style="color:#999;margin-bottom:20px;font-size:0.9rem">Admin Control Panel</p>
-<input type="password" id="pwd" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')login()">
-<button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
-<div id="loginErr" style="color:#ef4444;margin-top:10px;font-size:0.85rem"></div>
+<h2>BUKUMA RADIO</h2>
+<p style="color:#999;margin-bottom:20px;font-size:.9rem">Admin Control Panel</p>
+<input type="password" id="pwd" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()">
+<button class="btn btn-primary" style="width:100%" onclick="doLogin()">Login</button>
+<div id="loginErr" style="color:#ef4444;margin-top:10px;font-size:.85rem"></div>
 </div>
 </div>
-
 <div id="app" style="display:none">
 <div class="header">
 <span style="font-size:1.5rem">📻</span>
 <h1>BUKUMA RADIO — Admin</h1>
 <div class="status"><div class="dot" id="streamDot"></div><span id="streamStatus">Connecting...</span></div>
 </div>
-
 <div class="tabs">
 <div class="tab active" onclick="showTab('live')">🔴 Live</div>
 <div class="tab" onclick="showTab('queue')">🎵 Queue</div>
@@ -98,88 +88,53 @@ input[type=range] { width: 100%; accent-color: #ff6b00; }
 <div class="tab" onclick="showTab('history')">📜 History</div>
 <div class="tab" onclick="showTab('requests')">🙋 Requests</div>
 </div>
-
-<!-- LIVE PANEL -->
 <div class="panel active" id="panel-live">
-<div class="now-playing">
-<h2>NOW PLAYING</h2>
-<div class="track" id="nowTitle">—</div>
-<div style="color:#999;font-size:0.85rem" id="nowArtist">Waiting for track...</div>
-</div>
+<div class="now-playing"><h2>NOW PLAYING</h2><div class="track" id="nowTitle">—</div><div style="color:#999;font-size:.85rem" id="nowArtist">Waiting...</div></div>
 <div class="stats-grid">
 <div class="stat-box"><div class="value" id="statListeners">0</div><div class="label">Listeners</div></div>
 <div class="stat-box"><div class="value" id="statQueue">0</div><div class="label">Queued</div></div>
 <div class="stat-box"><div class="value" id="statStatus">—</div><div class="label">Status</div></div>
 </div>
-<div class="card">
-<h3>Controls</h3>
+<div class="card"><h3>Controls</h3>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
 <button class="btn btn-danger" onclick="skipTrack()">⏭ Skip Track</button>
 <button class="btn btn-secondary" onclick="refreshStatus()">🔄 Refresh</button>
+</div></div>
 </div>
-</div>
-</div>
-
-<!-- QUEUE PANEL -->
 <div class="panel" id="panel-queue">
-<div class="card">
-<h3>Add YouTube URL</h3>
+<div class="card"><h3>Add YouTube URL</h3>
 <div class="form-row">
 <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=..." style="flex:1">
 <button class="btn btn-primary" onclick="addToQueue()">Add</button>
+</div></div>
+<div class="card"><h3>Current Queue</h3><div class="queue-list" id="queueList"><p style="color:#999">Loading...</p></div></div>
 </div>
-</div>
-<div class="card">
-<h3>Current Queue</h3>
-<div class="queue-list" id="queueList"><p style="color:#999">Loading...</p></div>
-</div>
-</div>
-
-<!-- SEARCH PANEL -->
 <div class="panel" id="panel-search">
-<div class="card">
-<h3>Search YouTube</h3>
+<div class="card"><h3>Search YouTube</h3>
 <div class="form-row">
-<input type="text" id="searchQ" placeholder="Search for songs, artists..." style="flex:1" onkeydown="if(event.key==='Enter')searchYT()">
+<input type="text" id="searchQ" placeholder="Search songs, artists..." style="flex:1" onkeydown="if(event.key==='Enter')searchYT()">
 <button class="btn btn-primary" onclick="searchYT()">Search</button>
 </div>
 <div class="search-results" id="searchResults"></div>
-</div>
-</div>
-
-<!-- PLAYLISTS PANEL -->
+</div></div>
 <div class="panel" id="panel-playlists">
-<div class="card">
-<h3>Save Current Queue as Playlist</h3>
-<div class="form-row">
-<input type="text" id="plName" placeholder="Playlist name..." style="flex:1">
-<button class="btn btn-primary" onclick="savePlaylist()">Save</button>
+<div class="card"><h3>Save Queue as Playlist</h3>
+<div class="form-row"><input type="text" id="plName" placeholder="Playlist name..." style="flex:1"><button class="btn btn-primary" onclick="savePlaylist()">Save</button></div>
 </div>
+<div class="card"><h3>Saved Playlists</h3><div id="playlistList"><p style="color:#999">Loading...</p></div></div>
 </div>
-<div class="card">
-<h3>Saved Playlists</h3>
-<div id="playlistList"><p style="color:#999">Loading...</p></div>
-</div>
-</div>
-
-<!-- SCHEDULE PANEL -->
 <div class="panel" id="panel-schedule">
-<div class="card">
-<h3>Bulk Add URLs</h3>
-<div class="form-row"><textarea id="bulkUrls" placeholder="Paste YouTube URLs, one per line (up to 50)"></textarea></div>
+<div class="card"><h3>Bulk Add URLs</h3>
+<div class="form-row"><textarea id="bulkUrls" placeholder="Paste YouTube URLs, one per line"></textarea></div>
 <button class="btn btn-primary" onclick="bulkAdd()">Add All to Queue</button>
 </div>
-<div class="card">
-<h3>Loop Mode</h3>
+<div class="card"><h3>Loop Mode</h3>
 <div class="form-row">
-<label>Loop playlist:</label>
-<select id="loopPlaylist"><option value="">Current queue</option></select>
+<label>Loop:</label><select id="loopPlaylist"><option value="">Current queue</option></select>
 <button class="btn btn-success" onclick="enableLoop()">Enable Loop</button>
 <button class="btn btn-danger" onclick="disableLoop()">Disable</button>
-</div>
-</div>
-<div class="card">
-<h3>Day Planner</h3>
+</div></div>
+<div class="card"><h3>Day Planner</h3>
 <div class="form-row">
 <select id="schedDay"><option>monday</option><option>tuesday</option><option>wednesday</option><option>thursday</option><option>friday</option><option>saturday</option><option>sunday</option><option>everyday</option></select>
 <input type="time" id="schedTime" value="09:00">
@@ -192,325 +147,141 @@ input[type=range] { width: 100%; accent-color: #ff6b00; }
 <button class="btn btn-danger" onclick="toggleScheduler(false)">Disable</button>
 </div>
 <div id="schedSlots"><p style="color:#999">Loading slots...</p></div>
-</div>
-</div>
-
-<!-- MIC PANEL -->
+</div></div>
 <div class="panel" id="panel-mic">
-<div class="card" style="text-align:center">
-<h3>DJ Microphone</h3>
+<div class="card" style="text-align:center"><h3>DJ Microphone</h3>
 <div class="mic-btn" id="micBtn" onmousedown="startMic()" onmouseup="stopMic()" ontouchstart="startMic()" ontouchend="stopMic()">🎙️</div>
-<p style="color:#999;font-size:0.85rem">Hold to talk — music ducks automatically</p>
-<div id="micLevel" style="margin:10px auto;width:200px;height:8px;background:#222;border-radius:4px"><div id="micBar" style="height:100%;width:0%;background:#ff6b00;border-radius:4px;transition:width 0.1s"></div></div>
+<p style="color:#999;font-size:.85rem">Hold to talk — music ducks automatically</p>
+<div style="margin:10px auto;width:200px;height:8px;background:#222;border-radius:4px"><div id="micBar" style="height:100%;width:0%;background:#ff6b00;border-radius:4px;transition:width .1s"></div></div>
 <div class="form-row" style="justify-content:center;margin-top:16px">
-<label>Duck Level:</label>
-<input type="range" id="duckLevel" min="0" max="100" value="25" style="width:150px" oninput="updateDuck()">
-<span id="duckVal">25%</span>
-</div>
-</div>
-</div>
-
-<!-- JINGLES PANEL -->
+<label>Duck Level:</label><input type="range" id="duckLevel" min="0" max="100" value="25" style="width:150px" oninput="document.getElementById('duckVal').textContent=this.value+'%'"><span id="duckVal">25%</span>
+</div></div></div>
 <div class="panel" id="panel-jingles">
-<div class="card">
-<h3>Upload Jingle</h3>
+<div class="card"><h3>Upload Jingle</h3>
 <div class="form-row">
 <input type="file" id="jingleFile" accept="audio/*" style="flex:1">
 <input type="text" id="jingleName" placeholder="Jingle name" style="flex:1">
 <button class="btn btn-primary" onclick="uploadJingle()">Upload</button>
+</div></div>
+<div class="card"><h3>Jingle Pads</h3><div class="jingle-grid" id="jingleGrid"><p style="color:#999">No jingles yet</p></div></div>
 </div>
-</div>
-<div class="card">
-<h3>Jingle Pads</h3>
-<div class="jingle-grid" id="jingleGrid"><p style="color:#999">No jingles uploaded yet</p></div>
-</div>
-</div>
-
-<!-- AUDIO PANEL -->
 <div class="panel" id="panel-audio">
-<div class="card">
-<h3>Audio Settings</h3>
+<div class="card"><h3>Audio Settings</h3>
 <div class="form-row"><label>Fade In (s):</label><input type="range" min="0" max="10" value="2" id="fadeIn" oninput="document.getElementById('fadeInV').textContent=this.value+'s'"><span id="fadeInV">2s</span></div>
 <div class="form-row"><label>Fade Out (s):</label><input type="range" min="0" max="10" value="3" id="fadeOut" oninput="document.getElementById('fadeOutV').textContent=this.value+'s'"><span id="fadeOutV">3s</span></div>
 <div class="form-row"><label>Crossfade (s):</label><input type="range" min="0" max="8" value="2" id="crossfade" oninput="document.getElementById('crossfadeV').textContent=this.value+'s'"><span id="crossfadeV">2s</span></div>
 <div class="form-row"><label>Volume:</label><input type="range" min="0" max="100" value="85" id="volume" oninput="document.getElementById('volumeV').textContent=this.value+'%'"><span id="volumeV">85%</span></div>
 <button class="btn btn-primary" onclick="saveAudio()">Save Settings</button>
-</div>
-<div class="card">
-<h3>Station ID (Auto-Jingle)</h3>
-<div class="form-row"><label>Every N tracks:</label><input type="number" id="stationIdInterval" min="1" max="20" value="5" style="width:80px"></div>
-<div class="form-row"><label>Jingle file:</label><select id="stationIdJingle"><option value="">Select jingle...</option></select></div>
-<div class="form-row"><label>Enabled:</label><input type="checkbox" id="stationIdEnabled"></div>
-<button class="btn btn-primary" onclick="saveStationId()">Save</button>
-</div>
-</div>
-
-<!-- HISTORY PANEL -->
+</div></div>
 <div class="panel" id="panel-history">
-<div class="card">
-<h3>Play History</h3>
-<div id="historyList"><p style="color:#999">Loading...</p></div>
+<div class="card"><h3>Play History</h3><div id="historyList"><p style="color:#999">Loading...</p></div></div>
 </div>
-</div>
-
-<!-- REQUESTS PANEL -->
 <div class="panel" id="panel-requests">
-<div class="card">
-<h3>Song Requests</h3>
-<div id="requestList"><p style="color:#999">No pending requests</p></div>
+<div class="card"><h3>Song Requests</h3><div id="requestList"><p style="color:#999">No pending requests</p></div></div>
 </div>
-</div>
-
-</div> <!-- end app -->
+  </div>
 <script>
-const BASE = '';
-let ws = null, token = '', micStream = null, micAnalyser = null, micAnimFrame = null;
-
-function login() {
-  const p = document.getElementById('pwd').value;
-  fetch(BASE+'/api/admin/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:p})})
-    .then(r=>r.json()).then(d=>{
-      if(d.success){token=p;document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';init();}
-      else{document.getElementById('loginErr').textContent='Wrong password';}
-    });
+var BASE='',ws=null,adminPwd='',micStream=null,micAnalyser=null,micAnimFrame=null;
+function doLogin(){
+  var p=document.getElementById('pwd').value;
+  fetch(BASE+'/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:p})})
+  .then(function(r){return r.json()}).then(function(d){
+    if(d.success){adminPwd=p;document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';init();}
+    else{document.getElementById('loginErr').textContent='Wrong password';}
+  });
 }
-
-function init() {
-  connectWS(); refreshStatus(); loadQueue(); loadPlaylists(); loadJingles(); loadHistory(); loadRequests();
+function init(){connectWS();refreshStatus();loadQueue();loadPlaylists();loadJingles();loadHistory();loadRequests();}
+function connectWS(){
+  var proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(proto+'://'+location.host);
+  ws.onmessage=function(e){var d=JSON.parse(e.data);if(d.type==='status')updateStatus(d);if(d.type==='history_update')loadHistory();if(d.type==='request_new')loadRequests();};
+  ws.onclose=function(){setTimeout(connectWS,3000);};
 }
-
-function connectWS() {
-  const proto = location.protocol==='https:'?'wss':'ws';
-  ws = new WebSocket(proto+'://'+location.host);
-  ws.onmessage = (e) => {
-    const d = JSON.parse(e.data);
-    if(d.type==='status') updateStatus(d);
-    if(d.type==='history_update') loadHistory();
-    if(d.type==='request_new') loadRequests();
-  };
-  ws.onclose = () => setTimeout(connectWS, 3000);
+function updateStatus(d){
+  document.getElementById('nowTitle').textContent=d.currentTrack?d.currentTrack.title:'—';
+  document.getElementById('nowArtist').textContent=d.currentTrack?(d.currentTrack.artist||''):'No track';
+  document.getElementById('statListeners').textContent=d.listeners||0;
+  document.getElementById('statQueue').textContent=(d.queue||[]).length;
+  document.getElementById('statStatus').textContent=d.isPlaying?'▶':'⏸';
+  document.getElementById('streamDot').style.background=d.isPlaying?'#4ade80':'#999';
+  document.getElementById('streamStatus').textContent=d.isPlaying?'ON AIR':'Idle';
 }
-
-function updateStatus(d) {
-  document.getElementById('nowTitle').textContent = d.currentTrack ? d.currentTrack.title : '—';
-  document.getElementById('nowArtist').textContent = d.currentTrack ? (d.currentTrack.artist||'') : 'No track';
-  document.getElementById('statListeners').textContent = d.listeners||0;
-  document.getElementById('statQueue').textContent = (d.queue||[]).length;
-  document.getElementById('statStatus').textContent = d.isPlaying ? '▶' : '⏸';
-  document.getElementById('streamDot').style.background = d.isPlaying ? '#4ade80' : '#999';
-  document.getElementById('streamStatus').textContent = d.isPlaying ? 'ON AIR' : 'Idle';
+function refreshStatus(){fetch(BASE+'/api/status').then(function(r){return r.json()}).then(updateStatus);}
+function skipTrack(){fetch(BASE+'/api/queue/skip',{method:'POST',headers:{Authorization:adminPwd}}).then(function(){refreshStatus();});}
+function showTab(name){
+  var tabs=document.querySelectorAll('.tab');
+  tabs.forEach(function(t,i){t.classList.toggle('active',(name==='live'&&i===0)||(t.textContent.toLowerCase().indexOf(name)>=0&&name!=='live'));});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  var panel=document.getElementById('panel-'+name);if(panel)panel.classList.add('active');
+  if(name==='queue')loadQueue();if(name==='playlists')loadPlaylists();if(name==='history')loadHistory();if(name==='requests')loadRequests();if(name==='jingles')loadJingles();if(name==='schedule')loadSchedule();
 }
-
-function refreshStatus() {
-  fetch(BASE+'/api/status').then(r=>r.json()).then(d=>updateStatus(d));
+function addToQueue(){
+  var url=document.getElementById('ytUrl').value.trim();if(!url)return;
+  fetch(BASE+'/api/queue',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({url:url})})
+  .then(function(r){return r.json()}).then(function(d){if(d.id){document.getElementById('ytUrl').value='';loadQueue();}});
 }
-
-function skipTrack() {
-  fetch(BASE+'/api/queue/skip',{method:'POST',headers:{'Authorization':token}}).then(()=>refreshStatus());
-}
-
-function showTab(name) {
-  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('active',t.textContent.toLowerCase().includes(name)||name==='live'&&i===0)});
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  if(name==='queue') loadQueue();
-  if(name==='playlists') loadPlaylists();
-  if(name==='history') loadHistory();
-  if(name==='requests') loadRequests();
-  if(name==='jingles') loadJingles();
-  if(name==='schedule') loadSchedule();
-}
-
-function addToQueue() {
-  const url = document.getElementById('ytUrl').value.trim();
-  if(!url) return;
-  fetch(BASE+'/api/queue',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({url})})
-    .then(r=>r.json()).then(d=>{if(d.id){document.getElementById('ytUrl').value='';loadQueue();}});
-}
-
-function loadQueue() {
-  fetch(BASE+'/api/queue').then(r=>r.json()).then(d=>{
-    const el = document.getElementById('queueList');
+function loadQueue(){
+  fetch(BASE+'/api/queue').then(function(r){return r.json()}).then(function(d){
+    var el=document.getElementById('queueList');
     if(!d.queue||!d.queue.length){el.innerHTML='<p style="color:#999">Queue is empty</p>';return;}
-    el.innerHTML = d.queue.map((t,i)=>'<div class="queue-item"><span style="color:#ff6b00;min-width:24px">'+(i+1)+'</span><span class="title">'+(t.title||t.url||'Loading...')+'</span><span class="duration">'+(t.duration||'')+'</span><button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem" onclick="removeFromQueue(''+t.id+'')">✕</button></div>').join('');
+    el.innerHTML=d.queue.map(function(t,i){return '<div class="queue-item"><span style="color:#ff6b00;min-width:24px">'+(i+1)+'</span><span class="title">'+(t.title||t.url||'Loading...')+'</span><button class="btn btn-danger" style="padding:4px 8px;font-size:.75rem" onclick="removeQueue(''+t.id+'')">✕</button></div>';}).join('');
   });
 }
-
-function removeFromQueue(id) {
-  fetch(BASE+'/api/queue/'+id,{method:'DELETE',headers:{'Authorization':token}}).then(()=>loadQueue());
-}
-
-function searchYT() {
-  const q = document.getElementById('searchQ').value.trim();
-  if(!q) return;
-  document.getElementById('searchResults').innerHTML = '<p style="color:#999">Searching...</p>';
-  fetch(BASE+'/api/youtube/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
+function removeQueue(id){fetch(BASE+'/api/queue/'+id,{method:'DELETE',headers:{Authorization:adminPwd}}).then(function(){loadQueue();});}
+function searchYT(){
+  var q=document.getElementById('searchQ').value.trim();if(!q)return;
+  document.getElementById('searchResults').innerHTML='<p style="color:#999">Searching...</p>';
+  fetch(BASE+'/api/youtube/search?q='+encodeURIComponent(q)).then(function(r){return r.json()}).then(function(d){
     if(!d.results||!d.results.length){document.getElementById('searchResults').innerHTML='<p style="color:#999">No results</p>';return;}
-    document.getElementById('searchResults').innerHTML = d.results.map(r=>'<div class="search-result" onclick="addSearchResult(''+r.url+'')"><img src="'+r.thumbnail+'" onerror="this.style.display='none'"><div class="info"><div class="title">'+r.title+'</div><div class="duration">'+r.duration+'</div></div><button class="btn btn-primary" style="padding:4px 8px;font-size:0.75rem">+ Add</button></div>').join('');
+    document.getElementById('searchResults').innerHTML=d.results.map(function(r){return '<div class="search-result" onclick="addSearchResult(''+r.url+'')"><img src="'+r.thumbnail+'" onerror="this.style.display='none'"><div class="info"><div class="title">'+r.title+'</div><div class="duration">'+r.duration+'</div></div><button class="btn btn-primary" style="padding:4px 8px;font-size:.75rem">+</button></div>';}).join('');
   });
 }
-
-function addSearchResult(url) {
-  fetch(BASE+'/api/queue',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({url})})
-    .then(r=>r.json()).then(()=>{showTab('queue');});
-}
-
-function loadPlaylists() {
-  fetch(BASE+'/api/playlists').then(r=>r.json()).then(d=>{
-    const el = document.getElementById('playlistList');
+function addSearchResult(url){fetch(BASE+'/api/queue',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({url:url})}).then(function(){showTab('queue');});}
+function loadPlaylists(){
+  fetch(BASE+'/api/playlists').then(function(r){return r.json()}).then(function(d){
+    var el=document.getElementById('playlistList');
     if(!d.playlists||!d.playlists.length){el.innerHTML='<p style="color:#999">No playlists saved</p>';return;}
-    el.innerHTML = d.playlists.map(p=>'<div class="queue-item"><span class="title">'+p.name+' ('+p.tracks.length+' tracks)</span><button class="btn btn-primary" style="padding:4px 10px;font-size:0.8rem" onclick="loadPlaylist(''+p.id+'')">Load</button><button class="btn btn-danger" style="padding:4px 10px;font-size:0.8rem" onclick="deletePlaylist(''+p.id+'')">Del</button></div>').join('');
-    // update loop/schedule selects
-    const opts = d.playlists.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-    document.getElementById('loopPlaylist').innerHTML = '<option value="">Current queue</option>'+opts;
-    document.getElementById('schedPlaylist').innerHTML = '<option value="">Select playlist...</option>'+opts;
-    document.getElementById('stationIdJingle').innerHTML = '<option value="">Select jingle...</option>';
+    el.innerHTML=d.playlists.map(function(p){return '<div class="queue-item"><span class="title">'+p.name+' ('+p.tracks.length+' tracks)</span><button class="btn btn-primary" style="padding:4px 10px;font-size:.8rem" onclick="loadPlaylist(''+p.id+'')">Load</button><button class="btn btn-danger" style="padding:4px 10px;font-size:.8rem" onclick="deletePlaylist(''+p.id+'')">Del</button></div>';}).join('');
+    var opts=d.playlists.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
+    document.getElementById('loopPlaylist').innerHTML='<option value="">Current queue</option>'+opts;
+    document.getElementById('schedPlaylist').innerHTML='<option value="">Select playlist...</option>'+opts;
   });
 }
-
-function savePlaylist() {
-  const name = document.getElementById('plName').value.trim();
-  if(!name) return;
-  fetch(BASE+'/api/playlists',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({name})})
-    .then(r=>r.json()).then(()=>{document.getElementById('plName').value='';loadPlaylists();});
+function savePlaylist(){var name=document.getElementById('plName').value.trim();if(!name)return;fetch(BASE+'/api/playlists',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({name:name})}).then(function(){document.getElementById('plName').value='';loadPlaylists();});}
+function loadPlaylist(id){fetch(BASE+'/api/playlists/'+id+'/load',{method:'POST',headers:{Authorization:adminPwd}}).then(function(){showTab('queue');});}
+function deletePlaylist(id){fetch(BASE+'/api/playlists/'+id,{method:'DELETE',headers:{Authorization:adminPwd}}).then(function(){loadPlaylists();});}
+function bulkAdd(){
+  var rawUrls=document.getElementById('bulkUrls').value.trim();
+  var urls=rawUrls.split('
+').filter(function(u){return u.trim().indexOf('http')===0;});
+  if(!urls.length)return;
+  fetch(BASE+'/api/queue/bulk',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({urls:urls})})
+  .then(function(){document.getElementById('bulkUrls').value='';showTab('queue');});
 }
-
-function loadPlaylist(id) {
-  fetch(BASE+'/api/playlists/'+id+'/load',{method:'POST',headers:{'Authorization':token}}).then(()=>showTab('queue'));
-}
-
-function deletePlaylist(id) {
-  fetch(BASE+'/api/playlists/'+id,{method:'DELETE',headers:{'Authorization':token}}).then(()=>loadPlaylists());
-}
-
-function bulkAdd() {
-  const urls = document.getElementById('bulkUrls').value.trim().split('\n').filter(u=>u.trim().startsWith('http'));
-  if(!urls.length) return;
-  fetch(BASE+'/api/queue/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({urls})})
-    .then(r=>r.json()).then(()=>{document.getElementById('bulkUrls').value='';showTab('queue');});
-}
-
-function enableLoop() {
-  const plId = document.getElementById('loopPlaylist').value;
-  fetch(BASE+'/api/loop/enable',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({playlistId:plId||undefined})}).then(()=>alert('Loop enabled!'));
-}
-
-function disableLoop() {
-  fetch(BASE+'/api/loop/disable',{method:'POST',headers:{'Authorization':token}}).then(()=>alert('Loop disabled'));
-}
-
-function loadSchedule() {
-  fetch(BASE+'/api/schedule').then(r=>r.json()).then(d=>{
-    const el = document.getElementById('schedSlots');
-    if(!d.slots||!d.slots.length){el.innerHTML='<p style="color:#999">No slots scheduled</p>';return;}
-    el.innerHTML = d.slots.map(s=>'<div class="queue-item"><span style="color:#ff6b00;min-width:80px">'+s.day+' '+s.time+'</span><span class="title">'+(s.label||s.playlistId||'playlist')+'</span><button class="btn btn-danger" style="padding:4px 8px;font-size:0.75rem" onclick="deleteSlot(''+s.id+'')">✕</button></div>').join('');
-  });
-}
-
-function addSlot() {
-  const day=document.getElementById('schedDay').value, time=document.getElementById('schedTime').value, plId=document.getElementById('schedPlaylist').value, label=document.getElementById('schedLabel').value;
-  if(!plId) return alert('Select a playlist first');
-  fetch(BASE+'/api/schedule/slot',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({day,time,playlistId:plId,label})}).then(()=>loadSchedule());
-}
-
-function deleteSlot(id) {
-  fetch(BASE+'/api/schedule/slot/'+id,{method:'DELETE',headers:{'Authorization':token}}).then(()=>loadSchedule());
-}
-
-function toggleScheduler(enable) {
-  fetch(BASE+'/api/schedule',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({enabled:enable})}).then(()=>alert('Scheduler '+(enable?'enabled':'disabled')));
-}
-
-async function startMic() {
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({audio:true});
-    const ctx = new AudioContext();
-    const src = ctx.createMediaStreamSource(micStream);
-    micAnalyser = ctx.createAnalyser();
-    src.connect(micAnalyser);
+function enableLoop(){var plId=document.getElementById('loopPlaylist').value;fetch(BASE+'/api/loop/enable',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({playlistId:plId||undefined})}).then(function(){alert('Loop enabled!');});}
+function disableLoop(){fetch(BASE+'/api/loop/disable',{method:'POST',headers:{Authorization:adminPwd}}).then(function(){alert('Loop disabled');});}
+function loadSchedule(){fetch(BASE+'/api/schedule').then(function(r){return r.json()}).then(function(d){var el=document.getElementById('schedSlots');if(!d.slots||!d.slots.length){el.innerHTML='<p style="color:#999">No slots scheduled</p>';return;}el.innerHTML=d.slots.map(function(s){return '<div class="queue-item"><span style="color:#ff6b00;min-width:80px">'+s.day+' '+s.time+'</span><span class="title">'+(s.label||s.playlistId||'playlist')+'</span><button class="btn btn-danger" style="padding:4px 8px;font-size:.75rem" onclick="deleteSlot(''+s.id+'')">✕</button></div>';}).join('');});}
+function addSlot(){var day=document.getElementById('schedDay').value,time=document.getElementById('schedTime').value,plId=document.getElementById('schedPlaylist').value,label=document.getElementById('schedLabel').value;if(!plId)return alert('Select a playlist first');fetch(BASE+'/api/schedule/slot',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({day:day,time:time,playlistId:plId,label:label})}).then(function(){loadSchedule();});}
+function deleteSlot(id){fetch(BASE+'/api/schedule/slot/'+id,{method:'DELETE',headers:{Authorization:adminPwd}}).then(function(){loadSchedule();});}
+function toggleScheduler(enable){fetch(BASE+'/api/schedule',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({enabled:enable})}).then(function(){alert('Scheduler '+(enable?'enabled':'disabled'));});}
+function startMic(){
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    micStream=stream;var ctx=new AudioContext();var src=ctx.createMediaStreamSource(stream);micAnalyser=ctx.createAnalyser();src.connect(micAnalyser);
     document.getElementById('micBtn').classList.add('active');
-    fetch(BASE+'/api/duck',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({active:true})});
+    fetch(BASE+'/api/duck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({active:true})});
     animateMic();
-  } catch(e){alert('Mic access denied');}
+  }).catch(function(){alert('Mic access denied');});
 }
-
-function stopMic() {
-  if(micStream) micStream.getTracks().forEach(t=>t.stop());
-  micStream = null;
-  document.getElementById('micBtn').classList.remove('active');
-  document.getElementById('micBar').style.width='0%';
-  cancelAnimationFrame(micAnimFrame);
-  fetch(BASE+'/api/duck',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({active:false})});
-}
-
-function animateMic() {
-  if(!micAnalyser) return;
-  const data = new Uint8Array(micAnalyser.frequencyBinCount);
-  micAnalyser.getByteFrequencyData(data);
-  const avg = data.reduce((a,b)=>a+b,0)/data.length;
-  document.getElementById('micBar').style.width = Math.min(100,(avg/256)*100*3)+'%';
-  micAnimFrame = requestAnimationFrame(animateMic);
-}
-
-function updateDuck() {
-  const v = document.getElementById('duckLevel').value;
-  document.getElementById('duckVal').textContent = v+'%';
-}
-
-function loadJingles() {
-  fetch(BASE+'/api/jingles').then(r=>r.json()).then(d=>{
-    const el = document.getElementById('jingleGrid');
-    if(!d.jingles||!d.jingles.length){el.innerHTML='<p style="color:#999">No jingles uploaded</p>';return;}
-    el.innerHTML = d.jingles.map(j=>'<div class="jingle-pad" onclick="playJingle(''+j.id+'')"><div style="font-size:1.5rem">🔔</div><div>'+j.name+'</div></div>').join('');
-    const opts = d.jingles.map(j=>'<option value="'+j.id+'">'+j.name+'</option>').join('');
-    document.getElementById('stationIdJingle').innerHTML = '<option value="">None</option>'+opts;
-  });
-}
-
-function playJingle(id) {
-  fetch(BASE+'/api/jingles/'+id+'/play',{method:'POST',headers:{'Authorization':token}});
-}
-
-async function uploadJingle() {
-  const file = document.getElementById('jingleFile').files[0];
-  const name = document.getElementById('jingleName').value || file.name.replace(/.[^.]+$/,'');
-  if(!file) return;
-  const fd = new FormData(); fd.append('jingle',file); fd.append('name',name);
-  await fetch(BASE+'/api/jingles',{method:'POST',headers:{'Authorization':token},body:fd});
-  document.getElementById('jingleFile').value=''; document.getElementById('jingleName').value='';
-  loadJingles();
-}
-
-function saveAudio() {
-  fetch(BASE+'/api/audio/settings',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({fadeIn:+document.getElementById('fadeIn').value,fadeOut:+document.getElementById('fadeOut').value,crossfade:+document.getElementById('crossfade').value,volume:+document.getElementById('volume').value})}).then(()=>alert('Audio settings saved!'));
-}
-
-function saveStationId() {
-  fetch(BASE+'/api/station-id',{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({interval:+document.getElementById('stationIdInterval').value,jingleId:document.getElementById('stationIdJingle').value,enabled:document.getElementById('stationIdEnabled').checked})}).then(()=>alert('Station ID settings saved!'));
-}
-
-function loadHistory() {
-  fetch(BASE+'/api/history?limit=50').then(r=>r.json()).then(d=>{
-    const el = document.getElementById('historyList');
-    if(!d.history||!d.history.length){el.innerHTML='<p style="color:#999">No play history yet</p>';return;}
-    el.innerHTML = d.history.map(h=>'<div class="history-item"><span class="time">'+new Date(h.playedAt).toLocaleTimeString()+'</span><span style="flex:1">'+h.title+'</span></div>').join('');
-  });
-}
-
-function loadRequests() {
-  fetch(BASE+'/api/requests').then(r=>r.json()).then(d=>{
-    const el = document.getElementById('requestList');
-    if(!d.requests||!d.requests.length){el.innerHTML='<p style="color:#999">No pending requests</p>';return;}
-    el.innerHTML = d.requests.filter(r=>r.status==='pending').map(r=>'<div class="request-item"><div class="song"><strong>'+r.song+'</strong><br><span style="color:#999;font-size:0.8rem">from '+r.listener+'</span></div><button class="btn btn-success" style="padding:4px 10px" onclick="handleRequest(''+r.id+'','approve')">✓ Approve</button><button class="btn btn-danger" style="padding:4px 10px" onclick="handleRequest(''+r.id+'','reject')">✕ Reject</button></div>').join('');
-  });
-}
-
-function handleRequest(id, action) {
-  fetch(BASE+'/api/requests/'+id,{method:'POST',headers:{'Content-Type':'application/json','Authorization':token},body:JSON.stringify({action})}).then(()=>loadRequests());
-}
-
-// Init polling
-setInterval(refreshStatus, 5000);
+function stopMic(){if(micStream)micStream.getTracks().forEach(function(t){t.stop();});micStream=null;document.getElementById('micBtn').classList.remove('active');document.getElementById('micBar').style.width='0%';cancelAnimationFrame(micAnimFrame);fetch(BASE+'/api/duck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({active:false})});}
+function animateMic(){if(!micAnalyser)return;var data=new Uint8Array(micAnalyser.frequencyBinCount);micAnalyser.getByteFrequencyData(data);var avg=data.reduce(function(a,b){return a+b;},0)/data.length;document.getElementById('micBar').style.width=Math.min(100,(avg/256)*100*3)+'%';micAnimFrame=requestAnimationFrame(animateMic);}
+function loadJingles(){fetch(BASE+'/api/jingles').then(function(r){return r.json()}).then(function(d){var el=document.getElementById('jingleGrid');if(!d.jingles||!d.jingles.length){el.innerHTML='<p style="color:#999">No jingles uploaded</p>';return;}el.innerHTML=d.jingles.map(function(j){return '<div class="jingle-pad" onclick="playJingle(''+j.id+'')"><div style="font-size:1.5rem">🔔</div><div>'+j.name+'</div></div>';}).join('');});}
+function playJingle(id){fetch(BASE+'/api/jingles/'+id+'/play',{method:'POST',headers:{Authorization:adminPwd}});}
+function uploadJingle(){var file=document.getElementById('jingleFile').files[0];var name=document.getElementById('jingleName').value||file.name.replace(/.[^.]+$/,'');if(!file)return;var fd=new FormData();fd.append('jingle',file);fd.append('name',name);fetch(BASE+'/api/jingles',{method:'POST',headers:{Authorization:adminPwd},body:fd}).then(function(){document.getElementById('jingleFile').value='';document.getElementById('jingleName').value='';loadJingles();});}
+function saveAudio(){fetch(BASE+'/api/audio/settings',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({fadeIn:+document.getElementById('fadeIn').value,fadeOut:+document.getElementById('fadeOut').value,crossfade:+document.getElementById('crossfade').value,volume:+document.getElementById('volume').value})}).then(function(){alert('Audio settings saved!');});}
+function loadHistory(){fetch(BASE+'/api/history?limit=50').then(function(r){return r.json()}).then(function(d){var el=document.getElementById('historyList');if(!d.history||!d.history.length){el.innerHTML='<p style="color:#999">No history yet</p>';return;}el.innerHTML=d.history.map(function(h){return '<div class="history-item"><span class="time">'+new Date(h.playedAt).toLocaleTimeString()+'</span><span style="flex:1">'+h.title+'</span></div>';}).join('');});}
+function loadRequests(){fetch(BASE+'/api/requests').then(function(r){return r.json()}).then(function(d){var el=document.getElementById('requestList');if(!d.requests||!d.requests.length){el.innerHTML='<p style="color:#999">No pending requests</p>';return;}var pending=d.requests.filter(function(r){return r.status==='pending';});if(!pending.length){el.innerHTML='<p style="color:#999">No pending requests</p>';return;}el.innerHTML=pending.map(function(r){return '<div class="request-item"><div class="song"><strong>'+r.song+'</strong><br><span style="color:#999;font-size:.8rem">from '+r.listener+'</span></div><button class="btn btn-success" style="padding:4px 10px" onclick="handleRequest(''+r.id+'','approve')">✓</button><button class="btn btn-danger" style="padding:4px 10px" onclick="handleRequest(''+r.id+'','reject')">✕</button></div>';}).join('');});}
+function handleRequest(id,action){fetch(BASE+'/api/requests/'+id,{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({action:action})}).then(function(){loadRequests();});}
+setInterval(refreshStatus,5000);
 </script>
 </body>
 </html>
