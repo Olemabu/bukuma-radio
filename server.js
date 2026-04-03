@@ -22,6 +22,8 @@ let currentProcess = null;
 const clients = new Set();
 const streamClients = new Set();
 let listeners = 0;
+let autoJingles = { start: true, random: true };
+let jingleTimer = null;
 
 // Cardinal Rex Lawson top 4 popular songs
 const REX_LAWSON_SONGS = [
@@ -43,11 +45,12 @@ function loadState() {
     if (!fs.existsSync(queueFile)) saveQueue();
     const s = fs.existsSync(stateFile) ? JSON.parse(fs.readFileSync(stateFile, 'utf8')) : {};
     volume = s.volume || 80;
+    if (s.autoJingles) autoJingles = s.autoJingles;
   } catch(e) { queue = [...REX_LAWSON_SONGS]; }
 }
 
 function saveQueue() { try { fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2)); } catch(e) {} }
-function saveState() { try { fs.writeFileSync(stateFile, JSON.stringify({ volume, isPlaying, currentTrack }, null, 2)); } catch(e) {} }
+function saveState() { try { fs.writeFileSync(stateFile, JSON.stringify({ volume, isPlaying, currentTrack, autoJingles }, null, 2)); } catch(e) {} }
 let jingles = [];
 const jinglesFile = path.join(dataDir, 'jingles.json');
 if (fs.existsSync(jinglesFile)) { try { jingles = JSON.parse(fs.readFileSync(jinglesFile, 'utf8')); } catch(e){} }
@@ -59,8 +62,21 @@ function broadcast(msg) {
   clients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 }
 
+function scheduleRandomJingle() {
+  clearTimeout(jingleTimer);
+  if (!isPlaying || !autoJingles.random || jingles.length === 0) return;
+  const delay = Math.floor(Math.random() * (240000 - 120000 + 1) + 120000);
+  jingleTimer = setTimeout(() => {
+    if (isPlaying && autoJingles.random && jingles.length > 0) {
+      const randomJingle = jingles[Math.floor(Math.random() * jingles.length)];
+      broadcast({ type: 'playJingle', url: randomJingle.url });
+    }
+    scheduleRandomJingle();
+  }, delay);
+}
+
 function getStatus() {
-  return { type: 'status', currentTrack, queue, isPlaying, volume, listeners, timestamp: Date.now() };
+  return { type: 'status', currentTrack, queue, isPlaying, volume, listeners, autoJingles, timestamp: Date.now() };
 }
 
 wss.on('connection', (ws) => {
@@ -101,6 +117,7 @@ function handleCommand(msg, ws) {
     case 'addSong': addSong(msg.song); break;
     case 'removeSong': removeSong(msg.id); break;
     case 'reorder': reorderQueue(msg.from, msg.to); break;
+    case 'setAutoJingles': autoJingles = msg.settings; saveState(); broadcast(getStatus()); if (isPlaying && autoJingles.random) scheduleRandomJingle(); else clearTimeout(jingleTimer); break;
     case 'getStatus': if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(getStatus())); break;
   }
 }
@@ -134,6 +151,11 @@ async function playNext() {
     broadcast({ type: 'loading', message: `Loading: ${currentTrack.title}...` });
     const url = await getYouTubeUrl(q);
     if (!isPlaying) return;
+    if (autoJingles.start && jingles.length > 0) {
+      const startJingle = jingles[Math.floor(Math.random() * jingles.length)];
+      broadcast({ type: 'playJingle', url: startJingle.url });
+    }
+    scheduleRandomJingle();
     if (currentProcess) { try { currentProcess.kill('SIGKILL'); } catch(e) {} }
 
     currentProcess = spawn('ffmpeg', ['-reconnect', '1', '-reconnect_streamed', '1', '-i', url, '-af', `volume=${volume/100}`, '-f', 'mp3', '-br', '128k', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
