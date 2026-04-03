@@ -118,6 +118,11 @@ function requireAdmin(req, res, next) {
     res.status(401).json({ error: 'Unauthorized' });
 }
 
+app.post('/api/admin/login', (req, res) => {
+    if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
+    else res.json({ success: false });
+});
+
 wss.on('connection', (ws) => {
     ws.id = 'L-' + Math.random().toString(36).substr(2, 9);
     clients.add(ws);
