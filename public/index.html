@@ -542,8 +542,8 @@
   <section class="hero">
     <div class="container">
       <div class="hero-tag">🎵 Streaming Live 24/7</div>
-      <h2>Your Community's<br><span>Sound & Soul</span></h2>
-      <p>Experience the rhythm of our community — live music, cultural celebrations, and the legendary sounds of Highlife music that connect us all.</p>
+      <h2>The Bukuma Community's<br><span>Sound & Soul</span></h2>
+      <p>Experience the rhythm of Bukuma — live music, cultural celebrations, and the legendary sounds of Highlife music that connect us all.</p>
     </div>
   </section>
 
@@ -639,32 +639,107 @@
     </div>
   </section>
 
-  <!-- About -->
+  <!-- About & Community -->
   <section class="about-section">
     <div class="container">
-      <div class="about-grid">
+      <div class="about-grid" style="margin-bottom: 60px;">
         <div class="about-content">
-          <h3>About Bukuma Radio 📻</h3>
-          <p>Bukuma Radio is your community's premier internet radio station, dedicated to celebrating culture, music, and community through the power of sound.</p>
-          <p>We specialize in bringing you the finest Highlife music from legends like Cardinal Rex Lawson, alongside community news, cultural programming, and more.</p>
-          <ul class="feature-list">
+          <h3>About Bukuma Community Radio 📻</h3>
+          <p>Bukuma Radio is your community's premier internet radio station, dedicated to celebrating our culture, music, and the people of Bukuma.</p>
+          <p>We specialize in bringing you the finest Highlife music from legends like Cardinal Rex Lawson, while sharing community news and cultural programming.</p>
+          <ul class="feature-list" style="margin-bottom: 30px;">
             <li>Live 24/7 streaming music</li>
-            <li>Cardinal Rex Lawson Highlife classics</li>
             <li>Community-curated playlists</li>
-            <li>DJ-controlled live sessions</li>
-            <li>Cultural programming & events</li>
-            <li>Request your favourite songs</li>
+            <li>Live DJ sessions and presenters</li>
+            <li>Call in directly from the app</li>
           </ul>
+          
+          <div class="app-downloads">
+            <h4 style="margin-bottom: 10px; font-family: 'Playfair Display', serif;">Get the Mobile App</h4>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+              <a href="#" class="btn-app android-btn" style="background: var(--card2); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 8px; display: inline-flex; align-items: center; gap: 10px; color: white; text-decoration: none; font-weight: 600; transition: background 0.2s;">
+                <span style="font-size: 20px;">🤖</span> Download for Android
+              </a>
+              <a href="#" class="btn-app ios-btn" style="background: var(--card2); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 8px; display: inline-flex; align-items: center; gap: 10px; color: white; text-decoration: none; font-weight: 600; transition: background 0.2s;">
+                <span style="font-size: 20px;">🍎</span> Download for iOS
+              </a>
+            </div>
+          </div>
+
+          <!-- Call In Feature -->
+          <div style="margin-top: 30px; background: rgba(0,208,132,0.1); border: 1px solid rgba(0,208,132,0.3); border-radius: 12px; padding: 20px;">
+            <h4 style="margin-bottom: 10px; font-family: 'Playfair Display', serif;">Live Call-In</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Hold the button below to stream your voice directly to the DJ. Make sure your volume is lowered to prevent echo!</p>
+            <div style="display: flex; align-items: center;">
+              <button id="callInBtn" onmousedown="startCallIn()" onmouseup="stopCallIn()" ontouchstart="startCallIn()" ontouchend="stopCallIn()" style="background: linear-gradient(90deg, #00D084, #008f5d); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 16px; transition: transform 0.1s;">
+                📞 Hold to Call In
+              </button>
+              <span id="callInStatus" style="color: var(--text-muted); font-size: 13px; margin-left: 15px;">(Microphone required)</span>
+            </div>
+          </div>
         </div>
-        <div class="about-visual">
-          <div class="radio-wave">🎵</div>
-          <h4 style="font-family: Playfair Display, serif; font-size: 22px; margin-bottom: 12px;">Cardinal Rex Lawson</h4>
-          <p style="color: var(--text-muted); font-size: 14px; line-height: 1.7;">The Maestro of Highlife music — we're proud to feature his legendary catalog as our launch playlist. Experience the joy, rhythm, and soul of Delta Highlife.</p>
+        
+        <div class="about-visual" style="padding: 0; overflow: hidden; position: relative;">
+          <img src="/images/community.png" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;" alt="Bukuma Community gathering">
+          <div style="position: relative; z-index: 1; padding: 32px; background: linear-gradient(to top, rgba(13,13,26,0.9) 0%, rgba(13,13,26,0) 100%); height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
+            <h4 style="font-family: Playfair Display, serif; font-size: 22px; margin-bottom: 12px; color: white;">The Heart of Bukuma</h4>
+            <p style="color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.7;">Connecting our people through the timeless rhythm and soul of true Highlife.</p>
+          </div>
         </div>
+      </div>
+
+      <!-- Support & Donate -->
+      <div style="background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,215,0,0.05)); border: 1px solid rgba(255,107,53,0.3); border-radius: 24px; padding: 40px; text-align: center; margin-bottom: 20px;">
+        <h3 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 16px;">Support Our Community Radio</h3>
+        <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 24px;">Your donations help us keep the servers running, support our local DJs, and bring you the best programming 24/7. Any amount makes a huge difference to the Bukuma community.</p>
+        <button class="donate-btn" style="background: linear-gradient(90deg, var(--primary), var(--accent)); color: white; border: none; padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(255,107,53,0.3); transition: transform 0.2s;">
+          💝 Donate Now
+        </button>
       </div>
     </div>
   </section>
 
+  <script>
+    let callInStream=null, callInCtx=null, callInScriptNode=null, isAwaitingCall=false;
+    function startCallIn() {
+      if(!ws || ws.readyState !== 1) return;
+      isAwaitingCall = true;
+      document.getElementById('callInStatus').textContent = '⏳ Waiting for DJ...';
+      ws.send(JSON.stringify({action: 'requestCallIn', name: 'Listener'}));
+    }
+    function goLiveCaller() {
+      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+        callInStream=stream; 
+        callInCtx=new AudioContext({sampleRate:22050});
+        var src=callInCtx.createMediaStreamSource(stream);
+        callInScriptNode=callInCtx.createScriptProcessor(4096,1,1);
+        src.connect(callInScriptNode);
+        callInScriptNode.connect(callInCtx.destination);
+        callInScriptNode.onaudioprocess=function(e){
+          if(!callInStream) return;
+          var cd=e.inputBuffer.getChannelData(0);
+          var i16=new Int16Array(cd.length);
+          for(var i=0;i<cd.length;i++){ var s=Math.max(-1,Math.min(1,cd[i])); i16[i]=s<0?s*32768:s*32767; }
+          if(ws&&ws.readyState===1) ws.send(i16.buffer);
+        };
+        document.getElementById('callInBtn').style.background = 'linear-gradient(90deg, #FF4757, #cc0011)';
+        document.getElementById('callInBtn').style.transform = 'scale(0.95)';
+        document.getElementById('callInStatus').textContent = '🔴 LIVE - Speak now!';
+        document.getElementById('callInStatus').style.color = '#FF4757';
+      }).catch(function(){alert('Microphone access denied');stopCallIn();});
+    }
+    function stopCallIn() {
+      isAwaitingCall = false;
+      if(callInStream) { callInStream.getTracks().forEach(t=>t.stop()); callInStream=null; }
+      if(callInScriptNode) { callInScriptNode.disconnect(); callInScriptNode=null; }
+      if(callInCtx) { callInCtx.close(); callInCtx=null; }
+      if(ws&&ws.readyState===1) ws.send(JSON.stringify({action: 'hangUpCall'}));
+      document.getElementById('callInBtn').style.background = 'linear-gradient(90deg, #00D084, #008f5d)';
+      document.getElementById('callInBtn').style.transform = '';
+      document.getElementById('callInStatus').textContent = '(Microphone required)';
+      document.getElementById('callInStatus').style.color = '';
+    }
+  </script>
   <!-- Footer -->
   <footer>
     <div class="container">
@@ -696,11 +771,24 @@
           ws.send(JSON.stringify({ action: 'getStatus' }));
         };
 
-        ws.onmessage = (e) => {
-          try {
-            const msg = JSON.parse(e.data);
-            handleMessage(msg);
-          } catch(err) {}
+        ws.onmessage = async (e) => {
+          if (e.data instanceof Blob) {
+            if(!window.liveCtx) window.liveCtx = new AudioContext({sampleRate: 22050});
+            if(liveCtx.state === 'suspended') liveCtx.resume();
+            const arr = await e.data.arrayBuffer();
+            const i16 = new Int16Array(arr);
+            const f32 = new Float32Array(i16.length);
+            for(let i=0; i<i16.length; i++) f32[i] = i16[i]/32768;
+            const buf = liveCtx.createBuffer(1, f32.length, 22050);
+            buf.copyToChannel(f32, 0);
+            const src = liveCtx.createBufferSource();
+            src.buffer = buf; src.connect(liveCtx.destination);
+            if(!window.nextPlayTime || window.nextPlayTime < liveCtx.currentTime) window.nextPlayTime = liveCtx.currentTime;
+            src.start(window.nextPlayTime);
+            window.nextPlayTime += buf.duration;
+            return;
+          }
+          try { const msg = JSON.parse(e.data); handleMessage(msg); } catch(err) {}
         };
 
         ws.onclose = () => {
@@ -717,6 +805,9 @@
     }
 
     function handleMessage(msg) {
+      if (msg.action === 'duck') { document.getElementById('radioAudio').volume = msg.active ? 0.2 : (document.getElementById('volumeSlider').value / 100); return; }
+      if (msg.type === 'callAccepted') { if (isAwaitingCall) goLiveCaller(); return; }
+      if (msg.type === 'callEnded') { stopCallIn(); return; }
       switch(msg.type) {
         case 'status':
           updateStatus(msg);

@@ -181,12 +181,12 @@ input[type=range]{width:100%;accent-color:#ff6b00}
 </div>
   </div>
 <script>
-var BASE='',ws=null,adminPwd='',micStream=null,micAnalyser=null,micAnimFrame=null;
+var BASE='',ws=null,adminPwd='',micStream=null,micAnalyser=null,micAnimFrame=null,micScriptNode=null,micCtx=null;
 function doLogin(){
   var p=document.getElementById('pwd').value;
   fetch(BASE+'/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:p})})
   .then(function(r){return r.json()}).then(function(d){
-    if(d.success){adminPwd=p;document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';init();}
+    if(d.success){adminPwd=p;document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';init();setTimeout(function(){ws.send(JSON.stringify({action:'adminLogin',password:p}))},1000);}
     else{document.getElementById('loginErr').textContent='Wrong password';}
   });
 }
@@ -194,7 +194,25 @@ function init(){connectWS();refreshStatus();loadQueue();loadPlaylists();loadJing
 function connectWS(){
   var proto=location.protocol==='https:'?'wss':'ws';
   ws=new WebSocket(proto+'://'+location.host);
-  ws.onmessage=function(e){var d=JSON.parse(e.data);if(d.type==='status')updateStatus(d);if(d.type==='history_update')loadHistory();if(d.type==='request_new')loadRequests();};
+  ws.onmessage=async function(e){
+    if (e.data instanceof Blob) {
+        if(!window.callerCtx) window.callerCtx = new AudioContext({sampleRate: 22050});
+        if(callerCtx.state === 'suspended') callerCtx.resume();
+        const arr = await e.data.arrayBuffer();
+        const i16 = new Int16Array(arr);
+        const f32 = new Float32Array(i16.length);
+        for(let i=0; i<i16.length; i++) f32[i] = i16[i]/32768;
+        const buf = callerCtx.createBuffer(1, f32.length, 22050);
+        buf.copyToChannel(f32, 0);
+        const src = callerCtx.createBufferSource();
+        src.buffer = buf; src.connect(callerCtx.destination);
+        if(!window.callerTime || window.callerTime < callerCtx.currentTime) window.callerTime = callerCtx.currentTime;
+        src.start(window.callerTime);
+        window.callerTime += buf.duration;
+        return;
+    }
+    try{ var d=JSON.parse(e.data);if(d.type==='status')updateStatus(d);if(d.type==='history_update')loadHistory();if(d.type==='request_new')loadRequests();}catch(err){}
+  };
   ws.onclose=function(){setTimeout(connectWS,3000);};
 }
 function updateStatus(d){
@@ -266,13 +284,14 @@ function deleteSlot(id){fetch(BASE+'/api/schedule/slot/'+id,{method:'DELETE',hea
 function toggleScheduler(enable){fetch(BASE+'/api/schedule',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({enabled:enable})}).then(function(){alert('Scheduler '+(enable?'enabled':'disabled'));});}
 function startMic(){
   navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-    micStream=stream;var ctx=new AudioContext();var src=ctx.createMediaStreamSource(stream);micAnalyser=ctx.createAnalyser();src.connect(micAnalyser);
+    micStream=stream;micCtx=new AudioContext({sampleRate:22050});var src=micCtx.createMediaStreamSource(stream);micAnalyser=micCtx.createAnalyser();micScriptNode=micCtx.createScriptProcessor(4096,1,1);src.connect(micAnalyser);src.connect(micScriptNode);micScriptNode.connect(micCtx.destination);
+    micScriptNode.onaudioprocess=function(e){if(!micStream)return;var cd=e.inputBuffer.getChannelData(0);var i16=new Int16Array(cd.length);for(var i=0;i<cd.length;i++){var s=Math.max(-1,Math.min(1,cd[i]));i16[i]=s<0?s*32768:s*32767;}if(ws&&ws.readyState===1)ws.send(i16.buffer);};
     document.getElementById('micBtn').classList.add('active');
     fetch(BASE+'/api/duck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({active:true})});
     animateMic();
   }).catch(function(){alert('Mic access denied');});
 }
-function stopMic(){if(micStream)micStream.getTracks().forEach(function(t){t.stop();});micStream=null;document.getElementById('micBtn').classList.remove('active');document.getElementById('micBar').style.width='0%';cancelAnimationFrame(micAnimFrame);fetch(BASE+'/api/duck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({active:false})});}
+function stopMic(){if(micStream){micStream.getTracks().forEach(function(t){t.stop();});micStream=null;}if(micScriptNode){micScriptNode.disconnect();micScriptNode=null;}if(micCtx){micCtx.close();micCtx=null;}document.getElementById('micBtn').classList.remove('active');document.getElementById('micBar').style.width='0%';cancelAnimationFrame(micAnimFrame);fetch(BASE+'/api/duck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({active:false})});}
 function animateMic(){if(!micAnalyser)return;var data=new Uint8Array(micAnalyser.frequencyBinCount);micAnalyser.getByteFrequencyData(data);var avg=data.reduce(function(a,b){return a+b;},0)/data.length;document.getElementById('micBar').style.width=Math.min(100,(avg/256)*100*3)+'%';micAnimFrame=requestAnimationFrame(animateMic);}
 function loadJingles(){fetch(BASE+'/api/jingles').then(function(r){return r.json()}).then(function(d){var el=document.getElementById('jingleGrid');if(!d.jingles||!d.jingles.length){el.innerHTML='<p style="color:#999">No jingles uploaded</p>';return;}el.innerHTML=d.jingles.map(function(j){return '<div class="jingle-pad" onclick="playJingle(''+j.id+'')"><div style="font-size:1.5rem">🔔</div><div>'+j.name+'</div></div>';}).join('');});}
 function playJingle(id){fetch(BASE+'/api/jingles/'+id+'/play',{method:'POST',headers:{Authorization:adminPwd}});}

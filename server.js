@@ -58,16 +58,34 @@ function getStatus() {
 }
 
 wss.on('connection', (ws) => {
+  ws.id = 'L-' + Math.random().toString(36).substr(2, 9);
   clients.add(ws);
   listeners = clients.size;
   ws.send(JSON.stringify(getStatus()));
   broadcast({ type: 'listeners', count: listeners });
-  ws.on('message', (data) => { try { handleCommand(JSON.parse(data.toString()), ws); } catch(e) {} });
+  ws.on('message', (data, isBinary) => { 
+    if (isBinary) {
+      if (ws.isAdmin) {
+        // Admin broadcasting live voice to listeners
+        clients.forEach(c => { if (c !== ws && c.readyState === WebSocket.OPEN) c.send(data); });
+      } else {
+        // Listener calling in - route to admins
+        clients.forEach(c => { if (c.isAdmin && c.readyState === WebSocket.OPEN) c.send(data); });
+      }
+      return;
+    }
+    try { handleCommand(JSON.parse(data.toString()), ws); } catch(e) {} 
+  });
   ws.on('close', () => { clients.delete(ws); listeners = clients.size; broadcast({ type: 'listeners', count: listeners }); });
 });
 
 function handleCommand(msg, ws) {
   switch(msg.action) {
+    case 'requestCallIn': clients.forEach(c => { if (c.isAdmin && c.readyState === WebSocket.OPEN) c.send(JSON.stringify({ type: 'callInRequest', listenerId: ws.id, name: msg.name || 'Anonymous Listener' })); }); break;
+    case 'acceptCall': clients.forEach(c => { if (c.id === msg.listenerId && c.readyState === WebSocket.OPEN) c.send(JSON.stringify({ type: 'callAccepted' })); }); break;
+    case 'hangUpCall': clients.forEach(c => { if (c.id === msg.listenerId && c.readyState === WebSocket.OPEN) c.send(JSON.stringify({ type: 'callEnded' })); }); break;
+    case 'adminLogin': if (msg.password === 'admin') { ws.isAdmin = true; ws.send(JSON.stringify({type:'auth', success:true})); } break;
+    case 'duck': broadcast({ action: 'duck', active: msg.active }); break;
     case 'play': if (!isPlaying) startPlayback(); break;
     case 'pause': pausePlayback(); break;
     case 'skip': skipTrack(); break;
@@ -171,11 +189,17 @@ app.get('/stream', (req, res) => {
   req.on('close', () => streamClients.delete(res));
 });
 
+app.post('/api/admin/login', (req, res) => {
+  if (req.body.password === 'admin') res.json({ success: true });
+  else res.json({ success: false });
+});
+app.post('/api/duck', (req, res) => { broadcast({ action: 'duck', active: req.body.active }); res.json({ success: true }); });
 app.get('/api/status', (req, res) => res.json(getStatus()));
 app.post('/api/play', (req, res) => { if (!isPlaying) startPlayback(); res.json({ success: true, isPlaying }); });
 app.post('/api/pause', (req, res) => { pausePlayback(); res.json({ success: true, isPlaying }); });
 app.post('/api/skip', (req, res) => { skipTrack(); res.json({ success: true }); });
 app.post('/api/volume', (req, res) => { volume = Math.min(100, Math.max(0, parseInt(req.body.value) || 80)); saveState(); broadcast({ type: 'volume', value: volume }); res.json({ success: true, volume }); });
+app.post('/api/queue/skip', (req, res) => { skipTrack(); res.json({ success: true }); });
 app.post('/api/queue/add', (req, res) => { addSong(req.body); res.json({ success: true, queue }); });
 app.delete('/api/queue/:id', (req, res) => { removeSong(req.params.id); res.json({ success: true, queue }); });
 app.post('/api/queue/rex-lawson', (req, res) => {
