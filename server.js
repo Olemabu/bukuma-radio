@@ -42,6 +42,7 @@ if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 function loadState() {
   try {
     queue = fs.existsSync(queueFile) ? JSON.parse(fs.readFileSync(queueFile, 'utf8')) : [...REX_LAWSON_SONGS];
+    if (!queue || queue.length === 0) queue = [...REX_LAWSON_SONGS];
     if (!fs.existsSync(queueFile)) saveQueue();
     const s = fs.existsSync(stateFile) ? JSON.parse(fs.readFileSync(stateFile, 'utf8')) : {};
     volume = s.volume || 80;
@@ -253,5 +254,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log('BUKUMA RADIO running on port ' + PORT);
   loadState();
-  setTimeout(() => { if (!isPlaying && queue.length > 0) { console.log('Auto-starting with Rex Lawson...'); startPlayback(); } }, 5000);
+  setTimeout(() => { if (!isPlaying && queue.length > 0) { console.log('Auto-starting...'); startPlayback(); } }, 500);
 });
