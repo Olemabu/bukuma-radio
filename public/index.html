@@ -3,272 +3,503 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AGUM BUKUMA RADIO - Master Console</title>
+  <title>Agum Bukuma Community Radio — The Voice of the Rivers</title>
+  <meta name="description" content="Agum Bukuma Community Radio — 24/7 Highlife, Heritage, and Community News from the heart of the Niger Delta.">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Playfair+Display:wght@700;800;900&display=swap');
-    
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Playfair+Display:wght@700;800;900&display=swap');
+
     :root {
-      --primary: #8B4513;
-      --accent: #D4AF37;
-      --bg: #0D0805;
-      --card: #2b1b17;
-      --text: #F5DEB3;
-      --green: #4ade80;
-      --red: #ff4757;
+      --bg: #FAF8F5;
+      --text: #2C2420;
+      --text-muted: #7A7068;
+      --accent: #B8860B;
+      --accent-light: #D4AF37;
+      --green: #16a34a;
+      --card: #FFFFFF;
+      --card-border: #EDE8E3;
+      --section-alt: #F3F0EC;
+      /* Radio widget keeps its dark palette */
+      --radio-bg: #2b1b17;
+      --radio-chassis: #1a1210;
+      --radio-green: #4ade80;
       --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
-      --wood: url('https://www.transparenttextures.com/patterns/dark-wood.png');
-      --chassis-border: #1a1210;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    
+
     body {
       font-family: 'Inter', sans-serif;
-      background: #0f0a08 var(--wood);
+      background: var(--bg);
       color: var(--text);
       overflow-x: hidden;
+      line-height: 1.6;
     }
 
-    /* TYPOGRAPHY */
     h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 900; }
-    .label { font-size: 10px; letter-spacing: 3px; color: #777; font-weight: 900; text-transform: uppercase; }
 
-    /* LAYOUT: THE HARDWARE RACK */
-    .rack-container {
-      max-width: 1400px;
-      margin: 40px auto;
-      background: #3D2B1F;
-      border: 20px solid #1a100c;
-      border-radius: 60px;
-      box-shadow: 0 100px 200px rgba(0,0,0,1), inset 0 0 100px rgba(0,0,0,0.5);
-      position: relative;
-      overflow: hidden;
+    /* ═══════════════════════════════════════════
+       NAVIGATION
+       ═══════════════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 20px 40px;
+      background: rgba(250,248,245,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--card-border);
+      display: flex; justify-content: space-between; align-items: center;
+      transition: box-shadow 0.3s;
     }
-
-    section {
-      padding: 100px 60px;
-      border-bottom: 2px solid rgba(212,175,55,0.05);
-      position: relative;
+    nav.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.06); }
+    .nav-brand {
+      font-family: 'Playfair Display', serif; font-weight: 900; font-size: 18px;
+      color: var(--accent); letter-spacing: 1px;
     }
-
-    .screw {
-      position: absolute; width: 16px; height: 16px; background: var(--brass); border-radius: 50%; z-index: 10;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    .nav-links { display: flex; gap: 30px; }
+    .nav-links a {
+      text-decoration: none; color: var(--text-muted); font-size: 13px;
+      font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+      transition: color 0.2s;
     }
-    .screw::after { content: ''; position: absolute; top:50%; left:15%; right:15%; height:2px; background:rgba(0,0,0,0.3); transform:rotate(45deg); }
-    .tl { top: 30px; left: 30px; } .tr { top: 30px; right: 30px; }
-    .bl { bottom: 30px; left: 30px; } .br { bottom: 30px; right: 30px; }
+    .nav-links a:hover { color: var(--accent); }
 
-    /* HERO SECTION */
+    /* ═══════════════════════════════════════════
+       HERO — Full-bleed, keeps the dramatic image
+       ═══════════════════════════════════════════ */
     #hero {
-      height: 85vh;
+      height: 90vh; min-height: 600px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center;
-      background: linear-gradient(rgba(13,8,5,0.4), rgba(13,8,5,0.9)), url('/images/hero.png') center/cover;
-      background-position: center 25%; /* Adjust for head-to-knee focus */
-      border-bottom: 10px solid #1a1210;
-      position: relative;
+      text-align: center; position: relative;
+      background: linear-gradient(rgba(20,12,8,0.35), rgba(20,12,8,0.85)), url('/images/hero.png') center 25%/cover;
     }
-    #hero::before {
+    #hero::after {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 100%);
+      background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.5) 100%);
       pointer-events: none;
     }
-    #hero h1 { font-size: 72px; color: var(--accent); margin-bottom: 20px; text-shadow: 0 10px 40px rgba(0,0,0,1); position: relative; z-index: 10; }
-    #hero p { font-size: 14px; letter-spacing: 5px; color: #a89f8e; text-transform: uppercase; font-weight: 900; position: relative; z-index: 10; }
+    #hero h1 {
+      font-size: 72px; color: #fff; margin-bottom: 16px;
+      text-shadow: 0 6px 40px rgba(0,0,0,0.8); position: relative; z-index: 2;
+    }
+    #hero h1 span { color: var(--accent-light); }
+    #hero .hero-sub {
+      font-size: 14px; letter-spacing: 5px; color: rgba(255,255,255,0.7);
+      text-transform: uppercase; font-weight: 700; position: relative; z-index: 2;
+    }
+    .hero-cta {
+      margin-top: 40px; display: flex; gap: 16px; position: relative; z-index: 2;
+    }
+    .btn {
+      padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 13px;
+      text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;
+      border: none; text-decoration: none; transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 4px 15px rgba(184,134,11,0.3);
+    }
+    .btn-primary:hover { background: #9a7209; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(184,134,11,0.4); }
+    .btn-outline {
+      background: rgba(255,255,255,0.1); color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
 
-    /* TRANSMISSION SECTION */
-    #transmission { background: rgba(0,0,0,0.1); }
+    /* ═══════════════════════════════════════════
+       CONTENT WRAPPER
+       ═══════════════════════════════════════════ */
+    .content-wrap {
+      max-width: 1100px; margin: 0 auto; padding: 0 30px;
+    }
+    .section-pad { padding: 100px 0; }
+
+    .section-header {
+      text-align: center; margin-bottom: 60px;
+    }
+    .section-header h2 {
+      font-size: 42px; color: var(--text); margin-bottom: 12px;
+    }
+    .section-header p {
+      font-size: 15px; color: var(--text-muted); max-width: 500px; margin: 0 auto;
+    }
+    .section-label {
+      font-size: 11px; letter-spacing: 4px; color: var(--accent);
+      text-transform: uppercase; font-weight: 700; margin-bottom: 12px;
+    }
+
+    /* ═══════════════════════════════════════════
+       RADIO PLAYER WIDGET — Dark hardware island
+       ═══════════════════════════════════════════ */
+    .radio-section { padding: 80px 0; }
+    .radio-widget {
+      max-width: 680px; margin: 0 auto;
+      background: var(--radio-bg);
+      border: 12px solid var(--radio-chassis);
+      border-radius: 30px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.25), inset 0 0 60px rgba(0,0,0,0.4);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      color: #F5DEB3;
+    }
+    .radio-widget::before {
+      content: ''; position: absolute; inset: 0;
+      background: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+      opacity: 0.3; pointer-events: none;
+    }
+
+    .radio-screw {
+      position: absolute; width: 14px; height: 14px;
+      background: var(--brass); border-radius: 50%; z-index: 10;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    .radio-screw::after {
+      content: ''; position: absolute; top: 50%; left: 15%; right: 15%;
+      height: 2px; background: rgba(0,0,0,0.3); transform: rotate(45deg);
+    }
+    .rs-tl { top: 16px; left: 16px; } .rs-tr { top: 16px; right: 16px; }
+    .rs-bl { bottom: 16px; left: 16px; } .rs-br { bottom: 16px; right: 16px; }
+
+    .radio-label {
+      font-size: 9px; letter-spacing: 3px; color: #777; font-weight: 900; text-transform: uppercase;
+    }
+
     .crt-screen {
-      background: #050805; border: 12px solid #1a1210; border-radius: 20px;
-      padding: 40px; box-shadow: inset 0 0 60px #000, 0 20px 40px rgba(0,0,0,0.5);
-      color: var(--green); font-family: 'Courier New', monospace; position: relative; overflow: hidden;
+      background: #050805; border: 8px solid #111; border-radius: 14px;
+      padding: 30px; position: relative; overflow: hidden;
+      box-shadow: inset 0 0 40px #000;
+      color: var(--radio-green); font-family: 'Courier New', monospace;
+      margin-bottom: 30px;
     }
     .crt-screen::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
       background: repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px, rgba(74, 222, 128, 0.03) 2px);
     }
 
-    .knob-unit { display: flex; flex-direction: column; align-items: center; gap: 20px; }
     .knob {
-      width: 120px; height: 120px; background: var(--brass); border-radius: 50%;
-      position: relative; cursor: pointer; box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+      width: 90px; height: 90px; background: var(--brass); border-radius: 50%;
+      position: relative; cursor: pointer;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .knob::before { content: ''; position: absolute; top: 10%; left: 50%; width: 6px; height: 18%; background: #111; transform: translateX(-50%); border-radius: 3px; }
-    .knob.active { transform: rotate(45deg); box-shadow: 0 0 40px rgba(212,175,55,0.4); }
+    .knob::before {
+      content: ''; position: absolute; top: 10%; left: 50%;
+      width: 5px; height: 16%; background: #111;
+      transform: translateX(-50%); border-radius: 3px;
+    }
+    .knob.active { transform: rotate(45deg); box-shadow: 0 0 30px rgba(212,175,55,0.4); }
 
     .meter-container {
-      width: 200px; height: 100px; background: #eee; border-radius: 100px 100px 0 0;
-      border: 6px solid #2b1b17; position: relative; overflow: hidden;
-      box-shadow: inset 0 8px 20px rgba(0,0,0,0.2);
+      width: 140px; height: 70px; background: #eee; border-radius: 70px 70px 0 0;
+      border: 4px solid #2b1b17; position: relative; overflow: hidden;
+      box-shadow: inset 0 5px 15px rgba(0,0,0,0.2);
     }
     .needle {
-      position: absolute; bottom: 0; left: 50%; width: 3px; height: 80px;
+      position: absolute; bottom: 0; left: 50%; width: 2px; height: 60px;
       background: #8b0000; transform-origin: bottom center; transform: rotate(-45deg);
       transition: transform 0.1s ease-out;
     }
 
     .rocker {
-      width: 50px; height: 80px; background: #333; border-radius: 6px;
-      position: relative; border: 3px solid #111; cursor: pointer;
+      width: 36px; height: 60px; background: #333; border-radius: 4px;
+      position: relative; border: 2px solid #111; cursor: pointer;
     }
-    .rocker::before { content: ''; position: absolute; top:5px; left:5px; right:5px; height:35px; background: linear-gradient(#555, #222); border-radius: 3px; }
-    .rocker.active::before { top: 40px; background: linear-gradient(#ff4757, #ab2c2c); box-shadow: 0 0 15px #ff4757; }
-
-    /* HERALD & REQUESTS */
-    .hardware-plate {
-      background: #1e1411; border: 4px solid #120a08; border-radius: 20px;
-      padding: 60px; box-shadow: inset 0 2px 30px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
+    .rocker::before {
+      content: ''; position: absolute; top: 4px; left: 4px; right: 4px; height: 24px;
+      background: linear-gradient(#555, #222); border-radius: 2px;
     }
-
-    .hw-input {
-      width: 100%; padding: 20px; background: #0a0503; border: 3px inset #2b1b17;
-      color: var(--green); font-family: 'Courier New', monospace; margin-bottom: 25px; outline: none;
-    }
-    .hw-btn {
-      padding: 20px 40px; background: var(--brass); border: none; border-radius: 4px;
-      color: #222; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
-      box-shadow: 0 6px 0 #b8860b; transition: all 0.1s;
-    }
-    .hw-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #b8860b; }
-
-    /* DONATIONS */
-    #donations {
-      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('/images/community.png') center/cover;
-      text-align: center;
+    .rocker.active::before {
+      top: 30px; background: linear-gradient(#ff4757, #ab2c2c);
+      box-shadow: 0 0 10px #ff4757;
     }
 
-    ::-webkit-scrollbar { width: 12px; }
-    ::-webkit-scrollbar-track { background: #0a0503; }
-    ::-webkit-scrollbar-thumb { background: #2b1b17; border: 3px solid #0a0503; border-radius: 6px; }
+    .radio-stats {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 20px;
+    }
+    .radio-stat {
+      background: rgba(0,0,0,0.3); border-radius: 8px; padding: 16px; text-align: center;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .radio-stat-val {
+      font-size: 28px; font-weight: 900; color: var(--radio-green);
+      font-family: 'Courier New', monospace;
+    }
 
-    ::-webkit-scrollbar { width: 10px; }
-    ::-webkit-scrollbar-track { background: #0a0503; }
-    ::-webkit-scrollbar-thumb { background: #2b1b17; }
+    /* ═══════════════════════════════════════════
+       HERALD — Light news cards
+       ═══════════════════════════════════════════ */
+    .herald-section { background: var(--section-alt); }
+
+    .herald-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+    }
+    .herald-card {
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 40px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .herald-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+    }
+    .herald-card h3 {
+      font-size: 22px; color: var(--text); margin-bottom: 16px;
+      padding-bottom: 16px; border-bottom: 2px solid var(--card-border);
+    }
+    .herald-card p { font-size: 15px; line-height: 1.8; color: var(--text-muted); }
+    .herald-badge {
+      display: inline-block; margin-top: 20px; padding: 6px 14px;
+      border-radius: 20px; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+    .badge-ongoing { background: #dcfce7; color: #166534; }
+    .badge-official { background: #fef3c7; color: #92400e; }
+    .badge-upcoming { background: #dbeafe; color: #1e40af; }
+
+    .activities-bar {
+      margin-top: 40px; padding: 30px 36px;
+      background: var(--card); border-radius: 16px;
+      border-left: 4px solid var(--accent);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .activities-bar h4 {
+      font-size: 11px; letter-spacing: 3px; color: var(--accent);
+      text-transform: uppercase; font-weight: 800; margin-bottom: 12px;
+    }
+
+    /* ═══════════════════════════════════════════
+       REQUEST FORM — Clean card
+       ═══════════════════════════════════════════ */
+    .request-card {
+      max-width: 600px; margin: 0 auto;
+      background: var(--card); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 50px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+    }
+    .input-modern {
+      width: 100%; padding: 16px 20px; border: 1.5px solid var(--card-border);
+      border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif;
+      color: var(--text); background: var(--bg); margin-bottom: 16px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .input-modern:focus { border-color: var(--accent); }
+    .input-modern::placeholder { color: #bbb; }
+
+    .btn-submit {
+      width: 100%; padding: 16px; background: var(--accent); color: #fff;
+      border: none; border-radius: 10px; font-weight: 700; font-size: 14px;
+      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #9a7209; }
+
+    /* ═══════════════════════════════════════════
+       DONATE SECTION
+       ═══════════════════════════════════════════ */
+    .donate-section {
+      background: linear-gradient(135deg, #1a3c1a, #0f2b0f);
+      color: #fff; text-align: center;
+    }
+    .donate-section h2 { color: #fff; }
+    .donate-section p { color: rgba(255,255,255,0.7); max-width: 550px; margin: 0 auto 40px; }
+    .btn-donate {
+      padding: 18px 48px; background: #4ade80; color: #0f2b0f;
+      border: none; border-radius: 10px; font-weight: 800; font-size: 15px;
+      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+      box-shadow: 0 6px 25px rgba(74,222,128,0.3);
+      transition: all 0.2s;
+    }
+    .btn-donate:hover { background: #22c55e; transform: translateY(-2px); box-shadow: 0 10px 35px rgba(74,222,128,0.4); }
+
+    /* ═══════════════════════════════════════════
+       FOOTER — Light
+       ═══════════════════════════════════════════ */
+    footer {
+      padding: 40px; text-align: center; border-top: 1px solid var(--card-border);
+    }
+    footer p {
+      font-size: 12px; color: var(--text-muted); letter-spacing: 2px;
+      text-transform: uppercase; font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+       ═══════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      #hero h1 { font-size: 42px; }
+      .section-header h2 { font-size: 32px; }
+      .herald-grid { grid-template-columns: 1fr; }
+      .radio-widget { margin: 0 16px; padding: 24px; }
+      .radio-stats { grid-template-columns: 1fr; }
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .content-wrap { padding: 0 20px; }
+      .section-pad { padding: 60px 0; }
+    }
   </style>
 </head>
 <body>
 
-  <div class="rack-container">
-    <!-- SECTION 1: HERO -->
-    <section id="hero">
-      <div class="screw tl"></div><div class="screw tr"></div>
-      <h1>AGUM BUKUMA<br>COMMUNITY RADIO</h1>
-      <p>Echoes of the Riverine • 24/7 Highlife & Heritage</p>
-      <div style="margin-top:40px; display:flex; gap:20px; position:relative; z-index:20;">
-         <a href="#transmission" class="hw-btn" style="text-decoration:none; background:rgba(0,0,0,0.5); color:var(--accent); border:1px solid var(--accent);">STAY FOR NEWS</a>
-         <a href="/app/" class="hw-btn" style="text-decoration:none; background:var(--brass); color:#000;">JOIN PRIVATE APP</a>
-      </div>
-    </section>
+  <!-- NAVIGATION -->
+  <nav id="mainNav">
+    <div class="nav-brand">AGUM BUKUMA RADIO</div>
+    <div class="nav-links">
+      <a href="#radio">Listen</a>
+      <a href="#herald">News</a>
+      <a href="#requests">Request</a>
+      <a href="#donate">Support</a>
+      <a href="/app/">Community App</a>
+    </div>
+  </nav>
 
-    <!-- SECTION 2: TRANSMISSION -->
-    <section id="transmission">
-      <div class="screw bl"></div><div class="screw br"></div>
-      <div class="crt-screen" style="margin-bottom: 60px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <div>
-             <div class="label" style="opacity:0.6; margin-bottom:15px;">NOW BROADCASTING:</div>
-             <div id="trackTitle" style="font-size:42px; font-weight:900;">STATION IDLE</div>
-             <div id="trackArtist" style="font-size:22px; opacity:0.8; margin-top:10px;">Awaiting transmission sync...</div>
-          </div>
-          <div style="text-align: right;">
-             <div class="label" style="opacity:0.6; margin-bottom:15px;">SIGNAL QUALITY:</div>
-             <div id="signalStatus" style="font-size:20px; font-weight:900; color:var(--green);">READY</div>
+  <!-- HERO -->
+  <section id="hero">
+    <h1>AGUM <span>BUKUMA</span><br>COMMUNITY RADIO</h1>
+    <p class="hero-sub">Echoes of the Riverine • 24/7 Highlife & Heritage</p>
+    <div class="hero-cta">
+      <a href="#radio" class="btn btn-primary">Listen Live</a>
+      <a href="/app/" class="btn btn-outline">Join Community App</a>
+    </div>
+  </section>
+
+  <!-- RADIO PLAYER WIDGET -->
+  <section id="radio" class="radio-section">
+    <div class="content-wrap">
+      <div class="section-header">
+        <div class="section-label">Live Transmission</div>
+        <h2>Tune In Now</h2>
+        <p>The heartbeat of Bukuma, broadcasting live from the Niger Delta.</p>
+      </div>
+
+      <div class="radio-widget">
+        <div class="radio-screw rs-tl"></div><div class="radio-screw rs-tr"></div>
+        <div class="radio-screw rs-bl"></div><div class="radio-screw rs-br"></div>
+
+        <!-- CRT DISPLAY -->
+        <div class="crt-screen">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div class="radio-label" style="opacity:0.6; margin-bottom:8px;">NOW BROADCASTING:</div>
+              <div id="trackTitle" style="font-size:24px; font-weight:900;">STATION IDLE</div>
+              <div id="trackArtist" style="font-size:14px; opacity:0.8; margin-top:6px;">Awaiting sync...</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="radio-label" style="opacity:0.6; margin-bottom:8px;">SIGNAL:</div>
+              <div id="signalStatus" style="font-weight:900; color:var(--radio-green);">READY</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap:80px; align-items: center; margin-bottom: 60px;">
-         <div style="display: flex; flex-direction: column; align-items: center; gap:20px;">
+        <!-- CONTROLS ROW -->
+        <div style="display:flex; justify-content:space-around; align-items:center; position:relative; z-index:2;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
             <div class="meter-container">
-               <div class="needle" id="needle1"></div>
+              <div class="needle" id="needle1"></div>
             </div>
-            <span class="label">SIGNAL GAIN</span>
-         </div>
-         
-         <div class="knob-unit">
-            <div class="knob" id="powerKnob" onclick="togglePower()"></div>
-            <span id="knobLabel" class="label">POWER / OFF</span>
-         </div>
-
-         <div style="display: flex; gap:40px; justify-content: center;">
-            <div style="text-align:center;">
-               <div class="rocker" id="onAirLed"></div>
-               <span class="label">ON AIR</span>
-            </div>
-            <div style="text-align:center;">
-               <div class="rocker" id="streamLed"></div>
-               <span class="label">STATUS</span>
-            </div>
-         </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap:30px;">
-         <div class="hardware-plate" style="padding:30px; text-align:center;">
-            <div id="statListeners" style="font-size:48px; color:var(--green); font-weight:900; text-shadow:0 0 10px rgba(74,222,128,0.3);">000</div>
-            <div class="label" style="margin-top:10px;">ACTIVE UPLINKS</div>
-         </div>
-         <div class="hardware-plate" style="padding:30px; text-align:center;">
-            <div id="statQueue" style="font-size:48px; color:var(--green); font-weight:900; text-shadow:0 0 10px rgba(74,222,128,0.3);">0</div>
-            <div class="label" style="margin-top:10px;">QUEUED ASSETS</div>
-         </div>
-         <div class="hardware-plate" style="padding:30px; text-align:center;">
-            <div style="font-size:48px; color:var(--accent); font-weight:900;">24/7</div>
-            <div class="label" style="margin-top:10px;">TRANSMISSION</div>
-         </div>
-      </div>
-    </section>
-
-    <!-- SECTION 3: THE HERALD -->
-    <section id="herald">
-      <div class="hardware-plate">
-        <h2 style="font-size:52px; color:var(--accent); margin-bottom:40px;">The Bukuma Herald</h2>
-        
-        <div id="heraldGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap:60px;">
-          <!-- Fetched dynamically -->
-        </div>
-
-        <div id="heraldActivities" style="margin-top:60px; padding:30px; background:rgba(0,0,0,0.2); border-radius:12px; border-left:4px solid var(--accent);">
-           <h4 class="label" style="color:var(--accent); margin-bottom:15px;">UPCOMING COMMUNITY ACTIVITIES</h4>
-           <div id="activitiesContent" style="font-size:16px; color:#888;"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 4: PUSH-IN REQUESTS -->
-    <section id="requests">
-       <div style="max-width:800px; margin:0 auto;" class="hardware-plate">
-          <div style="text-align:center; margin-bottom:40px;">
-             <h2 style="font-size:42px; color:var(--accent);">UPLINK UNIT</h2>
-             <p class="label">BEAM REQUEST TO DJ</p>
+            <span class="radio-label">SIGNAL</span>
           </div>
-          <input type="text" id="reqName" class="hw-input" placeholder="INPUT OPERATOR NAME">
-          <input type="text" id="reqSong" class="hw-input" placeholder="INPUT SONG / ARTIST DATA">
-          <button class="hw-btn" style="width:100%" onclick="sendRequest()">INITIATE UPLINK TRANSMISSION</button>
-       </div>
-    </section>
 
-    <!-- SECTION 5: DONATIONS -->
-    <section id="donations">
-       <div class="screw tl"></div><div class="screw tr"></div>
-       <div style="max-width:700px; margin:0 auto;">
-          <h2 style="font-size:48px; color:var(--accent); margin-bottom:20px;">Support the Mission</h2>
-          <p style="font-size:18px; color:#a89f8e; margin-bottom:40px;">Your contributions keep the Agum Bukuma Community Radio live and help fund our community development projects, including the Primary School redevelopment.</p>
-          <button class="hw-btn" style="background:#4ade80; color:#000; box-shadow:0 6px 0 #2d8a50;" onclick="alert('Squad API Integration Coming Soon...')">DONATE TO THE RADIO CAUSE</button>
-       </div>
-    </section>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <div class="knob" id="powerKnob" onclick="togglePower()"></div>
+            <span id="knobLabel" class="radio-label">POWER / OFF</span>
+          </div>
 
-    <footer style="padding: 40px; background: rgba(0,0,0,0.6); text-align: center; border-top: 2px solid #1a1210;">
-       <div class="label" style="opacity:0.4;">AGUM BUKUMA BROADCASTING CORP • AUTHENTIC HARDWARE INTERFACE • EST. 2024</div>
-    </footer>
-  </div>
+          <div style="display:flex; gap:20px;">
+            <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <div class="rocker" id="onAirLed"></div>
+              <span class="radio-label">ON AIR</span>
+            </div>
+            <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <div class="rocker" id="streamLed"></div>
+              <span class="radio-label">STATUS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="radio-stats">
+          <div class="radio-stat">
+            <div class="radio-stat-val" id="statListeners">000</div>
+            <div class="radio-label" style="margin-top:6px;">LISTENERS</div>
+          </div>
+          <div class="radio-stat">
+            <div class="radio-stat-val" id="statQueue">0</div>
+            <div class="radio-label" style="margin-top:6px;">QUEUED</div>
+          </div>
+          <div class="radio-stat">
+            <div class="radio-stat-val" style="color:var(--accent-light);">24/7</div>
+            <div class="radio-label" style="margin-top:6px;">LIVE</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE HERALD -->
+  <section id="herald" class="herald-section section-pad">
+    <div class="content-wrap">
+      <div class="section-header">
+        <div class="section-label">Community News</div>
+        <h2>The Bukuma Herald</h2>
+        <p>Updates, announcements, and stories from across our villages.</p>
+      </div>
+
+      <div id="heraldGrid" class="herald-grid">
+        <!-- Populated dynamically -->
+      </div>
+
+      <div id="heraldActivities" class="activities-bar">
+        <h4>Upcoming Community Activities</h4>
+        <div id="activitiesContent" style="font-size:15px; color:var(--text-muted);"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REQUESTS -->
+  <section id="requests" class="section-pad">
+    <div class="content-wrap">
+      <div class="section-header">
+        <div class="section-label">Song Request</div>
+        <h2>Beam a Request to the DJ</h2>
+        <p>Send your favourite song directly to the Agum Bukuma Master Console.</p>
+      </div>
+
+      <div class="request-card">
+        <input type="text" id="reqName" class="input-modern" placeholder="Your Name">
+        <input type="text" id="reqSong" class="input-modern" placeholder="Song or Artist">
+        <button class="btn-submit" onclick="sendRequest()">Send Request</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DONATE -->
+  <section id="donate" class="donate-section section-pad">
+    <div class="content-wrap">
+      <div class="section-header">
+        <div class="section-label" style="color:rgba(255,255,255,0.5);">Support the Mission</div>
+        <h2>Keep the Station Live</h2>
+        <p>Your contributions fund our broadcast and community development projects, including the Village Primary School redevelopment.</p>
+      </div>
+      <button class="btn-donate" onclick="alert('Squad API Integration Coming Soon...')">Donate to the Radio Cause</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>Agum Bukuma Broadcasting Corp &bull; Est. 2024 &bull; The Voice of the Rivers</p>
+  </footer>
 
   <audio id="radioAudio" src="/stream" preload="none"></audio>
 
   <script>
     var ws = null, audioPlaying = false, needleTimer = null;
+
+    // Navigation scroll effect
+    window.addEventListener('scroll', () => {
+      document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 50);
+    });
 
     function connect() {
       var proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -320,9 +551,9 @@
     function sendRequest() {
       var n = document.getElementById('reqName').value;
       var s = document.getElementById('reqSong').value;
-      if(!n || !s) return alert('Clearance Denied: All fields required.');
+      if(!n || !s) return alert('Please fill in both fields.');
       ws.send(JSON.stringify({ action: 'request', listener: n, song: s }));
-      alert('REQUEST BEAMED TO MASTER CONSOLE');
+      alert('Your request has been sent to the DJ!');
       document.getElementById('reqName').value = '';
       document.getElementById('reqSong').value = '';
     }
@@ -343,21 +574,20 @@
         const r = await fetch('/data/herald.json');
         const d = await r.json();
         const grid = document.getElementById('heraldGrid');
-        grid.innerHTML = d.news.slice(0, 2).map(n => `
-          <div id="herald-${n.id}">
-             <h3 style="color:var(--accent); font-size:24px; margin-bottom:20px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:10px;">${n.title}</h3>
-             <p style="font-size:16px; line-height:1.7; color:#a89f8e; margin-bottom:20px;">${n.content}</p>
-             <p style="font-size:14px; font-weight:700; color:var(--green);">[ ${n.status.toUpperCase()} ]</p>
+        const badgeMap = { 'ongoing': 'badge-ongoing', 'official': 'badge-official', 'upcoming': 'badge-upcoming' };
+        grid.innerHTML = d.news.filter(n => n.id !== 'compound-competitions').map(n => `
+          <div class="herald-card" id="herald-${n.id}">
+            <h3>${n.title}</h3>
+            <p>${n.content}</p>
+            <span class="herald-badge ${badgeMap[n.status.toLowerCase()] || 'badge-official'}">${n.status}</span>
           </div>
         `).join('');
-        
+
         const acts = d.news.find(n => n.id === 'compound-competitions');
         if(acts) {
           document.getElementById('activitiesContent').innerHTML = `
             <p>${acts.content}</p>
-            <p style="margin-top:15px; color:var(--accent); font-weight:700;">Full data broadcast via Public App.</p>
           `;
-          document.getElementById('herald-compound-competitions')?.remove();
         }
       } catch(err) {}
     }

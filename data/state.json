@@ -1,5 +1,15 @@
 {
-  "volume": 80,
+  "volume": 36,
   "isPlaying": false,
-  "currentTrack": null
+  "currentTrack": null,
+  "autoJingles": {
+    "start": true,
+    "random": true
+  },
+  "audioSettings": {
+    "fadeIn": 2,
+    "fadeOut": 3,
+    "crossfade": 2,
+    "volume": 85
+  }
 }
