@@ -18,7 +18,7 @@
     --muted: #8890a6;
     --radius: 10px;
   }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
 
   /* ── LOGIN ── */
   #loginScreen {
@@ -43,8 +43,9 @@
   #loginError { color: var(--accent); margin-top: 12px; font-size: 0.9rem; }
 
   /* ── MAIN LAYOUT ── */
-  #mainScreen { display: none; flex-direction: column; min-height: 100vh; }
+  #mainScreen { display: none; flex-direction: column; }
   header {
+    position: sticky; top: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
   }
@@ -62,22 +63,22 @@
 
   .main-grid {
     display: grid; grid-template-columns: 1fr 360px; gap: 20px;
-    padding: 20px 24px; flex: 1;
+    padding: 20px 24px; align-items: start;
   }
   @media(max-width:900px) { .main-grid { grid-template-columns: 1fr; } }
 
   /* ── PANEL CARDS ── */
   .card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 20px;
+    padding: 20px; margin-bottom: 20px;
   }
+  .card:last-child { margin-bottom: 0; }
   .card-title {
     font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
     color: var(--muted); margin-bottom: 16px;
   }
 
   /* ── NOW PLAYING ── */
-  .now-playing-section { margin-bottom: 20px; }
   .track-display {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 20px; display: flex; align-items: center; gap: 16px;
@@ -119,9 +120,7 @@
   /* volume row */
   .volume-row { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
   .volume-row label { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
-  input[type=range] {
-    flex: 1; height: 4px; accent-color: var(--accent2); cursor: pointer;
-  }
+  input[type=range] { flex: 1; height: 4px; accent-color: var(--accent2); cursor: pointer; }
   .volume-val { color: var(--text); font-size: 0.85rem; width: 36px; text-align: right; }
 
   /* monitor row */
@@ -161,7 +160,7 @@
     border: none; border-radius: var(--radius); cursor: pointer; white-space: nowrap;
   }
   .search-row button:hover { opacity: .85; }
-  .results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
+  .results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
   .result-item {
     display: flex; align-items: center; gap: 10px; padding: 10px 12px;
     background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
@@ -181,7 +180,7 @@
   #searchStatus { margin-top: 8px; font-size: 0.82rem; color: var(--muted); }
 
   /* ── QUEUE ── */
-  .queue-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+  .queue-list { display: flex; flex-direction: column; gap: 8px; }
   .queue-item {
     display: flex; align-items: center; gap: 10px; padding: 10px 12px;
     background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
@@ -201,7 +200,7 @@
   /* status bar */
   .statusbar {
     padding: 8px 24px; background: var(--surface); border-top: 1px solid var(--border);
-    font-size: 0.78rem; color: var(--muted); display: flex; gap: 20px;
+    font-size: 0.78rem; color: var(--muted); display: flex; gap: 20px; flex-wrap: wrap; margin-top: 4px;
   }
   .statusbar span { display: flex; align-items: center; gap: 6px; }
   .dot { width: 7px; height: 7px; border-radius: 50%; }
@@ -241,10 +240,10 @@
   <div class="main-grid">
 
     <!-- ── LEFT COLUMN ── -->
-    <div style="display:flex;flex-direction:column;gap:20px;">
+    <div>
 
       <!-- Now Playing + Transport -->
-      <div class="card now-playing-section">
+      <div class="card">
         <div class="card-title">Now Playing</div>
         <div class="track-display">
           <div class="track-thumb" id="trackThumb">
@@ -298,9 +297,7 @@
       <!-- Mic Controls -->
       <div class="card">
         <div class="card-title">Microphone Controls</div>
-        <div class="mic-grid" id="micGrid">
-          <!-- rendered by JS -->
-        </div>
+        <div class="mic-grid" id="micGrid"></div>
       </div>
 
       <!-- YouTube Search -->
@@ -317,17 +314,14 @@
     </div><!-- end left col -->
 
     <!-- ── RIGHT COLUMN ── -->
-    <div style="display:flex;flex-direction:column;gap:20px;">
-
-      <!-- Queue -->
-      <div class="card" style="flex:1;">
+    <div>
+      <div class="card">
         <div class="card-title">Play Queue</div>
         <div class="queue-list" id="queueList">
           <div class="queue-empty">Queue is empty</div>
         </div>
       </div>
-
-    </div><!-- end right col -->
+    </div>
 
   </div><!-- end main-grid -->
 
@@ -338,29 +332,17 @@
   </div>
 </div><!-- end mainScreen -->
 
-<!-- hidden audio monitor -->
 <audio id="monitorAudio" src="/stream" preload="none"></audio>
 
 <script>
 'use strict';
 
-/* ════════ STATE ════════ */
 const STATE = {
-  token: null,
-  isPlaying: false,
-  mics: [
-    { id: 'mic1', label: 'Mic 1', mode: 'off' },
-    { id: 'mic2', label: 'Mic 2', mode: 'off' },
-  ],
-  queue: [],
-  currentTrack: null,
-  ws: null,
-  monitorOn: false,
-  micStream: null,
-  micPeer: null,
+  token: null, isPlaying: false,
+  mics: [{ id: 'mic1', label: 'Mic 1', mode: 'off' }, { id: 'mic2', label: 'Mic 2', mode: 'off' }],
+  queue: [], currentTrack: null, ws: null, monitorOn: false, micStream: null, micRecorder: null,
 };
 
-/* ════════ LOGIN ════════ */
 document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
 async function doLogin() {
@@ -368,15 +350,13 @@ async function doLogin() {
   if (!pw) return;
   try {
     const r = await fetch('/api/admin/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw }),
     });
     const d = await r.json();
     if (d.success) {
       STATE.token = d.token || pw;
       document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('mainScreen').style.display = 'flex';
+      document.getElementById('mainScreen').style.display = 'block';
       initDashboard();
     } else {
       document.getElementById('loginError').textContent = 'Incorrect password';
@@ -386,7 +366,6 @@ async function doLogin() {
   }
 }
 
-/* ════════ INIT ════════ */
 function initDashboard() {
   renderMics();
   connectWS();
@@ -396,39 +375,21 @@ function initDashboard() {
   setInterval(fetchQueue, 10000);
 }
 
-/* ════════ WEBSOCKET ════════ */
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   const ws = new WebSocket(`${proto}://${location.host}`);
   STATE.ws = ws;
-
-  ws.onopen = () => {
-    setWsStatus('connected', true);
-    ws.send(JSON.stringify({ type: 'auth', token: STATE.token }));
-  };
-  ws.onclose = () => {
-    setWsStatus('disconnected', false);
-    setTimeout(connectWS, 4000);
-  };
+  ws.onopen = () => { setWsStatus('connected', true); ws.send(JSON.stringify({ type: 'auth', token: STATE.token })); };
+  ws.onclose = () => { setWsStatus('disconnected', false); setTimeout(connectWS, 4000); };
   ws.onerror = () => setWsStatus('error', false);
-  ws.onmessage = (ev) => {
-    try {
-      const msg = JSON.parse(ev.data);
-      handleWS(msg);
-    } catch(_) {}
-  };
+  ws.onmessage = (ev) => { try { handleWS(JSON.parse(ev.data)); } catch(_) {} };
 }
 
 function handleWS(msg) {
   if (msg.type === 'status') updateStatus(msg);
   if (msg.type === 'queueUpdate') renderQueue(msg.queue || []);
-  if (msg.type === 'trackChange') {
-    STATE.currentTrack = msg.track;
-    renderNowPlaying(msg.track);
-  }
-  if (msg.type === 'listenerCount') {
-    document.getElementById('listenerCount').textContent = msg.count + ' listener' + (msg.count === 1 ? '' : 's');
-  }
+  if (msg.type === 'trackChange') { STATE.currentTrack = msg.track; renderNowPlaying(msg.track); }
+  if (msg.type === 'listenerCount') document.getElementById('listenerCount').textContent = msg.count + ' listener' + (msg.count === 1 ? '' : 's');
 }
 
 function setWsStatus(txt, ok) {
@@ -436,33 +397,25 @@ function setWsStatus(txt, ok) {
   document.getElementById('wsDot').className = 'dot ' + (ok ? 'green' : 'red');
 }
 
-/* ════════ STATUS ════════ */
 async function fetchStatus() {
-  try {
-    const r = await fetch('/api/status');
-    const d = await r.json();
-    updateStatus(d);
-  } catch(_) {}
+  try { const r = await fetch('/api/status'); updateStatus(await r.json()); } catch(_) {}
 }
 
 function updateStatus(d) {
   STATE.isPlaying = d.isPlaying;
-  if (d.currentTrack) {
-    STATE.currentTrack = d.currentTrack;
-    renderNowPlaying(d.currentTrack);
-  }
-  if (d.listeners !== undefined) {
-    document.getElementById('listenerCount').textContent = d.listeners + ' listener' + (d.listeners === 1 ? '' : 's');
-  }
+  if (d.currentTrack) { STATE.currentTrack = d.currentTrack; renderNowPlaying(d.currentTrack); }
+  if (d.listeners !== undefined) document.getElementById('listenerCount').textContent = d.listeners + ' listener' + (d.listeners === 1 ? '' : 's');
   const playing = d.isPlaying;
   document.getElementById('streamDot').className = 'dot ' + (playing ? 'green' : 'grey');
   document.getElementById('streamStatus').textContent = playing ? 'Streaming' : 'Idle';
-  document.getElementById('btnPlay').textContent = '';
-  document.getElementById('btnPlay').innerHTML = playing
-    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg> PAUSE'
-    : '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY';
-  document.getElementById('btnPlay').style.background = playing ? 'var(--yellow)' : 'var(--green)';
-  document.getElementById('btnPlay').style.color = playing ? '#000' : '#fff';
+  const btn = document.getElementById('btnPlay');
+  if (playing) {
+    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg> PAUSE';
+    btn.style.background = 'var(--yellow)'; btn.style.color = '#000';
+  } else {
+    btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY';
+    btn.style.background = 'var(--green)'; btn.style.color = '#fff';
+  }
 }
 
 function renderNowPlaying(track) {
@@ -477,42 +430,26 @@ function renderNowPlaying(track) {
   }
 }
 
-/* ════════ TRANSPORT ════════ */
 async function playStation() {
   try {
-    if (STATE.isPlaying) {
-      await apiFetch('/api/stop', 'POST');
-    } else {
-      await apiFetch('/api/play', 'POST');
-    }
-    await fetchStatus();
-    await fetchQueue();
+    if (STATE.isPlaying) { await apiFetch('/api/stop', 'POST'); } else { await apiFetch('/api/play', 'POST'); }
+    await fetchStatus(); await fetchQueue();
   } catch(e) { alert('Error: ' + e.message); }
 }
 
 async function stopStation() {
-  try {
-    await apiFetch('/api/stop', 'POST');
-    await fetchStatus();
-  } catch(e) { alert('Error: ' + e.message); }
+  try { await apiFetch('/api/stop', 'POST'); await fetchStatus(); } catch(e) { alert('Error: ' + e.message); }
 }
 
 async function skipTrack() {
-  try {
-    await apiFetch('/api/skip', 'POST');
-    await fetchStatus();
-    await fetchQueue();
-  } catch(e) { alert('Error: ' + e.message); }
+  try { await apiFetch('/api/skip', 'POST'); await fetchStatus(); await fetchQueue(); } catch(e) { alert('Error: ' + e.message); }
 }
 
 async function setVolume(val) {
   document.getElementById('volumeVal').textContent = val + '%';
-  try {
-    await apiFetch('/api/volume', 'POST', { volume: parseInt(val) });
-  } catch(_) {}
+  try { await apiFetch('/api/volume', 'POST', { volume: parseInt(val) }); } catch(_) {}
 }
 
-/* ════════ MONITOR ════════ */
 function toggleMonitor() {
   const audio = document.getElementById('monitorAudio');
   STATE.monitorOn = !STATE.monitorOn;
@@ -521,17 +458,14 @@ function toggleMonitor() {
     document.getElementById('monitorBtn').classList.add('active');
     document.getElementById('monitorStatus').textContent = 'Listening...';
   } else {
-    audio.pause();
-    audio.currentTime = 0;
+    audio.pause(); audio.currentTime = 0;
     document.getElementById('monitorBtn').classList.remove('active');
     document.getElementById('monitorStatus').textContent = 'Off';
   }
 }
 
-/* ════════ MICS ════════ */
 function renderMics() {
-  const grid = document.getElementById('micGrid');
-  grid.innerHTML = STATE.mics.map((m, i) => `
+  document.getElementById('micGrid').innerHTML = STATE.mics.map((m, i) => `
     <div class="mic-card">
       <div class="mic-label">${m.label}</div>
       <div class="mic-btn-group">
@@ -539,8 +473,7 @@ function renderMics() {
         <button class="mic-btn ${m.mode==='solo'?'active-solo':''}" onclick="setMic(${i},'solo')">SOLO</button>
         <button class="mic-btn ${m.mode==='off'?'active-off':''}" onclick="setMic(${i},'off')">OFF</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 async function setMic(idx, mode) {
@@ -548,14 +481,9 @@ async function setMic(idx, mode) {
   const wasActive = mic.mode !== 'off';
   mic.mode = mode;
   renderMics();
-  if (mode !== 'off' && !wasActive) {
-    await startMicStream(idx, mode);
-  } else if (mode === 'off') {
-    stopMicStream(idx);
-  }
-  try {
-    await apiFetch('/api/mic', 'POST', { micId: mic.id, mode });
-  } catch(_) {}
+  if (mode !== 'off' && !wasActive) await startMicStream(idx, mode);
+  else if (mode === 'off') stopMicStream(idx);
+  try { await apiFetch('/api/mic', 'POST', { micId: mic.id, mode }); } catch(_) {}
 }
 
 function startMicStream(idx, mode) {
@@ -565,11 +493,7 @@ function startMicStream(idx, mode) {
     if (!ws || ws.readyState !== 1) return;
     ws.send(JSON.stringify({ type: 'micStart', micId: STATE.mics[idx].id, mode }));
     const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-    recorder.ondataavailable = e => {
-      if (e.data.size > 0 && ws.readyState === 1) {
-        ws.send(e.data);
-      }
-    };
+    recorder.ondataavailable = e => { if (e.data.size > 0 && ws.readyState === 1) ws.send(e.data); };
     recorder.start(100);
     STATE.micRecorder = recorder;
   }).catch(e => alert('Mic error: ' + e.message));
@@ -578,12 +502,9 @@ function startMicStream(idx, mode) {
 function stopMicStream(idx) {
   if (STATE.micRecorder) { try { STATE.micRecorder.stop(); } catch(_){} STATE.micRecorder = null; }
   if (STATE.micStream) { STATE.micStream.getTracks().forEach(t => t.stop()); STATE.micStream = null; }
-  if (STATE.ws && STATE.ws.readyState === 1) {
-    STATE.ws.send(JSON.stringify({ type: 'micStop', micId: STATE.mics[idx].id }));
-  }
+  if (STATE.ws && STATE.ws.readyState === 1) STATE.ws.send(JSON.stringify({ type: 'micStop', micId: STATE.mics[idx].id }));
 }
 
-/* ════════ SEARCH ════════ */
 async function doSearch() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) return;
@@ -596,72 +517,50 @@ async function doSearch() {
     document.getElementById('searchStatus').textContent = results.length + ' result' + (results.length===1?'':'s');
     document.getElementById('resultsList').innerHTML = results.map(item => `
       <div class="result-item">
-        <img src="https://img.youtube.com/vi/${item.videoId || item.id}/default.jpg" onerror="this.style.display='none'">
+        <img src="https://img.youtube.com/vi/${item.videoId||item.id}/default.jpg" onerror="this.style.display='none'">
         <div class="result-text">
           <div class="result-title">${escHtml(item.title)}</div>
-          <div class="result-dur">${item.duration || ''}</div>
+          <div class="result-dur">${item.duration||''}</div>
         </div>
         <button class="result-add" onclick='addToQueue(${JSON.stringify(JSON.stringify(item))})'>+ Queue</button>
-      </div>
-    `).join('');
-  } catch(e) {
-    document.getElementById('searchStatus').textContent = 'Error: ' + e.message;
-  }
+      </div>`).join('');
+  } catch(e) { document.getElementById('searchStatus').textContent = 'Error: ' + e.message; }
 }
 
 async function addToQueue(itemJson) {
   const item = JSON.parse(itemJson);
   try {
-    await apiFetch('/api/queue/add', 'POST', { videoId: item.videoId || item.id, title: item.title, duration: item.duration });
+    await apiFetch('/api/queue/add', 'POST', { videoId: item.videoId||item.id, title: item.title, duration: item.duration });
     await fetchQueue();
   } catch(e) { alert('Error adding to queue: ' + e.message); }
 }
 
-/* ════════ QUEUE ════════ */
 async function fetchQueue() {
-  try {
-    const r = await fetch('/api/queue');
-    const d = await r.json();
-    renderQueue(d.queue || d || []);
-  } catch(_) {}
+  try { const r = await fetch('/api/queue'); renderQueue((await r.json()).queue || []); } catch(_) {}
 }
 
 function renderQueue(queue) {
   STATE.queue = queue;
   const el = document.getElementById('queueList');
-  if (!queue.length) {
-    el.innerHTML = '<div class="queue-empty">Queue is empty — search for music above</div>';
-    return;
-  }
+  if (!queue.length) { el.innerHTML = '<div class="queue-empty">Queue is empty — search for music above</div>'; return; }
   el.innerHTML = queue.map((item, i) => `
     <div class="queue-item ${i===0?'playing':''}">
       <span class="queue-num">${i===0?'▶':i+1}</span>
       <span class="queue-title">${escHtml(item.title||'Track '+(i+1))}</span>
       <span class="queue-dur">${item.duration||''}</span>
       <button class="queue-remove" onclick="removeFromQueue(${i})" title="Remove">×</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 async function removeFromQueue(idx) {
-  try {
-    await apiFetch('/api/queue/remove', 'POST', { index: idx });
-    await fetchQueue();
-  } catch(e) { alert('Error: ' + e.message); }
+  try { await apiFetch('/api/queue/remove', 'POST', { index: idx }); await fetchQueue(); } catch(e) { alert('Error: ' + e.message); }
 }
 
-/* ════════ HELPERS ════════ */
 async function apiFetch(url, method, body) {
-  const opts = {
-    method: method || 'GET',
-    headers: { 'Content-Type': 'application/json', 'x-admin-token': STATE.token, 'Authorization': 'Bearer ' + STATE.token },
-  };
+  const opts = { method: method||'GET', headers: { 'Content-Type': 'application/json', 'x-admin-token': STATE.token, 'Authorization': 'Bearer '+STATE.token } };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(url, opts);
-  if (!r.ok) {
-    const txt = await r.text().catch(() => r.statusText);
-    throw new Error(txt || r.status);
-  }
+  if (!r.ok) { const txt = await r.text().catch(() => r.statusText); throw new Error(txt||r.status); }
   return r.json().catch(() => ({}));
 }
 
@@ -672,8 +571,8 @@ function escHtml(s) {
 function formatDur(s) {
   if (!s && s !== 0) return '';
   if (typeof s === 'string') return s;
-  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-  return m + ':' + String(sec).padStart(2,'0');
+  const m = Math.floor(s/60), sec = Math.floor(s%60);
+  return m+':'+String(sec).padStart(2,'0');
 }
 </script>
 </body>
