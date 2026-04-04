@@ -3,598 +3,210 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agum Bukuma Community Radio — The Voice of the Rivers</title>
-  <meta name="description" content="Agum Bukuma Community Radio — 24/7 Highlife, Heritage, and Community News from the heart of the Niger Delta.">
+  <title>AGUM BUKUMA HERALD - Community News & Radio</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Playfair+Display:wght@700;800;900&display=swap');
-
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:wght@700;900&display=swap');
+    
     :root {
-      --bg: #FAF8F5;
-      --text: #2C2420;
-      --text-muted: #7A7068;
-      --accent: #B8860B;
-      --accent-light: #D4AF37;
-      --green: #16a34a;
-      --card: #FFFFFF;
-      --card-border: #EDE8E3;
-      --section-alt: #F3F0EC;
-      /* Radio widget keeps its dark palette */
-      --radio-bg: #2b1b17;
-      --radio-chassis: #1a1210;
-      --radio-green: #4ade80;
+      --primary: #8B4513;
+      --accent: #D4AF37;
+      --bg: #0D0805;
+      --card: #1f140f;
+      --text: #F5DEB3;
+      --green: #4ade80;
       --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
+      --wood: url('https://www.transparenttextures.com/patterns/dark-wood.png');
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-
+    
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg);
+      background: #0f0a08 var(--wood);
       color: var(--text);
-      overflow-x: hidden;
       line-height: 1.6;
     }
 
+    /* TYPOGRAPHY */
     h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 900; }
+    .label { font-size: 10px; letter-spacing: 3px; color: var(--accent); font-weight: 900; text-transform: uppercase; }
 
-    /* ═══════════════════════════════════════════
-       NAVIGATION
-       ═══════════════════════════════════════════ */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 20px 40px;
-      background: rgba(250,248,245,0.85);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--card-border);
-      display: flex; justify-content: space-between; align-items: center;
-      transition: box-shadow 0.3s;
-    }
-    nav.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.06); }
-    .nav-brand {
-      font-family: 'Playfair Display', serif; font-weight: 900; font-size: 18px;
-      color: var(--accent); letter-spacing: 1px;
-    }
-    .nav-links { display: flex; gap: 30px; }
-    .nav-links a {
-      text-decoration: none; color: var(--text-muted); font-size: 13px;
-      font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--accent); }
+    /* LAYOUT */
+    .container { max-width: 1400px; margin: 0 auto; padding: 40px; display: grid; grid-template-columns: 400px 1fr; gap: 40px; }
 
-    /* ═══════════════════════════════════════════
-       HERO — Full-bleed, keeps the dramatic image
-       ═══════════════════════════════════════════ */
-    #hero {
-      height: 90vh; min-height: 600px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; position: relative;
-      background: linear-gradient(rgba(20,12,8,0.35), rgba(20,12,8,0.85)), url('/images/hero.png') center 25%/cover;
-    }
-    #hero::after {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.5) 100%);
-      pointer-events: none;
-    }
-    #hero h1 {
-      font-size: 72px; color: #fff; margin-bottom: 16px;
-      text-shadow: 0 6px 40px rgba(0,0,0,0.8); position: relative; z-index: 2;
-    }
-    #hero h1 span { color: var(--accent-light); }
-    #hero .hero-sub {
-      font-size: 14px; letter-spacing: 5px; color: rgba(255,255,255,0.7);
-      text-transform: uppercase; font-weight: 700; position: relative; z-index: 2;
-    }
-    .hero-cta {
-      margin-top: 40px; display: flex; gap: 16px; position: relative; z-index: 2;
-    }
-    .btn {
-      padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 13px;
-      text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer;
-      border: none; text-decoration: none; transition: all 0.2s;
-    }
-    .btn-primary {
-      background: var(--accent); color: #fff;
-      box-shadow: 0 4px 15px rgba(184,134,11,0.3);
-    }
-    .btn-primary:hover { background: #9a7209; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(184,134,11,0.4); }
-    .btn-outline {
-      background: rgba(255,255,255,0.1); color: #fff;
-      border: 1.5px solid rgba(255,255,255,0.3); backdrop-filter: blur(10px);
-    }
-    .btn-outline:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
-
-    /* ═══════════════════════════════════════════
-       CONTENT WRAPPER
-       ═══════════════════════════════════════════ */
-    .content-wrap {
-      max-width: 1100px; margin: 0 auto; padding: 0 30px;
-    }
-    .section-pad { padding: 100px 0; }
-
-    .section-header {
-      text-align: center; margin-bottom: 60px;
-    }
-    .section-header h2 {
-      font-size: 42px; color: var(--text); margin-bottom: 12px;
-    }
-    .section-header p {
-      font-size: 15px; color: var(--text-muted); max-width: 500px; margin: 0 auto;
-    }
-    .section-label {
-      font-size: 11px; letter-spacing: 4px; color: var(--accent);
-      text-transform: uppercase; font-weight: 700; margin-bottom: 12px;
+    @media (max-width: 1000px) {
+      .container { grid-template-columns: 1fr; }
+      .sidebar { order: 2; }
+      .main-content { order: 1; }
     }
 
-    /* ═══════════════════════════════════════════
-       RADIO PLAYER WIDGET — Dark hardware island
-       ═══════════════════════════════════════════ */
-    .radio-section { padding: 80px 0; }
+    /* HEADER */
+    header { border-bottom: 2px solid var(--accent); padding-bottom: 20px; margin-bottom: 40px; text-align: center; }
+    header h1 { font-size: 72px; letter-spacing: -3px; color: var(--accent); line-height: 1; }
+
+    /* RADIO WIDGET */
     .radio-widget {
-      max-width: 680px; margin: 0 auto;
-      background: var(--radio-bg);
-      border: 12px solid var(--radio-chassis);
-      border-radius: 30px;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.25), inset 0 0 60px rgba(0,0,0,0.4);
-      padding: 40px;
-      position: relative;
-      overflow: hidden;
-      color: #F5DEB3;
+      background: #2b1b17 var(--wood); border: 8px solid #1a1210; border-radius: 20px;
+      padding: 20px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); position: sticky; top: 40px;
+      border-bottom: 12px solid #111;
     }
-    .radio-widget::before {
-      content: ''; position: absolute; inset: 0;
-      background: url('https://www.transparenttextures.com/patterns/dark-wood.png');
-      opacity: 0.3; pointer-events: none;
+    .widget-display {
+      background: #050805; border: 4px solid #111; border-radius: 12px; padding: 15px;
+      margin-bottom: 20px; color: var(--green); font-family: 'Courier New', monospace; box-shadow: inset 0 0 20px #000;
+      min-height: 100px; display: flex; flex-direction: column; justify-content: center;
     }
-
-    .radio-screw {
-      position: absolute; width: 14px; height: 14px;
-      background: var(--brass); border-radius: 50%; z-index: 10;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-    .radio-screw::after {
-      content: ''; position: absolute; top: 50%; left: 15%; right: 15%;
-      height: 2px; background: rgba(0,0,0,0.3); transform: rotate(45deg);
-    }
-    .rs-tl { top: 16px; left: 16px; } .rs-tr { top: 16px; right: 16px; }
-    .rs-bl { bottom: 16px; left: 16px; } .rs-br { bottom: 16px; right: 16px; }
-
-    .radio-label {
-      font-size: 9px; letter-spacing: 3px; color: #777; font-weight: 900; text-transform: uppercase;
-    }
-
-    .crt-screen {
-      background: #050805; border: 8px solid #111; border-radius: 14px;
-      padding: 30px; position: relative; overflow: hidden;
-      box-shadow: inset 0 0 40px #000;
-      color: var(--radio-green); font-family: 'Courier New', monospace;
-      margin-bottom: 30px;
-    }
-    .crt-screen::after {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px, rgba(74, 222, 128, 0.03) 2px);
-    }
-
-    .knob {
-      width: 90px; height: 90px; background: var(--brass); border-radius: 50%;
-      position: relative; cursor: pointer;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    .widget-knob {
+      width: 100px; height: 100px; background: var(--brass); border-radius: 50%;
+      margin: 0 auto 15px; cursor: pointer; box-shadow: 0 8px 15px rgba(0,0,0,0.6); border: 4px solid #111;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .knob::before {
-      content: ''; position: absolute; top: 10%; left: 50%;
-      width: 5px; height: 16%; background: #111;
-      transform: translateX(-50%); border-radius: 3px;
-    }
-    .knob.active { transform: rotate(45deg); box-shadow: 0 0 30px rgba(212,175,55,0.4); }
+    .widget-knob.active { transform: rotate(45deg); box-shadow: 0 0 30px var(--accent); }
 
-    .meter-container {
-      width: 140px; height: 70px; background: #eee; border-radius: 70px 70px 0 0;
-      border: 4px solid #2b1b17; position: relative; overflow: hidden;
-      box-shadow: inset 0 5px 15px rgba(0,0,0,0.2);
-    }
-    .needle {
-      position: absolute; bottom: 0; left: 50%; width: 2px; height: 60px;
-      background: #8b0000; transform-origin: bottom center; transform: rotate(-45deg);
-      transition: transform 0.1s ease-out;
-    }
+    /* NEWS GRID */
+    .news-grid { display: grid; grid-template-columns: 1fr; gap: 60px; }
+    .news-item { border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 60px; }
+    .news-item h2 { font-size: 48px; margin-bottom: 15px; color: #fff; line-height: 1; }
+    .news-summary { font-size: 20px; opacity: 0.8; margin-bottom: 25px; font-weight: 700; }
+    .news-status { display: inline-block; padding: 5px 12px; background: var(--accent); color: #000; font-weight: 900; font-size: 11px; border-radius: 4px; margin-bottom: 20px; }
 
-    .rocker {
-      width: 36px; height: 60px; background: #333; border-radius: 4px;
-      position: relative; border: 2px solid #111; cursor: pointer;
-    }
-    .rocker::before {
-      content: ''; position: absolute; top: 4px; left: 4px; right: 4px; height: 24px;
-      background: linear-gradient(#555, #222); border-radius: 2px;
-    }
-    .rocker.active::before {
-      top: 30px; background: linear-gradient(#ff4757, #ab2c2c);
-      box-shadow: 0 0 10px #ff4757;
-    }
+    /* VU METER (Mini) */
+    .vu-meter { width: 100%; height: 8px; background: #000; border-radius: 4px; position: relative; overflow: hidden; margin-top: 15px; }
+    .vu-bar { position: absolute; inset: 0; background: var(--green); width: 0%; transition: width 0.1s; opacity: 0.6; box-shadow: 0 0 10px var(--green); }
 
-    .radio-stats {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 20px;
-    }
-    .radio-stat {
-      background: rgba(0,0,0,0.3); border-radius: 8px; padding: 16px; text-align: center;
-      border: 1px solid rgba(255,255,255,0.05);
-    }
-    .radio-stat-val {
-      font-size: 28px; font-weight: 900; color: var(--radio-green);
-      font-family: 'Courier New', monospace;
-    }
+    footer { text-align: center; padding: 100px 60px; opacity: 0.3; font-size: 11px; letter-spacing: 3px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 100px; }
 
-    /* ═══════════════════════════════════════════
-       HERALD — Light news cards
-       ═══════════════════════════════════════════ */
-    .herald-section { background: var(--section-alt); }
-
-    .herald-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
-    }
-    .herald-card {
-      background: var(--card); border: 1px solid var(--card-border);
-      border-radius: 16px; padding: 40px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .herald-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-    }
-    .herald-card h3 {
-      font-size: 22px; color: var(--text); margin-bottom: 16px;
-      padding-bottom: 16px; border-bottom: 2px solid var(--card-border);
-    }
-    .herald-card p { font-size: 15px; line-height: 1.8; color: var(--text-muted); }
-    .herald-badge {
-      display: inline-block; margin-top: 20px; padding: 6px 14px;
-      border-radius: 20px; font-size: 11px; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-    }
-    .badge-ongoing { background: #dcfce7; color: #166534; }
-    .badge-official { background: #fef3c7; color: #92400e; }
-    .badge-upcoming { background: #dbeafe; color: #1e40af; }
-
-    .activities-bar {
-      margin-top: 40px; padding: 30px 36px;
-      background: var(--card); border-radius: 16px;
-      border-left: 4px solid var(--accent);
-      border: 1px solid var(--card-border);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-    }
-    .activities-bar h4 {
-      font-size: 11px; letter-spacing: 3px; color: var(--accent);
-      text-transform: uppercase; font-weight: 800; margin-bottom: 12px;
-    }
-
-    /* ═══════════════════════════════════════════
-       REQUEST FORM — Clean card
-       ═══════════════════════════════════════════ */
-    .request-card {
-      max-width: 600px; margin: 0 auto;
-      background: var(--card); border: 1px solid var(--card-border);
-      border-radius: 20px; padding: 50px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.06);
-    }
-    .input-modern {
-      width: 100%; padding: 16px 20px; border: 1.5px solid var(--card-border);
-      border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif;
-      color: var(--text); background: var(--bg); margin-bottom: 16px;
-      outline: none; transition: border-color 0.2s;
-    }
-    .input-modern:focus { border-color: var(--accent); }
-    .input-modern::placeholder { color: #bbb; }
-
-    .btn-submit {
-      width: 100%; padding: 16px; background: var(--accent); color: #fff;
-      border: none; border-radius: 10px; font-weight: 700; font-size: 14px;
-      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-submit:hover { background: #9a7209; }
-
-    /* ═══════════════════════════════════════════
-       DONATE SECTION
-       ═══════════════════════════════════════════ */
-    .donate-section {
-      background: linear-gradient(135deg, #1a3c1a, #0f2b0f);
-      color: #fff; text-align: center;
-    }
-    .donate-section h2 { color: #fff; }
-    .donate-section p { color: rgba(255,255,255,0.7); max-width: 550px; margin: 0 auto 40px; }
-    .btn-donate {
-      padding: 18px 48px; background: #4ade80; color: #0f2b0f;
-      border: none; border-radius: 10px; font-weight: 800; font-size: 15px;
-      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-      box-shadow: 0 6px 25px rgba(74,222,128,0.3);
-      transition: all 0.2s;
-    }
-    .btn-donate:hover { background: #22c55e; transform: translateY(-2px); box-shadow: 0 10px 35px rgba(74,222,128,0.4); }
-
-    /* ═══════════════════════════════════════════
-       FOOTER — Light
-       ═══════════════════════════════════════════ */
-    footer {
-      padding: 40px; text-align: center; border-top: 1px solid var(--card-border);
-    }
-    footer p {
-      font-size: 12px; color: var(--text-muted); letter-spacing: 2px;
-      text-transform: uppercase; font-weight: 600;
-    }
-
-    /* ═══════════════════════════════════════════
-       RESPONSIVE
-       ═══════════════════════════════════════════ */
-    @media (max-width: 768px) {
-      #hero h1 { font-size: 42px; }
-      .section-header h2 { font-size: 32px; }
-      .herald-grid { grid-template-columns: 1fr; }
-      .radio-widget { margin: 0 16px; padding: 24px; }
-      .radio-stats { grid-template-columns: 1fr; }
-      nav { padding: 16px 20px; }
-      .nav-links { display: none; }
-      .content-wrap { padding: 0 20px; }
-      .section-pad { padding: 60px 0; }
-    }
+    /* LOGO SCANLINES */
+    .logo-wrap { position: relative; display: inline-block; }
+    .logo-wrap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px, rgba(212,175,55,0.05) 2px); }
   </style>
 </head>
 <body>
 
-  <!-- NAVIGATION -->
-  <nav id="mainNav">
-    <div class="nav-brand">AGUM BUKUMA RADIO</div>
-    <div class="nav-links">
-      <a href="#radio">Listen</a>
-      <a href="#herald">News</a>
-      <a href="#requests">Request</a>
-      <a href="#donate">Support</a>
-      <a href="/app/">Community App</a>
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <section id="hero">
-    <h1>AGUM <span>BUKUMA</span><br>COMMUNITY RADIO</h1>
-    <p class="hero-sub">Echoes of the Riverine • 24/7 Highlife & Heritage</p>
-    <div class="hero-cta">
-      <a href="#radio" class="btn btn-primary">Listen Live</a>
-      <a href="/app/" class="btn btn-outline">Join Community App</a>
-    </div>
-  </section>
-
-  <!-- RADIO PLAYER WIDGET -->
-  <section id="radio" class="radio-section">
-    <div class="content-wrap">
-      <div class="section-header">
-        <div class="section-label">Live Transmission</div>
-        <h2>Tune In Now</h2>
-        <p>The heartbeat of Bukuma, broadcasting live from the Niger Delta.</p>
-      </div>
+  <div class="container">
+    
+    <!-- SIDEBAR: RADIO WIDGET -->
+    <aside class="sidebar">
+      <header style="border:none; margin-bottom:20px; text-align:left;">
+        <p class="label">LIVE FROM BUKUMA SQUARE</p>
+        <h2 style="font-size:36px; line-height:1;">Nature & Wood FM</h2>
+      </header>
 
       <div class="radio-widget">
-        <div class="radio-screw rs-tl"></div><div class="radio-screw rs-tr"></div>
-        <div class="radio-screw rs-bl"></div><div class="radio-screw rs-br"></div>
-
-        <!-- CRT DISPLAY -->
-        <div class="crt-screen">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-              <div class="radio-label" style="opacity:0.6; margin-bottom:8px;">NOW BROADCASTING:</div>
-              <div id="trackTitle" style="font-size:24px; font-weight:900;">STATION IDLE</div>
-              <div id="trackArtist" style="font-size:14px; opacity:0.8; margin-top:6px;">Awaiting sync...</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="radio-label" style="opacity:0.6; margin-bottom:8px;">SIGNAL:</div>
-              <div id="signalStatus" style="font-weight:900; color:var(--radio-green);">READY</div>
-            </div>
+        <p class="label" style="font-size:8px; margin-bottom:12px; opacity:0.6;">TRANSISTOR UPLINK • ACTIVE</p>
+        <div class="widget-display">
+          <div id="trackTitle" style="font-size:16px; font-weight:900; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">STATION IDLE</div>
+          <div id="trackArtist" style="font-size:11px; opacity:0.6; font-weight:700;">AWAITING SIGNAL...</div>
+          <div style="font-size:10px; margin-top:15px; display:flex; justify-content:space-between; font-weight:900;">
+            <span>STATUS: <span id="sigStatus" style="color:var(--green)">LOCKED</span></span>
+            <span>UPLINKS: <span id="statListeners" style="color:var(--accent)">000</span></span>
           </div>
+          <div class="vu-meter"><div id="vuBar" class="vu-bar"></div></div>
         </div>
 
-        <!-- CONTROLS ROW -->
-        <div style="display:flex; justify-content:space-around; align-items:center; position:relative; z-index:2;">
-          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
-            <div class="meter-container">
-              <div class="needle" id="needle1"></div>
-            </div>
-            <span class="radio-label">SIGNAL</span>
-          </div>
-
-          <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-            <div class="knob" id="powerKnob" onclick="togglePower()"></div>
-            <span id="knobLabel" class="radio-label">POWER / OFF</span>
-          </div>
-
-          <div style="display:flex; gap:20px;">
-            <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
-              <div class="rocker" id="onAirLed"></div>
-              <span class="radio-label">ON AIR</span>
-            </div>
-            <div style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px;">
-              <div class="rocker" id="streamLed"></div>
-              <span class="radio-label">STATUS</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- STATS -->
-        <div class="radio-stats">
-          <div class="radio-stat">
-            <div class="radio-stat-val" id="statListeners">000</div>
-            <div class="radio-label" style="margin-top:6px;">LISTENERS</div>
-          </div>
-          <div class="radio-stat">
-            <div class="radio-stat-val" id="statQueue">0</div>
-            <div class="radio-label" style="margin-top:6px;">QUEUED</div>
-          </div>
-          <div class="radio-stat">
-            <div class="radio-stat-val" style="color:var(--accent-light);">24/7</div>
-            <div class="radio-label" style="margin-top:6px;">LIVE</div>
-          </div>
+        <div style="text-align: center;">
+          <div class="widget-knob" id="powerKnob" onclick="togglePower()"></div>
+          <p class="label" id="knobLabel" style="margin-top:20px;">POWER / OFF</p>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- THE HERALD -->
-  <section id="herald" class="herald-section section-pad">
-    <div class="content-wrap">
-      <div class="section-header">
-        <div class="section-label">Community News</div>
-        <h2>The Bukuma Herald</h2>
-        <p>Updates, announcements, and stories from across our villages.</p>
+      <div style="margin-top:50px; padding:30px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid rgba(255,255,255,0.05);">
+        <h3 style="margin-bottom:20px;">Community Radio</h3>
+        <p style="font-size:15px; opacity:0.7;">Broadcasting highlife and community news 24/7 across Bukuma Square and surrounding square regions. Digital relay provided via the Nature & Wood system.</p>
+        <div style="margin-top:30px;">
+          <a href="/admin" style="color:var(--accent); text-decoration:none; font-weight:900; font-size:11px; letter-spacing:2px; border:1px solid var(--accent); padding:10px 20px; border-radius:5px;">STATION MASTER ACCESS ➔</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN: NEWS HERALD -->
+    <main class="main-content">
+      <header>
+        <p class="label" style="margin-bottom:10px;">VOL. LXXIV • NO. 127 • BUKUMA, NIGERIA</p>
+        <div class="logo-wrap"><h1>AGUM BUKUMA HERALD</h1></div>
+        <div style="border-top:1px solid var(--accent); border-bottom:1px solid var(--accent); padding:10px 0; margin-top:20px;">
+          <p class="label" style="opacity:0.8; letter-spacing:5px;">TRUTH • COMMUNITY • HIGHLIFE</p>
+        </div>
+      </header>
+
+      <div class="news-grid" id="newsGrid">
+        <!-- Dynmically loaded from herald.json -->
       </div>
 
-      <div id="heraldGrid" class="herald-grid">
-        <!-- Populated dynamically -->
-      </div>
+      <footer>
+          THE BUKUMA HERALD • EST. 1952 • PRINTED IN BUKUMA SQUARE • DISTRIBUTED VIA THE AIRWAVES • © 2026 AGUM BUKUMA HERALD
+      </footer>
+    </main>
 
-      <div id="heraldActivities" class="activities-bar">
-        <h4>Upcoming Community Activities</h4>
-        <div id="activitiesContent" style="font-size:15px; color:var(--text-muted);"></div>
-      </div>
-    </div>
-  </section>
+  </div>
 
-  <!-- REQUESTS -->
-  <section id="requests" class="section-pad">
-    <div class="content-wrap">
-      <div class="section-header">
-        <div class="section-label">Song Request</div>
-        <h2>Beam a Request to the DJ</h2>
-        <p>Send your favourite song directly to the Agum Bukuma Master Console.</p>
-      </div>
-
-      <div class="request-card">
-        <input type="text" id="reqName" class="input-modern" placeholder="Your Name">
-        <input type="text" id="reqSong" class="input-modern" placeholder="Song or Artist">
-        <button class="btn-submit" onclick="sendRequest()">Send Request</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- DONATE -->
-  <section id="donate" class="donate-section section-pad">
-    <div class="content-wrap">
-      <div class="section-header">
-        <div class="section-label" style="color:rgba(255,255,255,0.5);">Support the Mission</div>
-        <h2>Keep the Station Live</h2>
-        <p>Your contributions fund our broadcast and community development projects, including the Village Primary School redevelopment.</p>
-      </div>
-      <button class="btn-donate" onclick="alert('Squad API Integration Coming Soon...')">Donate to the Radio Cause</button>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <p>Agum Bukuma Broadcasting Corp &bull; Est. 2024 &bull; The Voice of the Rivers</p>
-  </footer>
-
-  <audio id="radioAudio" src="/stream" preload="none"></audio>
+  <audio id="radioAudio" preload="none"></audio>
 
   <script>
-    var ws = null, audioPlaying = false, needleTimer = null;
+    var ws = null, audioPlaying = false;
 
-    // Navigation scroll effect
-    window.addEventListener('scroll', () => {
-      document.getElementById('mainNav').classList.toggle('scrolled', window.scrollY > 50);
-    });
-
-    function connect() {
+    function connectWS() {
       var proto = location.protocol === 'https:' ? 'wss' : 'ws';
       ws = new WebSocket(proto + '://' + location.host);
-      ws.onopen = () => {
-        document.getElementById('streamLed').classList.add('active');
-        document.getElementById('signalStatus').textContent = 'CONNECTED';
-        ws.send(JSON.stringify({ action: 'getStatus' }));
-      };
-      ws.onmessage = (e) => {
-        try { var d = JSON.parse(e.data); handleMessage(d); } catch(err) {}
-      };
-      ws.onclose = () => {
-        document.getElementById('streamLed').classList.remove('active');
-        document.getElementById('signalStatus').textContent = 'OFFLINE';
-        setTimeout(connect, 3000);
-      };
+      ws.onopen = () => { ws.send(JSON.stringify({ action: 'getStatus' })); };
+      ws.onmessage = e => { try { handleStatus(JSON.parse(e.data)); } catch(err){} };
+      ws.onclose = () => setTimeout(connectWS, 3000);
     }
 
-    function handleMessage(d) {
-      if(d.type === 'status') {
-        document.getElementById('trackTitle').textContent = d.currentTrack ? d.currentTrack.title : 'STATION IDLE';
-        document.getElementById('trackArtist').textContent = d.currentTrack ? (d.currentTrack.artist || 'Unknown') : 'Awaiting sync...';
+    function handleStatus(d) {
+      if(d.type === 'status' || d.type === 'nowPlaying') {
+        const title = d.currentTrack ? d.currentTrack.title : 'STATION IDLE';
+        const artist = d.currentTrack ? d.currentTrack.artist : 'AWAITING SIGNAL...';
+        document.getElementById('trackTitle').textContent = title.toUpperCase();
+        document.getElementById('trackArtist').textContent = artist.toUpperCase();
         document.getElementById('statListeners').textContent = (d.listeners || 0).toString().padStart(3, '0');
-        document.getElementById('statQueue').textContent = (d.queue || []).length;
-        document.getElementById('onAirLed').classList.toggle('active', d.isPlaying);
+        
+        if(audioPlaying) {
+          document.getElementById('vuBar').style.width = (40 + Math.random() * 60) + '%';
+        }
       }
     }
 
     function togglePower() {
-      var audio = document.getElementById('radioAudio');
-      var knob = document.getElementById('powerKnob');
-      if(audioPlaying) {
-        audio.pause(); audio.src = '';
-        knob.classList.remove('active');
-        audioPlaying = false;
-        document.getElementById('knobLabel').textContent = 'POWER / OFF';
-        stopNeedle();
-      } else {
-        audio.src = '/stream?' + Date.now();
-        audio.play().catch(()=>{});
-        knob.classList.add('active');
-        audioPlaying = true;
-        document.getElementById('knobLabel').textContent = 'POWER / ON';
-        startNeedle();
-      }
-    }
-
-    function sendRequest() {
-      var n = document.getElementById('reqName').value;
-      var s = document.getElementById('reqSong').value;
-      if(!n || !s) return alert('Please fill in both fields.');
-      ws.send(JSON.stringify({ action: 'request', listener: n, song: s }));
-      alert('Your request has been sent to the DJ!');
-      document.getElementById('reqName').value = '';
-      document.getElementById('reqSong').value = '';
-    }
-
-    function startNeedle() {
-      needleTimer = setInterval(() => {
-        var angle = -30 + Math.random() * 60;
-        document.getElementById('needle1').style.transform = 'rotate(' + angle + 'deg)';
-      }, 150);
-    }
-    function stopNeedle() {
-      clearInterval(needleTimer);
-      document.getElementById('needle1').style.transform = 'rotate(-45deg)';
+       var audio = document.getElementById('radioAudio');
+       var knob = document.getElementById('powerKnob');
+       if(audioPlaying) {
+         audio.pause(); audio.src = '';
+         knob.classList.remove('active');
+         audioPlaying = false;
+         document.getElementById('knobLabel').textContent = 'POWER / OFF';
+         document.getElementById('vuBar').style.width = '0%';
+       } else {
+         audio.src = '/stream?' + Date.now();
+         audio.play().catch(()=>{});
+         knob.classList.add('active');
+         audioPlaying = true;
+         document.getElementById('knobLabel').textContent = 'POWER / ON';
+       }
     }
 
     async function loadHerald() {
       try {
         const r = await fetch('/data/herald.json');
         const d = await r.json();
-        const grid = document.getElementById('heraldGrid');
-        const badgeMap = { 'ongoing': 'badge-ongoing', 'official': 'badge-official', 'upcoming': 'badge-upcoming' };
-        grid.innerHTML = d.news.filter(n => n.id !== 'compound-competitions').map(n => `
-          <div class="herald-card" id="herald-${n.id}">
-            <h3>${n.title}</h3>
-            <p>${n.content}</p>
-            <span class="herald-badge ${badgeMap[n.status.toLowerCase()] || 'badge-official'}">${n.status}</span>
-          </div>
+        const grid = document.getElementById('newsGrid');
+        grid.innerHTML = d.news.map(item => `
+          <article class="news-item">
+            <span class="news-status">${item.status.toUpperCase()}</span>
+            <h2><a href="${item.link}" style="color:inherit; text-decoration:none;">${item.title}</a></h2>
+            <p class="news-summary">${item.summary}</p>
+            <p style="font-size:18px; opacity:0.7; color:var(--text);">${item.content}</p>
+            <div style="margin-top:30px;">
+              <a href="${item.link}" style="color:var(--accent); font-weight:900; font-size:12px; text-decoration:none; letter-spacing:2px; border-bottom:2px solid var(--accent);">READ THE FULL HERALD ➔</a>
+            </div>
+          </article>
         `).join('');
-
-        const acts = d.news.find(n => n.id === 'compound-competitions');
-        if(acts) {
-          document.getElementById('activitiesContent').innerHTML = `
-            <p>${acts.content}</p>
-          `;
-        }
-      } catch(err) {}
+      } catch(e) {
+        console.error('FAILED TO LOAD HERALD');
+      }
     }
 
-    connect();
+    connectWS();
     loadHerald();
-    setInterval(() => { if(ws && ws.readyState === 1) ws.send(JSON.stringify({ action: 'getStatus' })); }, 5000);
   </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AGUM BUKUMA - Master Control Station</title>
+  <title>AGUM BUKUMA - Multi-Tier Master Console</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:wght@700;900&display=swap');
     
@@ -11,11 +11,11 @@
       --primary: #8B4513;
       --accent: #D4AF37;
       --bg: #0D0805;
-      --card: #3D2B1F;
+      --card: #2b1b17;
       --text: #F5DEB3;
       --green: #4ade80;
+      --red: #ff4757;
       --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
-      --metal: linear-gradient(180deg, #333 0%, #111 100%);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,244 +24,191 @@
       font-family: 'Inter', sans-serif;
       background: #0f0a08 url('https://www.transparenttextures.com/patterns/dark-wood.png');
       color: var(--text);
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
     }
 
     /* THE MASTER CHASSIS */
     .master-chassis {
-      width: 100%; max-width: 1400px;
+      width: 100%; height: 100%; max-width: 1600px;
       background: var(--card);
-      border: 15px solid #2b1b17;
-      border-radius: 40px;
-      box-shadow: inset 0 0 100px rgba(0,0,0,0.6), 0 50px 150px rgba(0,0,0,1);
-      position: relative; overflow: hidden;
-      display: flex; flex-direction: column;
+      border: 12px solid #1a1210;
+      border-radius: 30px;
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.8), 0 50px 150px rgba(0,0,0,1);
+      position: relative;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      grid-template-columns: 350px 1fr 350px;
+      gap: 15px;
+      padding: 20px;
     }
 
     .screw {
-      position: absolute; width: 16px; height: 16px; background: var(--brass); border-radius: 50%; z-index: 10;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+      position: absolute; width: 14px; height: 14px; background: var(--brass); border-radius: 50%; z-index: 10;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
-    .screw::after { content: ''; position: absolute; top:50%; left:15%; right:15%; height:2px; background:rgba(0,0,0,0.3); transform:rotate(45deg); }
-    .tl { top: 20px; left: 20px; } .tr { top: 20px; right: 20px; }
-    .bl { bottom: 20px; left: 20px; } .br { bottom: 20px; right: 20px; }
+    .tl { top: 15px; left: 15px; } .tr { top: 15px; right: 15px; }
+    .bl { bottom: 15px; left: 15px; } .br { bottom: 15px; right: 15px; }
 
-    /* LOGIN OVERLAY */
-    #login {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .safe-box {
-      width: 400px; padding: 60px 40px; background: #2b1b17; border: 10px solid #1a1210;
-      border-radius: 12px; text-align: center; box-shadow: 0 40px 100px #000;
-      position: relative;
-    }
-
-    /* MODULES & PLATES */
-    .module-plate {
-      background: #1e1411; border: 4px solid #120a08; border-radius: 12px;
-      padding: 30px; margin: 20px; box-shadow: inset 0 2px 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.5);
-      position: relative;
-    }
-    .module-plate h3 { 
-      font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; 
-      border-bottom: 1px solid rgba(212,175,55,0.1); padding-bottom: 10px;
-    }
-
-    /* CRT DASHBOARD */
+    /* CRT MONITOR */
     .crt-monitor {
-      background: #050805; border: 12px solid #1a1210; border-radius: 20px;
-      padding: 40px; position: relative; overflow: hidden;
-      box-shadow: inset 0 0 50px #000, 0 10px 30px rgba(0,0,0,0.5);
+      grid-column: 2;
+      background: #050805; border: 8px solid #1a1210; border-radius: 15px;
+      padding: 30px; position: relative; overflow: hidden;
+      box-shadow: inset 0 0 30px #000, 0 5px 15px rgba(0,0,0,0.5);
       color: var(--green); font-family: 'Courier New', monospace;
+      display: flex; flex-direction: column; justify-content: center;
     }
     .crt-monitor::after {
       content: ''; position: absolute; inset: 0;
-      background: linear-gradient(rgba(74, 222, 128, 0.05) 50%, transparent 50%);
+      background: linear-gradient(rgba(74, 222, 128, 0.03) 50%, transparent 50%);
       background-size: 100% 4px; pointer-events: none;
     }
 
-    /* HARDWARE CONTROLS */
-    .module-tabs {
-      display: flex; gap: 15px; padding: 20px 40px; background: rgba(0,0,0,0.3); border-bottom: 2px solid rgba(212,175,55,0.05);
-      overflow-x: auto;
+    /* PANELS */
+    .panel {
+      background: #1e1411; border: 2px solid #120a08; border-radius: 10px;
+      padding: 20px; box-shadow: inset 0 2px 15px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column; gap: 15px;
+      overflow: hidden;
     }
-    .hw-tab {
-      padding: 12px 25px; background: #2b1b17; border: 1px solid #444; border-radius: 4px;
-      color: #777; font-weight: 900; font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
-      cursor: pointer; box-shadow: 0 5px 0 #000; transition: all 0.1s;
-    }
-    .hw-tab:active, .hw-tab.active { background: var(--brass); color: #222; transform: translateY(3px); box-shadow: 0 2px 0 #000; }
+    .panel h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); opacity: 0.8; }
 
-    /* INPUTS */
-    .hw-input {
-      width: 100%; padding: 15px; background: #0a0503; border: 2px inset #2b1b17; border-radius: 4px;
-      color: var(--green); font-family: 'Courier New', monospace; outline: none;
+    /* 2-BUTTON MIC SYSTEM */
+    .mic-ctrl-group { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+    .mic-btn {
+      width: 140px; height: 60px; border-radius: 8px; border: 4px solid #1a1210;
+      color: #333; font-weight: 900; font-size: 11px; letter-spacing: 2px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; position: relative;
+      background: #222; text-shadow: 0 1px 0 rgba(255,255,255,0.1);
+      box-shadow: 0 6px 0 #000, inset 0 1px 0 rgba(255,255,255,0.05);
     }
+    .mic-btn.active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
+    .mic-btn.talk.active { background: var(--accent); color: #000; box-shadow: 0 2px 0 #000, 0 0 15px rgba(212,175,55,0.3); }
+    .mic-btn.solo.active { background: var(--red); color: #fff; box-shadow: 0 2px 0 #000, 0 0 15px rgba(255,71,87,0.3); }
+
+    /* KNOB */
+    .master-knob {
+      width: 100px; height: 100px; background: var(--brass); border-radius: 50%;
+      border: 6px solid #1a1210; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+      cursor: pointer; position: relative; margin: 20px auto;
+      transition: transform 0.1s;
+    }
+    .master-knob::after {
+      content: ''; position: absolute; top: 15px; left: 50%; width: 4px; height: 20px;
+      background: #000; border-radius: 2px; transform: translateX(-50%);
+    }
+
+    .vu-meter { height: 60px; background: #000; border: 2px solid #222; position: relative; overflow: hidden; }
+    .vu-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, #4ade80, #f9e29c, #ff4757); transition: height 0.05s; }
+
     .hw-btn {
-      padding: 12px 25px; background: var(--brass); border: none; border-radius: 4px;
-      color: #222; font-weight: 900; cursor: pointer; text-transform: uppercase;
-      box-shadow: 0 4px 0 #b8860b; transition: all 0.1s;
+      padding: 10px; background: var(--brass); border: none; border-radius: 4px;
+      color: #222; font-weight: 900; font-size: 10px; letter-spacing: 1px; cursor: pointer;
+      box-shadow: 0 3px 0 #b8860b; transition: all 0.1s;
     }
-    .hw-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #b8860b; }
+    .hw-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b8860b; }
+    .hw-btn.red { background: var(--red); color: white; box-shadow: 0 3px 0 #ab2c2c; }
 
-    .mic-unit {
-      width: 200px; height: 200px; border-radius: 50%; background: #111;
-      border: 10px solid #2b1b17; margin: 0 auto; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; position: relative; box-shadow: 0 15px 40px #000;
+    .hw-input {
+      width: 100%; padding: 10px; background: #0a0503; border: 1px solid #3d2b1f; border-radius: 4px;
+      color: var(--green); font-family: monospace; outline: none; font-size: 12px;
     }
-    .mic-unit::before {
-      content: 'PUSH TO TALK'; position: absolute; bottom: -40px; font-size: 10px; letter-spacing: 2px; font-weight: 900; color: #555;
-    }
-    .mic-unit.active { background: radial-gradient(circle, #ff4757, #ab2c2c); box-shadow: 0 0 30px rgba(255,71,87,0.5); }
-    .mic-unit.active::before { color: #ff4757; }
 
-    /* LISTS */
-    .hw-list { background: #0a0503; border-radius: 8px; padding: 10px; max-height: 400px; overflow-y: auto; }
-    .hw-item { display: flex; align-items: center; gap: 15px; padding: 15px; border: 1px solid #222; margin-bottom: 8px; border-radius: 6px; }
+    .hw-list { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 5px; padding: 10px; }
+    .hw-item { padding: 8px; border-bottom: 1px solid #2b1b17; display: flex; align-items: center; gap: 10px; font-size: 11px; }
 
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #0a0503; }
-    ::-webkit-scrollbar-thumb { background: #2b1b17; }
+    .watchdog-led { width: 8px; height: 8px; background: #111; border-radius: 50%; display: inline-block; vertical-align: middle; }
+    .watchdog-led.active { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
 
-    #dashboard { display: none; }
+    #login { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; }
   </style>
 </head>
 <body>
 
-  <!-- STATION LOCK -->
   <div id="login">
-    <div class="safe-box">
-      <div class="screw tl"></div><div class="screw tr"></div>
-      <div class="screw bl"></div><div class="screw br"></div>
-      <h2 style="font-family:'Playfair Display', serif; color:var(--accent); margin-bottom:10px;">STATION LOCK</h2>
-      <p style="font-size:9px; letter-spacing:2px; color:#666; margin-bottom:40px;">INPUT MASTER CLEARANCE</p>
-      <input type="password" id="pwd" class="hw-input" placeholder="PASSCODE" style="text-align:center; margin-bottom:30px;" onkeydown="if(event.key==='Enter')doLogin()">
-      <button class="hw-btn" style="width:100%" onclick="doLogin()">AUTHORIZE ACCESS</button>
-      <div id="loginErr" style="color:var(--red); font-size:11px; margin-top:20px; font-weight:900;"></div>
+    <div style="width:350px; padding:40px; background:#1e1411; border:8px solid #120a08; border-radius:15px; text-align:center;">
+       <h2 style="font-family:'Playfair Display', serif; color:var(--accent); margin-bottom:10px;">DJ CLEARANCE</h2>
+       <input type="password" id="pwd" class="hw-input" style="text-align:center; margin: 20px 0;" placeholder="PASSCODE" onkeydown="if(event.key==='Enter')doLogin()">
+       <button class="hw-btn" style="width:100%" onclick="doLogin()">INITIALIZE UNIT</button>
+       <div id="loginErr" style="color:var(--red); font-size:10px; margin-top:20px; font-weight:900;"></div>
     </div>
   </div>
 
-  <!-- MASTER CONTROL CHASSIS -->
   <div id="dashboard" class="master-chassis">
     <div class="screw tl"></div><div class="screw tr"></div>
     <div class="screw bl"></div><div class="screw br"></div>
 
-    <header style="padding: 30px 40px; border-bottom: 1px solid rgba(212,175,55,0.1); background: rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;">
-      <div>
-        <h1 style="font-family:'Playfair Display', serif; color:var(--accent); font-size:24px;">MASTER CONTROL CONSOLE</h1>
-        <p style="font-size:9px; letter-spacing:3px; color:#777; font-weight:900;">AGUM BUKUMA BROADCASTING HUB</p>
-      </div>
-      <div id="onAirStatus" style="display: flex; align-items: center; gap:10px; font-weight:900; font-size:12px; color:#444;">
-        <div style="width:12px; height:12px; border-radius:50%; background:#222;" id="onAirLed"></div>
-        LIVE TRANSMISSION
-      </div>
-    </header>
-
-    <div class="module-tabs">
-      <div class="hw-tab active" onclick="showTab('live')">📡 MONITOR</div>
-      <div class="hw-tab" onclick="showTab('queue')">🎵 QUEUE</div>
-      <div class="hw-tab" onclick="showTab('search')">🔍 SEARCH</div>
-      <div class="hw-tab" onclick="showTab('playlists')">📜 ARCHIVES</div>
-      <div class="hw-tab" onclick="showTab('mic')">🎙️ MIC UNIT</div>
-      <div class="hw-tab" onclick="showTab('audio')">⚙️ SIGNAL</div>
-    </div>
-
-    <!-- MONITOR MODULE -->
-    <div id="module-live" class="module-plate" style="display:block;">
-      <h3>Broadcast Monitor</h3>
-      <div class="crt-monitor">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <div>
-            <div style="font-size:10px; opacity:0.6; margin-bottom:10px;">NOW PLAYING:</div>
-            <div id="nowTitle" style="font-size:32px; font-weight:900;">STATION IDLE</div>
-            <div id="nowArtist" style="font-size:18px; opacity:0.8; margin-top:5px;">Waiting for payload...</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:10px; opacity:0.6; margin-bottom:10px;">ACTIVE UPLINKS:</div>
-            <div id="statListeners" style="font-size:42px; font-weight:900;">000</div>
-            <div style="font-size:11px; letter-spacing:2px; font-weight:900;">LISTENERS</div>
-          </div>
-        </div>
-      </div>
-      
-      <div style="display: flex; gap:20px; margin-top:30px;">
-        <button class="hw-btn" style="background:#ab2c2c; color:#fff; box-shadow:0 4px 0 #6a1b1b;" onclick="skipTrack()">⏭ SKIP TRACK</button>
-        <button class="hw-btn" style="background:#222; color:var(--accent); box-shadow:0 4px 0 #000;" onclick="refreshStatus()">🔄 SYNC DATA</button>
-      </div>
-    </div>
-
-    <!-- QUEUE MODULE -->
-    <div id="module-queue" class="module-plate" style="display:none;">
-      <h3>Music Queue Plate</h3>
-      <div style="display: flex; gap:10px; margin-bottom:30px;">
-        <input type="text" id="ytUrl" class="hw-input" placeholder="PASTE YOUTUBE URL">
-        <button class="hw-btn" onclick="addToQueue()">INJECT</button>
-      </div>
-      <div id="queueList" class="hw-list"></div>
-    </div>
-
-    <!-- SEARCH MODULE -->
-    <div id="module-search" class="module-plate" style="display:none;">
-      <h3>Database Satellite Search</h3>
-      <div style="display: flex; gap:10px; margin-bottom:30px;">
-        <input type="text" id="searchQ" class="hw-input" placeholder="SEARCH ARTIST OR SONG" onkeydown="if(event.key==='Enter')searchYT()">
-        <button class="hw-btn" onclick="searchYT()">SCAN</button>
-      </div>
-      <div id="searchResults" class="hw-list" style="display: grid; grid-template-columns: 1fr 1fr; gap:15px;"></div>
-    </div>
-
-    <!-- MIC MODULE -->
-    <div id="module-mic" class="module-plate" style="display:none; text-align:center;">
-      <h3>Communication Uplink Unit</h3>
-      <div class="mic-unit" id="micBtn" onmousedown="startMic()" onmouseup="stopMic()" ontouchstart="startMic()" ontouchend="stopMic()">
-        <div style="font-size:42px;">🎙️</div>
-      </div>
-      <div style="max-width:400px; margin: 60px auto 0;">
-        <div id="micLabel" style="font-size:10px; margin-bottom:10px; color:#555; text-align:center; font-weight:900; letter-spacing:2px;">GAIN CALIBRATION</div>
-        <div style="height:10px; background:#000; border-radius:5px; overflow:hidden; border:1px solid #333;">
-           <div id="micBar" style="width:0%; height:100%; background:var(--brass); transition:width 0.1s;"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ARCHIVE MODULE -->
-    <div id="module-playlists" class="module-plate" style="display:none;">
-      <h3>Station Archive Safe</h3>
-      <div style="display: flex; gap:10px; margin-bottom:30px;">
-        <input type="text" id="plName" class="hw-input" placeholder="FILENAME">
-        <button class="hw-btn" onclick="savePlaylist()">SAVE</button>
-      </div>
+    <div class="panel" style="grid-row: span 2;">
+      <h3>Archives / Search</h3>
+      <input type="text" id="searchQ" class="hw-input" placeholder="SCAN SATELLITE..." onkeydown="if(event.key==='Enter')searchYT()">
+      <div id="searchResults" class="hw-list"></div>
+      <h3 style="margin-top:10px;">Archive Safes</h3>
       <div id="playlistList" class="hw-list"></div>
     </div>
 
-    <!-- SIGNAL MODULE -->
-    <div id="module-audio" class="module-plate" style="display:none;">
-      <h3>Signal Processing Unit</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap:40px;">
-         <div>
-            <label style="font-size:10px; font-weight:900; color:#555; display:block; margin-bottom:10px; letter-spacing:2px;">CROSSFADE DURATION</p>
-            <input type="range" id="crossfade" min="0" max="8" value="2" style="width:100%" oninput="document.getElementById('cfVal').textContent=this.value+'s'">
-            <span id="cfVal" style="color:var(--green); font-family:monospace;">2s</span>
-         </div>
-         <div>
-            <label style="font-size:10px; font-weight:900; color:#555; display:block; margin-bottom:10px; letter-spacing:2px;">MASTER GAIN</p>
-            <input type="range" id="volume" min="0" max="100" value="85" style="width:100%" oninput="document.getElementById('volVal').textContent=this.value+'%'">
-            <span id="volVal" style="color:var(--green); font-family:monospace;">85%</span>
-         </div>
+    <div class="crt-monitor">
+      <div style="display: flex; justify-content: space-between;">
+        <div id="onAirStatus" style="font-size:10px; font-weight:900;">
+          <div style="width:10px; height:10px; border-radius:50%; background:#222; display:inline-block;" id="onAirLed"></div> LIVE TRANSMISSION
+        </div>
+        <div style="font-size:10px; opacity:0.6;">
+          <div id="watchdogLed" class="watchdog-led"></div> WATCHDOG ACTIVE | UPLINKS: <span id="statListeners" style="color:var(--accent);">000</span>
+        </div>
       </div>
-      <button class="hw-btn" style="margin-top:40px;" onclick="saveAudio()">COMMIT SETTINGS</button>
+      <div style="margin-top:20px;">
+        <div style="font-size:9px; opacity:0.5; margin-bottom:5px;">CHANNEL A / ACTIVE PAYLOAD:</div>
+        <div id="nowTitle" style="font-size:32px; font-weight:900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">STATION IDLE</div>
+        <div id="nowArtist" style="font-size:16px; opacity:0.7;">Awaiting sync...</div>
+      </div>
+      <div style="display: flex; gap:20px; margin-top:20px;">
+        <button class="hw-btn red" style="flex:1" onclick="skipTrack()">NEXT TRACK</button>
+        <button class="hw-btn" style="flex:1" onclick="refreshStatus()">SYNC DATA</button>
+      </div>
     </div>
 
-    <footer style="padding: 20px 40px; background: rgba(0,0,0,0.4); text-align: center; border-top: 1px solid rgba(212,175,55,0.1);">
-      <div style="font-size:10px; color:#555; font-weight:900; letter-spacing:2px;">AGUM BUKUMA BROADCASTING CORP • AUTHENTIC HARDWARE INTERFACE</div>
-    </footer>
+    <div class="panel" style="grid-row: span 2;">
+      <h3>Master Output Console</h3>
+      
+      <div style="text-align: center;">
+         <label style="font-size:9px; font-weight:900; opacity:0.4; display:block;">MASTER BROADCAST GAIN</label>
+         <div class="master-knob" id="volKnob" onmousedown="startVolRotate(event)"></div>
+         <div style="font-family:monospace; font-size:18px; color:var(--accent);" id="volText">80%</div>
+      </div>
+
+      <div class="mic-ctrl-group" style="margin-top:20px;">
+        <div id="btn-solo" class="mic-btn solo" onclick="setMicState(2)">SOLO</div>
+        <div id="btn-talk" class="mic-btn talk" onclick="setMicState(1)">TALK/DUCK</div>
+      </div>
+      
+      <div style="margin-top:20px;">
+         <label style="font-size:9px; font-weight:900; opacity:0.4; display:block; margin-bottom:10px;">MIC INPUT LEVEL</label>
+         <div class="vu-meter"><div id="micBar" class="vu-bar" style="height:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="grid-column: 2;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+         <h3>Active Transmission Queue</h3>
+         <button class="hw-btn" onclick="savePlaylist()" style="padding:4px 10px; font-size:9px;">ARCHIVE QUEUE</button>
+      </div>
+      <div id="queueList" class="hw-list" style="max-height: 200px;"></div>
+    </div>
+
+    <div style="position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:20px;">
+       <div style="font-size:10px; font-weight:900; color:var(--accent);">STUDIO MONITORING:</div>
+       <input type="checkbox" id="monToggle" onchange="toggleMonitor()">
+       <audio id="monAudio" crossOrigin="anonymous"></audio>
+    </div>
   </div>
 
   <script>
     var ws=null, adminPwd='', micStream=null, micAnalyser=null, micAnimFrame=null, micScriptNode=null, micCtx=null;
+    var micState = 0; // 0=OFF, 1=TALK, 2=SOLO
+    var masterVol = 80;
 
     function doLogin(){
       var p=document.getElementById('pwd').value;
@@ -270,138 +217,96 @@
         if(d.success){
           adminPwd=p;
           document.getElementById('login').style.display='none';
-          document.getElementById('dashboard').style.display='flex';
+          document.getElementById('dashboard').style.display='grid';
           init();
-          setTimeout(()=>ws.send(JSON.stringify({action:'adminLogin',password:p})),1000);
         } else {
-          document.getElementById('loginErr').textContent='CLEARANCE DENIED';
+          document.getElementById('loginErr').textContent='ACCESS DENIED';
         }
       });
     }
 
     function init(){
-      connectWS(); refreshStatus(); loadQueue(); loadPlaylists();
-      setInterval(refreshStatus, 5000);
+      connect(); refreshStatus(); loadQueue(); loadPlaylists();
+      setInterval(refreshStatus, 3000);
+      // Watchdog LED blink
+      setInterval(()=>{document.getElementById('watchdogLed').classList.toggle('active')},1000);
     }
 
-    function connectWS(){
-      var proto=location.protocol==='https:'?'wss':'ws';
-      ws=new WebSocket(proto+'://'+location.host);
-      ws.onmessage=e=>{
-        try {
-          var d=JSON.parse(e.data);
-          if(d.type==='status') updateStatus(d);
-        } catch(err){}
-      };
-      ws.onclose=()=>setTimeout(connectWS,3000);
+    function connect() {
+      var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(proto + '://' + location.host);
+      ws.binaryType = 'arraybuffer';
+      ws.onopen = () => { ws.send(JSON.stringify({ action: 'adminLogin', password: adminPwd })); };
+      ws.onmessage = (e) => { try { var d = JSON.parse(e.data); if(d.type==='status') updateStatus(d); } catch(err) {} };
+      ws.onclose = () => { setTimeout(connect, 3000); };
     }
 
-    function updateStatus(d){
-      document.getElementById('nowTitle').textContent=d.currentTrack?d.currentTrack.title:'STATION IDLE';
-      document.getElementById('nowArtist').textContent=d.currentTrack?(d.currentTrack.artist||'Unknown'):'Awaiting Stream...';
-      document.getElementById('statListeners').textContent=(d.listeners||0).toString().padStart(3,'0');
-      
-      var led = document.getElementById('onAirLed');
-      if(d.isPlaying) {
-        led.style.background = '#4ade80';
-        led.style.boxShadow = '0 0 15px #4ade80';
-      } else {
-        led.style.background = '#222';
-        led.style.boxShadow = 'none';
+    function setMicState(target){
+      micState = (micState === target) ? 0 : target;
+      document.getElementById('btn-talk').classList.toggle('active', micState===1);
+      document.getElementById('btn-solo').classList.toggle('active', micState===2);
+      fetch('/api/duck', { method: 'POST', headers: {'Content-Type':'application/json', Authorization:adminPwd}, body: JSON.stringify({ state: micState }) });
+      if (micState > 0) startMic(); else stopMic();
+    }
+
+    function startVolRotate(e) {
+      const startY = e.clientY;
+      const startV = masterVol;
+      function move(me) {
+        const diff = (startY - me.clientY) / 2;
+        masterVol = Math.max(0, Math.min(100, Math.floor(startV + diff)));
+        updateVolUI();
       }
+      function end() {
+        window.removeEventListener('mousemove', move);
+        window.removeEventListener('mouseup', end);
+        fetch('/api/volume', { method: 'POST', headers: {'Content-Type':'application/json', Authorization:adminPwd}, body: JSON.stringify({ value: masterVol }) });
+      }
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', end);
     }
 
-    function refreshStatus(){ fetch('/api/status').then(r=>r.json()).then(updateStatus); }
-    function skipTrack(){ fetch('/api/queue/skip',{method:'POST',headers:{Authorization:adminPwd}}).then(refreshStatus); }
-
-    function showTab(name){
-      document.querySelectorAll('.module-plate').forEach(p=>p.style.display='none');
-      document.getElementById('module-'+name).style.display='block';
-      document.querySelectorAll('.hw-tab').forEach(t=>{
-        t.classList.toggle('active', t.textContent.toLowerCase().includes(name));
-      });
-      if(name==='queue') loadQueue();
-      if(name==='playlists') loadPlaylists();
+    function updateVolUI() {
+      document.getElementById('volKnob').style.transform = `rotate(${(masterVol-50)*3}deg)`;
+      document.getElementById('volText').textContent = masterVol + '%';
     }
-
-    function addToQueue(){
-      var url=document.getElementById('ytUrl').value.trim(); if(!url)return;
-      fetch('/api/queue',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({url:url})})
-      .then(r=>r.json()).then(d=>{ if(d.id){document.getElementById('ytUrl').value=''; loadQueue(); }});
-    }
-
-    function loadQueue(){
-      fetch('/api/queue').then(r=>r.json()).then(d=>{
-        var el=document.getElementById('queueList');
-        if(!d.queue||!d.queue.length){ el.innerHTML='<p style="color:#666; font-size:11px; text-transform:uppercase;">Queue Vacant</p>'; return; }
-        el.innerHTML=d.queue.map((t,i)=>`<div class="hw-item"><span style="color:var(--accent); font-weight:900;">${(i+1).toString().padStart(2,'0')}</span><span style="flex:1; font-family:monospace; color:var(--green);">${t.title||'Loading...'}</span><button class="hw-btn" style="padding:5px 10px; font-size:9px;" onclick="removeQueue('${t.id}')">EJECT</button></div>`).join('');
-      });
-    }
-
-    function removeQueue(id){ fetch('/api/queue/'+id,{method:'DELETE',headers:{Authorization:adminPwd}}).then(loadQueue); }
-
-    function searchYT(){
-      var q=document.getElementById('searchQ').value.trim(); if(!q)return;
-      document.getElementById('searchResults').innerHTML='<p style="color:#666">SCANNING SATELLITE...</p>';
-      fetch('/api/youtube/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
-        if(!d.results||!d.results.length){ document.getElementById('searchResults').innerHTML='<p style="color:#666">NO ASSETS FOUND</p>'; return; }
-        document.getElementById('searchResults').innerHTML=d.results.map(r=>`
-          <div class="hw-item" onclick="addSearchResult('${r.url}')" style="cursor:pointer; flex-direction:column; align-items:flex-start;">
-            <div style="color:var(--green); font-family:monospace; font-size:12px;">${r.title}</div>
-            <div style="font-size:10px; color:#555; margin-top:5px;">DURATION: ${r.duration}</div>
-          </div>
-        `).join('');
-      });
-    }
-
-    function addSearchResult(url){ fetch('/api/queue',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({url:url})}).then(()=>showTab('queue')); }
 
     function startMic(){
+      if(micStream) return;
       navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
         micStream=stream; micCtx=new AudioContext({sampleRate:22050});
-        var src=micCtx.createMediaStreamSource(stream); micAnalyser=micCtx.createAnalyser(); micScriptNode=micCtx.createScriptProcessor(4096,1,1);
+        var src=micCtx.createMediaStreamSource(stream); micAnalyser=micCtx.createAnalyser(); micScriptNode=micCtx.createScriptProcessor(2048,1,1);
         src.connect(micAnalyser); src.connect(micScriptNode); micScriptNode.connect(micCtx.destination);
         micScriptNode.onaudioprocess=e=>{
-          if(!micStream)return;
+          if(!micStream || micState===0)return;
           var cd=e.inputBuffer.getChannelData(0);
           var i16=new Int16Array(cd.length);
           for(var i=0;i<cd.length;i++){ var s=Math.max(-1,Math.min(1,cd[i])); i16[i]=s<0?s*32768:s*32767; }
           if(ws&&ws.readyState===1)ws.send(i16.buffer);
         };
-        document.getElementById('micBtn').classList.add('active');
-        fetch('/api/duck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({active:true})});
         animateMic();
       });
     }
 
-    function stopMic(){
-      if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
-      document.getElementById('micBtn').classList.remove('active');
-      document.getElementById('micBar').style.width='0%';
-      cancelAnimationFrame(micAnimFrame);
-      fetch('/api/duck',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({active:false})});
+    function stopMic(){ if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; } cancelAnimationFrame(micAnimFrame); document.getElementById('micBar').style.height = '0%'; }
+    function animateMic(){ if(!micAnalyser)return; var data=new Uint8Array(micAnalyser.frequencyBinCount); micAnalyser.getByteFrequencyData(data); var avg=data.reduce((a,b)=>a+b,0)/data.length; document.getElementById('micBar').style.height=Math.min(100,(avg/128)*100)+'%'; micAnimFrame=requestAnimationFrame(animateMic); }
+    function toggleMonitor(){ const audio = document.getElementById('monAudio'); if(document.getElementById('monToggle').checked){ audio.src='/stream?'+Date.now(); audio.play(); } else { audio.pause(); audio.src=''; } }
+    function updateStatus(d){
+      document.getElementById('nowTitle').textContent=d.currentTrack?d.currentTrack.title:'STATION IDLE';
+      document.getElementById('nowArtist').textContent=d.currentTrack?(d.currentTrack.artist||'Unknown'):'Broadcast Room Empty';
+      document.getElementById('statListeners').textContent=(d.listeners||0).toString().padStart(3,'0');
+      document.getElementById('onAirLed').style.background = d.isPlaying?'var(--green)':'#222';
+      masterVol = d.volume || 80; updateVolUI(); loadQueue();
     }
-
-    function animateMic(){
-      if(!micAnalyser)return;
-      var data=new Uint8Array(micAnalyser.frequencyBinCount); micAnalyser.getByteFrequencyData(data);
-      var avg=data.reduce((a,b)=>a+b,0)/data.length;
-      document.getElementById('micBar').style.width=Math.min(100,(avg/256)*100*3)+'%';
-      micAnimFrame=requestAnimationFrame(animateMic);
-    }
-
-    function loadPlaylists(){
-      fetch('/api/playlists').then(r=>r.json()).then(d=>{
-        var el=document.getElementById('playlistList');
-        if(!d.playlists||!d.playlists.length){ el.innerHTML='<p style="color:#666">Archives Empty</p>'; return; }
-        el.innerHTML=d.playlists.map(p=>`<div class="hw-item"><span style="flex:1; color:var(--green); font-family:monospace;">${p.name} [${p.tracks.length} BIN]</span><button class="hw-btn" style="padding:5px 10px; font-size:9px; margin-right:5px;" onclick="loadPlaylist('${p.id}')">LINK</button><button class="hw-btn" style="background:#ab2c2c; padding:5px 10px; font-size:9px;" onclick="deletePlaylist('${p.id}')">DEL</button></div>`).join('');
-      });
-    }
-    
-    function loadPlaylist(id){ fetch('/api/playlists/'+id+'/load',{method:'POST',headers:{Authorization:adminPwd}}).then(()=>showTab('queue')); }
-    function deletePlaylist(id){ fetch('/api/playlists/'+id,{method:'DELETE',headers:{Authorization:adminPwd}}).then(loadPlaylists); }
-    function savePlaylist(){ var name=document.getElementById('plName').value.trim(); if(!name)return; fetch('/api/playlists',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({name:name})}).then(()=>{document.getElementById('plName').value=''; loadPlaylists();}); }
-    function saveAudio(){ fetch('/api/audio/settings',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({crossfade:+document.getElementById('crossfade').value, volume:+document.getElementById('volume').value})}).then(()=>alert('SIGNAL CALIBRATED')); }
+    function refreshStatus(){ fetch('/api/status').then(r=>r.json()).then(updateStatus); }
+    function skipTrack(){ fetch('/api/queue/skip',{method:'POST',headers:{Authorization:adminPwd}}).then(refreshStatus); }
+    function searchYT(){ var q=document.getElementById('searchQ').value.trim(); if(!q)return; document.getElementById('searchResults').innerHTML='<p>SCANNING...</p>'; fetch('/api/youtube/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{ document.getElementById('searchResults').innerHTML=d.results.map(r=>`<div class="hw-item" onclick="addSearchResult('${r.url}')"><div style="color:var(--green);">${r.title}</div></div>`).join(''); }); }
+    function addSearchResult(url){ fetch('/api/queue',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({url:url})}); }
+    function loadQueue(){ fetch('/api/queue').then(r=>r.json()).then(d=>{ document.getElementById('queueList').innerHTML=d.queue.map((t,i)=>`<div class="hw-item"><span>${(i+1)}</span><span style="flex:1">${t.title}</span><button class="hw-btn" style="padding:2px 8px; font-size:8px;" onclick="removeQueue('${t.id}')">EJECT</button></div>`).join(''); }); }
+    function removeQueue(id){ fetch('/api/queue/'+id,{method:'DELETE',headers:{Authorization:adminPwd}}).then(loadQueue); }
+    function loadPlaylists(){ fetch('/api/playlists').then(r=>r.json()).then(d=>{ document.getElementById('playlistList').innerHTML=d.playlists.map(p=>`<div class="hw-item"><span style="flex:1">${p.name}</span><button class="hw-btn" style="padding:2px 8px; font-size:8px;" onclick="loadPlaylist('${p.id}')">LINK</button></div>`).join(''); }); }
+    function loadPlaylist(id){ fetch('/api/playlists/'+id+'/load',{method:'POST',headers:{Authorization:adminPwd}}).then(refreshStatus); }
+    function savePlaylist(){ var n=prompt('Filename?'); if(n) fetch('/api/playlists',{method:'POST',headers:{'Content-Type':'application/json',Authorization:adminPwd},body:JSON.stringify({name:n})}).then(loadPlaylists); }
   </script>
 </body>
 </html>
