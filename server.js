@@ -194,14 +194,21 @@ async function getYouTubeUrl(query) {
     const ytdlpPath = 'C:\\Users\\USER\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\yt-dlp.exe';
     return new Promise((resolve, reject) => {
           const q = query.startsWith('http') ? `"${query}"` : `"ytsearch1:${query}"`;
-          exec(`"${ytdlpPath}" --get-url --format bestaudio ${q}`, { timeout: 30000 }, (err, stdout) => {
-                  if (err) reject(err); else resolve(stdout.trim().split('\n')[0]);
+          console.log('[YT-DLP] Resolving:', q);
+          exec(`"${ytdlpPath}" --get-url --format bestaudio ${q}`, { timeout: 60000 }, (err, stdout, stderr) => {
+                  if (err) { console.error('[YT-DLP] ERROR:', err.message); reject(err); }
+                  else {
+                      const url = stdout.trim().split('\n')[0];
+                      console.log('[YT-DLP] Resolved OK, URL length:', url.length);
+                      resolve(url);
+                  }
           });
     });
 }
 
 async function startPlayback() {
-    if (queue.length === 0) { broadcast({ type: 'error', message: 'Queue is empty' }); return; }
+    if (queue.length === 0) { console.log('[PLAY] Queue is empty'); broadcast({ type: 'error', message: 'Queue is empty' }); return; }
+    console.log('[PLAY] Starting playback, queue:', queue.length, 'tracks');
     isPlaying = true;
     playNext();
 }
@@ -217,6 +224,7 @@ async function playNext() {
                             return;
                   }
           }
+          console.log('[PLAY] Queue exhausted, stopping.');
           isPlaying = false;
           currentTrack = null;
           broadcast(getStatus());
@@ -224,6 +232,7 @@ async function playNext() {
           return;
     }
     currentTrack = { ...queue[0] };
+    console.log('[PLAY] Now playing:', currentTrack.title, '-', currentTrack.artist);
     broadcast({ type: 'nowPlaying', track: currentTrack });
     broadcast(getStatus());
     saveState();
@@ -241,20 +250,25 @@ async function playNext() {
                   broadcast({ type: 'playJingle', url: startJingle.url });
           }
           scheduleRandomJingle();
+          if (currentProcess) { try { currentProcess.kill('SIGKILL'); } catch(e) {} }
           const ffmpegPath = 'C:\\Users\\USER\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.WinGet.Source_8wekyb3d8bbwe\\ffmpeg-8.1-full_build\\bin\\ffmpeg.exe';
-          currentProcess = spawn(ffmpegPath, ['-reconnect', '1', '-reconnect_streamed', '1', '-i', url, '-af', `volume=${volume/100}`, '-f', 'mp3', '-br', '128k', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
+          console.log('[FFMPEG] Spawning for:', currentTrack.title);
+          currentProcess = spawn(ffmpegPath, ['-reconnect', '1', '-reconnect_streamed', '1', '-i', url, '-af', `volume=${volume/100}`, '-f', 'mp3', '-b:a', '128k', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
           currentProcess.stdout.on('data', (chunk) => {
                   streamClients.forEach(res => { try { res.write(chunk); } catch(e) { streamClients.delete(res); } });
           });
-          currentProcess.stderr.on('data', () => {});
+          currentProcess.stderr.on('data', (d) => {});
           currentProcess.on('close', (code) => {
+                  console.log('[FFMPEG] Process closed for:', currentTrack?.title, 'code:', code);
                   if (isPlaying) { queue.shift(); saveQueue(); setTimeout(playNext, 500); }
           });
           currentProcess.on('error', (e) => {
+                  console.error('[FFMPEG] Error:', e.message);
                   broadcast({ type: 'error', message: 'Playback error: ' + e.message });
                   if (isPlaying) { queue.shift(); saveQueue(); setTimeout(playNext, 2000); }
           });
     } catch(e) {
+          console.error('[PLAY] CATCH ERROR for', currentTrack?.title, ':', e.message);
           broadcast({ type: 'error', message: 'Could not load: ' + (currentTrack ? currentTrack.title : 'track') });
           if (isPlaying) { queue.shift(); saveQueue(); setTimeout(playNext, 2000); }
     }

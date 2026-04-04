@@ -1,1 +1,107 @@
-[]
+[
+  {
+    "id": "1002",
+    "title": "Ogbologbo",
+    "artist": "Cardinal Rex Lawson",
+    "youtubeQuery": "https://www.youtube.com/watch?v=7bOxEi9RJsg",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1003",
+    "title": "Ozigizaga",
+    "artist": "Alfred J King",
+    "youtubeQuery": "Alfred J King Ozigizaga Ijaw highlife",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1004",
+    "title": "Jolly Papa",
+    "artist": "Cardinal Rex Lawson",
+    "youtubeQuery": "https://www.youtube.com/watch?v=mhoFozrOGlA",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1005",
+    "title": "Earth Song",
+    "artist": "Wizard Chan",
+    "youtubeQuery": "Wizard Chan Earth Song",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1006",
+    "title": "Paddle of the Niger Delta",
+    "artist": "Barrister Smooth",
+    "youtubeQuery": "Chief Barrister Smooth Ijaw highlife",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1007",
+    "title": "Yellow Sisi",
+    "artist": "Cardinal Rex Lawson",
+    "youtubeQuery": "https://www.youtube.com/watch?v=xSsSzuioIWA",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1008",
+    "title": "Tompolo",
+    "artist": "Alfred J King",
+    "youtubeQuery": "Alfred J King Tompolo",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1009",
+    "title": "Halo Halo",
+    "artist": "Wizard Chan",
+    "youtubeQuery": "Wizard Chan Halo Halo",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1010",
+    "title": "Ijaw Cultural Heritage",
+    "artist": "Barrister Smooth",
+    "youtubeQuery": "Barrister Smooth Ijaw highlife best",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1011",
+    "title": "Adaka Boro",
+    "artist": "Alfred J King",
+    "youtubeQuery": "Alfred J King Adaka Boro",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1012",
+    "title": "HighLife",
+    "artist": "Wizard Chan",
+    "youtubeQuery": "Wizard Chan HighLife",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1013",
+    "title": "Warri",
+    "artist": "Cardinal Rex Lawson",
+    "youtubeQuery": "Cardinal Rex Lawson Warri highlife",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1014",
+    "title": "Miss You",
+    "artist": "Wizard Chan",
+    "youtubeQuery": "Wizard Chan Miss You",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1015",
+    "title": "Miekemedonmo",
+    "artist": "Alfred J King",
+    "youtubeQuery": "Alfred J King Miekemedonmo",
+    "duration": "Unknown"
+  },
+  {
+    "id": "1016",
+    "title": "So Ala Teme",
+    "artist": "Cardinal Rex Lawson",
+    "youtubeQuery": "Cardinal Rex Lawson So Ala Teme",
+    "duration": "Unknown"
+  }
+]

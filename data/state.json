@@ -1,7 +1,13 @@
 {
   "volume": 36,
-  "isPlaying": false,
-  "currentTrack": null,
+  "isPlaying": true,
+  "currentTrack": {
+    "id": "1002",
+    "title": "Ogbologbo",
+    "artist": "Cardinal Rex Lawson",
+    "youtubeQuery": "https://www.youtube.com/watch?v=7bOxEi9RJsg",
+    "duration": "Unknown"
+  },
   "autoJingles": {
     "start": true,
     "random": true
