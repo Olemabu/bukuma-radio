@@ -1,488 +1,679 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AGUM BUKUMA - Multi-Tier Master Console</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:wght@700;900&display=swap');
-    :root {
-      --primary: #8B4513; --accent: #D4AF37; --bg: #0D0805;
-      --card: #2b1b17; --text: #F5DEB3; --green: #4ade80;
-      --red: #ff4757;
-      --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0f0a08 url('https://www.transparenttextures.com/patterns/dark-wood.png');
-      color: var(--text); height: 100vh; overflow: hidden;
-      display: flex; align-items: center; justify-content: center; padding: 20px;
-    }
-    .master-chassis {
-      width: 100%; height: 100%; max-width: 1600px;
-      background: var(--card); border: 12px solid #1a1210; border-radius: 30px;
-      box-shadow: inset 0 0 100px rgba(0,0,0,0.8), 0 50px 150px rgba(0,0,0,1);
-      position: relative; display: grid;
-      grid-template-rows: auto 1fr auto;
-      grid-template-columns: 350px 1fr 350px;
-      gap: 15px; padding: 20px;
-    }
-    .screw { position: absolute; width: 14px; height: 14px; background: var(--brass); border-radius: 50%; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    .tl { top: 15px; left: 15px; } .tr { top: 15px; right: 15px; }
-    .bl { bottom: 15px; left: 15px; } .br { bottom: 15px; right: 15px; }
-    .crt-monitor {
-      grid-column: 2; background: #050805; border: 8px solid #1a1210;
-      border-radius: 15px; padding: 30px; position: relative; overflow: hidden;
-      box-shadow: inset 0 0 30px #000, 0 5px 15px rgba(0,0,0,0.5);
-      color: var(--green); font-family: 'Courier New', monospace;
-      display: flex; flex-direction: column; justify-content: center;
-    }
-    .crt-monitor::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(rgba(74, 222, 128, 0.03) 50%, transparent 50%);
-      background-size: 100% 4px; pointer-events: none;
-    }
-    .panel {
-      background: #1e1411; border: 2px solid #120a08; border-radius: 10px;
-      padding: 20px; box-shadow: inset 0 2px 15px rgba(0,0,0,0.5);
-      display: flex; flex-direction: column; gap: 15px; overflow: hidden;
-    }
-    .panel h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); opacity: 0.8; }
-    .mic-ctrl-group { display: flex; flex-direction: column; gap: 15px; align-items: center; }
-    .mic-btn {
-      width: 140px; height: 60px; border-radius: 8px; border: 4px solid #1a1210;
-      color: #333; font-weight: 900; font-size: 11px; letter-spacing: 2px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      transition: all 0.2s; position: relative; background: #222;
-      box-shadow: 0 6px 0 #000, inset 0 1px 0 rgba(255,255,255,0.05);
-    }
-    .mic-btn.active { transform: translateY(4px); box-shadow: 0 2px 0 #000; }
-    .mic-btn.talk.active { background: var(--accent); color: #000; box-shadow: 0 2px 0 #000, 0 0 15px rgba(212,175,55,0.3); }
-    .mic-btn.solo.active { background: var(--red); color: #fff; box-shadow: 0 2px 0 #000, 0 0 15px rgba(255,71,87,0.3); }
-    .master-knob {
-      width: 100px; height: 100px; background: var(--brass); border-radius: 50%;
-      border: 6px solid #1a1210; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-      cursor: pointer; position: relative; margin: 20px auto; transition: transform 0.1s;
-    }
-    .master-knob::after {
-      content: ''; position: absolute; top: 15px; left: 50%; width: 4px; height: 20px;
-      background: #000; border-radius: 2px; transform: translateX(-50%);
-    }
-    .vu-meter { height: 60px; background: #000; border: 2px solid #222; position: relative; overflow: hidden; }
-    .vu-bar { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, #4ade80, #f9e29c, #ff4757); transition: height 0.05s; }
-    .hw-btn {
-      padding: 10px; background: var(--brass); border: none; border-radius: 4px;
-      color: #222; font-weight: 900; font-size: 10px; letter-spacing: 1px;
-      cursor: pointer; box-shadow: 0 3px 0 #b8860b; transition: all 0.1s;
-    }
-    .hw-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #b8860b; }
-    .hw-btn.red { background: var(--red); color: white; box-shadow: 0 3px 0 #ab2c2c; }
-    .hw-input {
-      width: 100%; padding: 10px; background: #0a0503; border: 1px solid #3d2b1f;
-      border-radius: 4px; color: var(--green); font-family: monospace; outline: none; font-size: 12px;
-    }
-    .hw-list { flex: 1; overflow-y: auto; background: rgba(0,0,0,0.3); border-radius: 5px; padding: 10px; }
-    .hw-item { padding: 8px; border-bottom: 1px solid #2b1b17; display: flex; align-items: center; gap: 10px; font-size: 11px; }
-    .watchdog-led { width: 8px; height: 8px; background: #111; border-radius: 50%; display: inline-block; vertical-align: middle; }
-    .watchdog-led.active { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
-    #login { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-    .mic-status { font-size: 9px; font-weight: 900; letter-spacing: 1px; text-align: center; color: #555; margin-top: 5px; }
-    .mic-status.active { color: var(--green); }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bukuma Radio — Admin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --accent: #e63946;
+    --accent2: #4cc9f0;
+    --green: #2dc653;
+    --yellow: #f4d03f;
+    --text: #e8eaf6;
+    --muted: #8890a6;
+    --radius: 10px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+  }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 40px; width: 340px; text-align: center;
+  }
+  .login-card h1 { font-size: 1.6rem; margin-bottom: 6px; }
+  .login-card p { color: var(--muted); margin-bottom: 28px; font-size: 0.9rem; }
+  .login-card input {
+    width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-size: 1rem; margin-bottom: 14px;
+  }
+  .login-card input:focus { outline: none; border-color: var(--accent2); }
+  .btn-login {
+    width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: var(--radius);
+    color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity .2s;
+  }
+  .btn-login:hover { opacity: .85; }
+  #loginError { color: var(--accent); margin-top: 12px; font-size: 0.9rem; }
+
+  /* ── MAIN LAYOUT ── */
+  #mainScreen { display: none; flex-direction: column; min-height: 100vh; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  header .logo { font-size: 1.2rem; font-weight: 700; }
+  header .logo span { color: var(--accent); }
+  .on-air-badge {
+    display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600;
+    background: rgba(230,57,70,.15); border: 1px solid rgba(230,57,70,.4);
+    padding: 6px 14px; border-radius: 20px; color: var(--accent);
+  }
+  .on-air-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: blink 1.2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .listener-count { color: var(--muted); font-size: 0.85rem; }
+
+  .main-grid {
+    display: grid; grid-template-columns: 1fr 360px; gap: 20px;
+    padding: 20px 24px; flex: 1;
+  }
+  @media(max-width:900px) { .main-grid { grid-template-columns: 1fr; } }
+
+  /* ── PANEL CARDS ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+    color: var(--muted); margin-bottom: 16px;
+  }
+
+  /* ── NOW PLAYING ── */
+  .now-playing-section { margin-bottom: 20px; }
+  .track-display {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; display: flex; align-items: center; gap: 16px;
+  }
+  .track-thumb {
+    width: 72px; height: 72px; border-radius: 8px; object-fit: cover;
+    background: #222; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .track-thumb svg { opacity: .4; }
+  .track-info { flex: 1; min-width: 0; }
+  .track-title { font-size: 1.1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .track-artist { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+  .track-duration { color: var(--muted); font-size: 0.85rem; margin-top: 6px; }
+
+  /* ── TRANSPORT CONTROLS ── */
+  .transport { display: flex; align-items: center; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
+  .btn-play {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 0 32px; height: 56px; font-size: 1.1rem; font-weight: 700;
+    background: var(--green); color: #fff; border: none; border-radius: 12px; cursor: pointer;
+    transition: opacity .2s, transform .1s;
+  }
+  .btn-play:hover { opacity: .9; transform: scale(1.02); }
+  .btn-stop {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 0 28px; height: 56px; font-size: 1.1rem; font-weight: 700;
+    background: var(--accent); color: #fff; border: none; border-radius: 12px; cursor: pointer;
+    transition: opacity .2s;
+  }
+  .btn-stop:hover { opacity: .9; }
+  .btn-skip {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 0 22px; height: 56px; font-size: 1rem; font-weight: 600;
+    background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-skip:hover { background: #23263a; }
+
+  /* volume row */
+  .volume-row { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+  .volume-row label { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }
+  input[type=range] {
+    flex: 1; height: 4px; accent-color: var(--accent2); cursor: pointer;
+  }
+  .volume-val { color: var(--text); font-size: 0.85rem; width: 36px; text-align: right; }
+
+  /* monitor row */
+  .monitor-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .btn-monitor {
+    display: flex; align-items: center; gap: 8px; padding: 10px 18px; font-size: 0.9rem; font-weight: 600;
+    background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .btn-monitor.active { background: rgba(76,201,240,.12); color: var(--accent2); border-color: var(--accent2); }
+
+  /* ── MIC SECTION ── */
+  .mic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .mic-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center;
+  }
+  .mic-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing:.05em; }
+  .mic-btn-group { display: flex; gap: 6px; justify-content: center; }
+  .mic-btn {
+    flex: 1; padding: 8px 4px; font-size: 0.75rem; font-weight: 700;
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    border-radius: 6px; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+  }
+  .mic-btn.active-talk { background: rgba(230,57,70,.2); color: var(--accent); border-color: var(--accent); }
+  .mic-btn.active-solo { background: rgba(244,208,63,.18); color: var(--yellow); border-color: var(--yellow); }
+  .mic-btn.active-off  { background: rgba(44,44,60,.4); color: var(--muted); border-color: var(--border); }
+
+  /* ── SEARCH & QUEUE ── */
+  .search-row { display: flex; gap: 10px; }
+  .search-row input {
+    flex: 1; padding: 10px 14px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-size: 0.95rem;
+  }
+  .search-row input:focus { outline: none; border-color: var(--accent2); }
+  .search-row button {
+    padding: 10px 18px; background: var(--accent2); color: #000; font-weight: 700; font-size: 0.9rem;
+    border: none; border-radius: var(--radius); cursor: pointer; white-space: nowrap;
+  }
+  .search-row button:hover { opacity: .85; }
+  .results-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
+  .result-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .result-item:hover { border-color: var(--accent2); }
+  .result-item img { width: 48px; height: 36px; object-fit: cover; border-radius: 4px; flex-shrink: 0; }
+  .result-text { flex: 1; min-width: 0; }
+  .result-title { font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-dur { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .result-add {
+    padding: 6px 12px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 0.8rem; font-weight: 600;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .result-add:hover { background: var(--accent2); color: #000; border-color: var(--accent2); }
+  #searchStatus { margin-top: 8px; font-size: 0.82rem; color: var(--muted); }
+
+  /* ── QUEUE ── */
+  .queue-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+  .queue-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .queue-item.playing { border-color: var(--green); }
+  .queue-num { color: var(--muted); font-size: 0.8rem; width: 20px; text-align: center; flex-shrink: 0; }
+  .queue-title { flex: 1; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .queue-dur { color: var(--muted); font-size: 0.78rem; flex-shrink: 0; }
+  .queue-remove {
+    width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border);
+    background: none; color: var(--muted); cursor: pointer; font-size: 1rem; line-height: 1;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .queue-remove:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .queue-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 20px; }
+
+  /* status bar */
+  .statusbar {
+    padding: 8px 24px; background: var(--surface); border-top: 1px solid var(--border);
+    font-size: 0.78rem; color: var(--muted); display: flex; gap: 20px;
+  }
+  .statusbar span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot.green { background: var(--green); }
+  .dot.red { background: var(--accent); }
+  .dot.grey { background: var(--muted); }
+
+  /* scrollbars */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
 </head>
 <body>
-<div id="login">
-  <div style="width:350px; padding:40px; background:#1e1411; border:8px solid #120a08; border-radius:15px; text-align:center;">
-    <h2 style="font-family:'Playfair Display', serif; color:var(--accent); margin-bottom:10px;">DJ CLEARANCE</h2>
-    <input type="password" id="pwd" class="hw-input" style="text-align:center; margin: 20px 0;" placeholder="PASSCODE" onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="hw-btn" style="width:100%" onclick="doLogin()">INITIALIZE UNIT</button>
-    <div id="loginErr" style="color:var(--red); font-size:10px; margin-top:20px; font-weight:900;"></div>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>🎙 Bukuma Radio</h1>
+    <p>Admin Panel — Sign In</p>
+    <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password">
+    <button class="btn-login" onclick="doLogin()">Sign In</button>
+    <div id="loginError"></div>
   </div>
 </div>
 
-<div id="dashboard" class="master-chassis" style="display:none">
-  <div class="screw tl"></div><div class="screw tr"></div>
-  <div class="screw bl"></div><div class="screw br"></div>
+<!-- ═══════════ MAIN ═══════════ -->
+<div id="mainScreen">
+  <header>
+    <div class="logo"><span>BUKUMA</span> RADIO</div>
+    <div class="on-air-badge"><span class="on-air-dot"></span> ON AIR</div>
+    <div class="header-right">
+      <span class="listener-count" id="listenerCount">— listeners</span>
+    </div>
+  </header>
 
-  <!-- LEFT: Archives / Search -->
-  <div class="panel" style="grid-row: span 2;">
-    <h3>Archives / Search</h3>
-    <input type="text" id="searchQ" class="hw-input" placeholder="SCAN SATELLITE..." onkeydown="if(event.key==='Enter')searchYT()">
-    <button class="hw-btn" onclick="searchYT()" style="margin-top:-5px;">SCAN</button>
-    <div id="searchResults" class="hw-list"></div>
-    <h3 style="margin-top:10px;">Archive Safes</h3>
-    <div id="playlistList" class="hw-list"></div>
-  </div>
+  <div class="main-grid">
 
-  <!-- CENTER: CRT Monitor -->
-  <div class="crt-monitor">
-    <div style="display: flex; justify-content: space-between;">
-      <div id="onAirStatus" style="font-size:10px; font-weight:900;">
-        <div style="width:10px; height:10px; border-radius:50%; background:#222; display:inline-block;" id="onAirLed"></div>
-        LIVE TRANSMISSION
+    <!-- ── LEFT COLUMN ── -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Now Playing + Transport -->
+      <div class="card now-playing-section">
+        <div class="card-title">Now Playing</div>
+        <div class="track-display">
+          <div class="track-thumb" id="trackThumb">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/>
+            </svg>
+          </div>
+          <div class="track-info">
+            <div class="track-title" id="trackTitle">— Station Idle —</div>
+            <div class="track-artist" id="trackArtist">Start playing to see track info</div>
+            <div class="track-duration" id="trackDuration"></div>
+          </div>
+        </div>
+
+        <!-- BIG TRANSPORT CONTROLS -->
+        <div class="transport">
+          <button class="btn-play" id="btnPlay" onclick="playStation()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            PLAY
+          </button>
+          <button class="btn-stop" onclick="stopStation()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+            STOP
+          </button>
+          <button class="btn-skip" onclick="skipTrack()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            SKIP
+          </button>
+        </div>
+
+        <!-- Volume -->
+        <div class="volume-row">
+          <label>Volume</label>
+          <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
+          <span class="volume-val" id="volumeVal">80%</span>
+        </div>
+
+        <!-- Monitor -->
+        <div class="monitor-row">
+          <button class="btn-monitor" id="monitorBtn" onclick="toggleMonitor()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+              <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+            </svg>
+            Monitor Stream
+          </button>
+          <span id="monitorStatus" style="font-size:.82rem;color:var(--muted)">Off</span>
+        </div>
       </div>
-      <div style="font-size:10px; opacity:0.6;">
-        <div id="watchdogLed" class="watchdog-led"></div>
-        WATCHDOG | UPLINKS: <span id="statListeners" style="color:var(--accent);">000</span>
-      </div>
-    </div>
-    <div style="margin-top:20px;">
-      <div style="font-size:9px; opacity:0.5; margin-bottom:5px;">CHANNEL A / ACTIVE PAYLOAD:</div>
-      <div id="nowTitle" style="font-size:32px; font-weight:900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">STATION IDLE</div>
-      <div id="nowArtist" style="font-size:16px; opacity:0.7;">Awaiting sync...</div>
-    </div>
-    <div style="display: flex; gap:20px; margin-top:20px;">
-      <button class="hw-btn red" style="flex:1" onclick="skipTrack()">NEXT TRACK</button>
-      <button class="hw-btn" style="flex:1" onclick="refreshStatus()">SYNC DATA</button>
-    </div>
-    <div id="micStatusDisplay" style="margin-top:15px; padding:8px; background:rgba(0,0,0,0.3); border-radius:4px; font-size:10px; font-weight:900; text-align:center; color:#555;">
-      MIC: OFF
-    </div>
-  </div>
 
-  <!-- RIGHT: Master Output -->
-  <div class="panel" style="grid-row: span 2;">
-    <h3>Master Output Console</h3>
-    <div style="text-align: center;">
-      <label style="font-size:9px; font-weight:900; opacity:0.4; display:block;">MASTER BROADCAST GAIN</label>
-      <div class="master-knob" id="volKnob" onmousedown="startVolRotate(event)"></div>
-      <div style="font-family:monospace; font-size:18px; color:var(--accent);" id="volText">80%</div>
-    </div>
-    <div class="mic-ctrl-group" style="margin-top:20px;">
-      <div id="btn-solo" class="mic-btn solo" onclick="setMicState(2)">SOLO</div>
-      <div id="btn-talk" class="mic-btn talk" onclick="setMicState(1)">TALK/DUCK</div>
-      <div id="btn-mic-off" class="mic-btn" style="background:#333; color:#888;" onclick="setMicState(0)">MIC OFF</div>
-    </div>
-    <div style="margin-top:20px;">
-      <label style="font-size:9px; font-weight:900; opacity:0.4; display:block; margin-bottom:10px;">MIC INPUT LEVEL</label>
-      <div class="vu-meter"><div id="micBar" class="vu-bar" style="height:0%"></div></div>
-      <div id="micErrMsg" style="color:var(--red); font-size:9px; margin-top:5px; display:none;"></div>
-    </div>
-    <div style="margin-top:15px;">
-      <label style="font-size:9px; font-weight:900; opacity:0.4; display:block; margin-bottom:10px;">STUDIO MONITOR</label>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <input type="checkbox" id="monToggle" onchange="toggleMonitor()">
-        <label for="monToggle" style="font-size:9px; font-weight:900;">HEADPHONE FEED</label>
+      <!-- Mic Controls -->
+      <div class="card">
+        <div class="card-title">Microphone Controls</div>
+        <div class="mic-grid" id="micGrid">
+          <!-- rendered by JS -->
+        </div>
       </div>
-      <audio id="monAudio" crossOrigin="anonymous"></audio>
-    </div>
-  </div>
 
-  <!-- BOTTOM CENTER: Queue -->
-  <div class="panel" style="grid-column: 2;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <h3>Active Transmission Queue</h3>
-      <button class="hw-btn" onclick="savePlaylist()" style="padding:4px 10px; font-size:9px;">ARCHIVE QUEUE</button>
-    </div>
-    <div id="queueList" class="hw-list" style="max-height: 200px;"></div>
+      <!-- YouTube Search -->
+      <div class="card">
+        <div class="card-title">YouTube Search</div>
+        <div class="search-row">
+          <input type="text" id="searchInput" placeholder="Search for music..." onkeydown="if(event.key==='Enter')doSearch()">
+          <button onclick="doSearch()">Search</button>
+        </div>
+        <div id="searchStatus"></div>
+        <div class="results-list" id="resultsList"></div>
+      </div>
+
+    </div><!-- end left col -->
+
+    <!-- ── RIGHT COLUMN ── -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Queue -->
+      <div class="card" style="flex:1;">
+        <div class="card-title">Play Queue</div>
+        <div class="queue-list" id="queueList">
+          <div class="queue-empty">Queue is empty</div>
+        </div>
+      </div>
+
+    </div><!-- end right col -->
+
+  </div><!-- end main-grid -->
+
+  <div class="statusbar">
+    <span><span class="dot" id="streamDot"></span> <span id="streamStatus">—</span></span>
+    <span><span class="dot grey" id="wsDot"></span> WS: <span id="wsStatus">disconnected</span></span>
+    <span id="codecInfo"></span>
   </div>
-</div>
+</div><!-- end mainScreen -->
+
+<!-- hidden audio monitor -->
+<audio id="monitorAudio" src="/stream" preload="none"></audio>
 
 <script>
-var ws = null, adminPwd = '', micStream = null, micAnalyser = null,
-    micAnimFrame = null, micScriptNode = null, micCtx = null;
-var micState = 0; // 0=OFF, 1=TALK/DUCK, 2=SOLO
-var masterVol = 80;
+'use strict';
 
-function doLogin() {
-  var p = document.getElementById('pwd').value;
-  fetch('/api/admin/login', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({password: p})
-  }).then(r => r.json()).then(d => {
-    if (d.success) {
-      adminPwd = p;
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('dashboard').style.display = 'grid';
-      init();
-    } else {
-      document.getElementById('loginErr').textContent = 'ACCESS DENIED';
-    }
-  }).catch(() => {
-    document.getElementById('loginErr').textContent = 'CONNECTION ERROR';
-  });
-}
+/* ════════ STATE ════════ */
+const STATE = {
+  token: null,
+  isPlaying: false,
+  mics: [
+    { id: 'mic1', label: 'Mic 1', mode: 'off' },
+    { id: 'mic2', label: 'Mic 2', mode: 'off' },
+  ],
+  queue: [],
+  currentTrack: null,
+  ws: null,
+  monitorOn: false,
+  micStream: null,
+  micPeer: null,
+};
 
-function init() {
-  connect();
-  refreshStatus();
-  loadQueue();
-  loadPlaylists();
-  setInterval(refreshStatus, 3000);
-  setInterval(() => { document.getElementById('watchdogLed').classList.toggle('active'); }, 1000);
-}
+/* ════════ LOGIN ════════ */
+document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
 
-function connect() {
-  var proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  ws = new WebSocket(proto + '://' + location.host);
-  ws.binaryType = 'arraybuffer';
-  ws.onopen = () => {
-    ws.send(JSON.stringify({ action: 'adminLogin', password: adminPwd }));
-  };
-  ws.onmessage = (e) => {
-    if (typeof e.data === 'string') {
-      try {
-        var d = JSON.parse(e.data);
-        if (d.type === 'status') updateStatus(d);
-        if (d.type === 'auth') console.log('[AUTH]', d.success ? 'Admin OK' : 'Admin DENIED');
-      } catch(err) {}
-    }
-  };
-  ws.onclose = () => { setTimeout(connect, 3000); };
-  ws.onerror = (e) => { console.error('[WS] error', e); };
-}
-
-function setMicState(target) {
-  // Toggle off if already active, else set new state
-  micState = (micState === target) ? 0 : target;
-
-  document.getElementById('btn-talk').classList.toggle('active', micState === 1);
-  document.getElementById('btn-solo').classList.toggle('active', micState === 2);
-  document.getElementById('btn-mic-off').classList.toggle('active', micState === 0);
-
-  // Notify server via WebSocket (server starts/stops mic pipeline)
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ action: 'micState', state: micState }));
-  }
-
-  // Also notify via HTTP for reliability
-  fetch('/api/duck', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ state: micState })
-  }).catch(() => {});
-
-  // Update display
-  var stateNames = ['OFF', 'TALK/DUCK', 'SOLO'];
-  var stateColors = ['#555', 'var(--accent)', 'var(--red)'];
-  var display = document.getElementById('micStatusDisplay');
-  display.textContent = 'MIC: ' + stateNames[micState];
-  display.style.color = stateColors[micState];
-
-  if (micState > 0) {
-    startMic();
-  } else {
-    stopMic();
-  }
-}
-
-function startVolRotate(e) {
-  const startY = e.clientY;
-  const startV = masterVol;
-  function move(me) {
-    const diff = (startY - me.clientY) / 2;
-    masterVol = Math.max(0, Math.min(100, Math.floor(startV + diff)));
-    updateVolUI();
-  }
-  function end() {
-    window.removeEventListener('mousemove', move);
-    window.removeEventListener('mouseup', end);
-    fetch('/api/volume', {
+async function doLogin() {
+  const pw = document.getElementById('pwInput').value.trim();
+  if (!pw) return;
+  try {
+    const r = await fetch('/api/admin/login', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ value: masterVol })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
     });
+    const d = await r.json();
+    if (d.success) {
+      STATE.token = d.token || pw;
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainScreen').style.display = 'flex';
+      initDashboard();
+    } else {
+      document.getElementById('loginError').textContent = 'Incorrect password';
+    }
+  } catch(e) {
+    document.getElementById('loginError').textContent = 'Connection error: ' + e.message;
   }
-  window.addEventListener('mousemove', move);
-  window.addEventListener('mouseup', end);
 }
 
-function updateVolUI() {
-  document.getElementById('volKnob').style.transform = 'rotate(' + ((masterVol - 50) * 3) + 'deg)';
-  document.getElementById('volText').textContent = masterVol + '%';
+/* ════════ INIT ════════ */
+function initDashboard() {
+  renderMics();
+  connectWS();
+  fetchStatus();
+  fetchQueue();
+  setInterval(fetchStatus, 8000);
+  setInterval(fetchQueue, 10000);
 }
 
-function startMic() {
-  if (micStream) return; // already running
-  var errEl = document.getElementById('micErrMsg');
-  errEl.style.display = 'none';
+/* ════════ WEBSOCKET ════════ */
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}`);
+  STATE.ws = ws;
 
-  navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-    .then(stream => {
-      micStream = stream;
-      // Use 22050 Hz to match server-side FFmpeg expectation
-      micCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
-      var src = micCtx.createMediaStreamSource(stream);
-      micAnalyser = micCtx.createAnalyser();
-      micAnalyser.fftSize = 256;
-
-      // Use ScriptProcessor to capture PCM data
-      micScriptNode = micCtx.createScriptProcessor(2048, 1, 1);
-      src.connect(micAnalyser);
-      src.connect(micScriptNode);
-      micScriptNode.connect(micCtx.destination);
-
-      micScriptNode.onaudioprocess = e => {
-        if (!micStream || micState === 0) return;
-        var cd = e.inputBuffer.getChannelData(0);
-        var i16 = new Int16Array(cd.length);
-        for (var i = 0; i < cd.length; i++) {
-          var s = Math.max(-1, Math.min(1, cd[i]));
-          i16[i] = s < 0 ? s * 32768 : s * 32767;
-        }
-        // Send PCM binary to server via WebSocket
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(i16.buffer);
-        }
-      };
-
-      animateMic();
-    })
-    .catch(err => {
-      console.error('[MIC] getUserMedia error:', err);
-      errEl.textContent = 'MIC ERROR: ' + err.message;
-      errEl.style.display = 'block';
-      // Reset mic state since we can't access mic
-      micState = 0;
-      document.getElementById('btn-talk').classList.remove('active');
-      document.getElementById('btn-solo').classList.remove('active');
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ action: 'micState', state: 0 }));
-      }
-    });
+  ws.onopen = () => {
+    setWsStatus('connected', true);
+    ws.send(JSON.stringify({ type: 'auth', token: STATE.token }));
+  };
+  ws.onclose = () => {
+    setWsStatus('disconnected', false);
+    setTimeout(connectWS, 4000);
+  };
+  ws.onerror = () => setWsStatus('error', false);
+  ws.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      handleWS(msg);
+    } catch(_) {}
+  };
 }
 
-function stopMic() {
-  if (micStream) {
-    micStream.getTracks().forEach(t => t.stop());
-    micStream = null;
+function handleWS(msg) {
+  if (msg.type === 'status') updateStatus(msg);
+  if (msg.type === 'queueUpdate') renderQueue(msg.queue || []);
+  if (msg.type === 'trackChange') {
+    STATE.currentTrack = msg.track;
+    renderNowPlaying(msg.track);
   }
-  if (micScriptNode) {
-    micScriptNode.disconnect();
-    micScriptNode = null;
+  if (msg.type === 'listenerCount') {
+    document.getElementById('listenerCount').textContent = msg.count + ' listener' + (msg.count === 1 ? '' : 's');
   }
-  if (micCtx) {
-    micCtx.close().catch(() => {});
-    micCtx = null;
-  }
-  micAnalyser = null;
-  cancelAnimationFrame(micAnimFrame);
-  document.getElementById('micBar').style.height = '0%';
 }
 
-function animateMic() {
-  if (!micAnalyser) return;
-  var data = new Uint8Array(micAnalyser.frequencyBinCount);
-  micAnalyser.getByteFrequencyData(data);
-  var avg = data.reduce((a, b) => a + b, 0) / data.length;
-  document.getElementById('micBar').style.height = Math.min(100, (avg / 128) * 100) + '%';
-  micAnimFrame = requestAnimationFrame(animateMic);
+function setWsStatus(txt, ok) {
+  document.getElementById('wsStatus').textContent = txt;
+  document.getElementById('wsDot').className = 'dot ' + (ok ? 'green' : 'red');
 }
 
-function toggleMonitor() {
-  const audio = document.getElementById('monAudio');
-  if (document.getElementById('monToggle').checked) {
-    audio.src = '/stream?' + Date.now();
-    audio.play().catch(e => console.warn('[MONITOR]', e));
-  } else {
-    audio.pause();
-    audio.src = '';
-  }
+/* ════════ STATUS ════════ */
+async function fetchStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    updateStatus(d);
+  } catch(_) {}
 }
 
 function updateStatus(d) {
-  document.getElementById('nowTitle').textContent = d.currentTrack ? d.currentTrack.title : 'STATION IDLE';
-  document.getElementById('nowArtist').textContent = d.currentTrack ? (d.currentTrack.artist || 'Unknown') : 'Broadcast Room Empty';
-  document.getElementById('statListeners').textContent = (d.listeners || 0).toString().padStart(3, '0');
-  document.getElementById('onAirLed').style.background = d.isPlaying ? 'var(--green)' : '#222';
-  masterVol = d.volume || 80;
-  updateVolUI();
-  loadQueue();
-}
-
-function refreshStatus() {
-  fetch('/api/status').then(r => r.json()).then(updateStatus).catch(() => {});
-}
-
-function skipTrack() {
-  // Use both routes for compatibility
-  fetch('/api/skip', { method: 'POST' }).then(refreshStatus).catch(() => {
-    fetch('/api/queue/skip', { method: 'POST' }).then(refreshStatus);
-  });
-}
-
-function searchYT() {
-  var q = document.getElementById('searchQ').value.trim();
-  if (!q) return;
-  document.getElementById('searchResults').innerHTML = '<p style="color:#555; padding:10px;">SCANNING...</p>';
-  fetch('/api/youtube/search?q=' + encodeURIComponent(q))
-    .then(r => r.json())
-    .then(d => {
-      if (!d.results || d.results.length === 0) {
-        document.getElementById('searchResults').innerHTML = '<p style="color:var(--red); padding:10px;">NO RESULTS</p>';
-        return;
-      }
-      document.getElementById('searchResults').innerHTML = d.results.map(r =>
-        '<div class="hw-item" style="cursor:pointer;" onclick="addSearchResult(' + JSON.stringify(r.url) + ', ' + JSON.stringify(r.title) + ')">' +
-        '<img src="' + r.thumbnail + '" style="width:40px; height:30px; object-fit:cover; border-radius:2px;">' +
-        '<div style="flex:1"><div style="color:var(--green);">' + r.title + '</div>' +
-        '<div style="font-size:9px; color:#555;">' + (r.duration || '') + '</div></div>' +
-        '</div>'
-      ).join('');
-    })
-    .catch(() => {
-      document.getElementById('searchResults').innerHTML = '<p style="color:var(--red); padding:10px;">SEARCH ERROR</p>';
-    });
-}
-
-function addSearchResult(url, title) {
-  fetch('/api/queue', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ url: url, title: title || url, youtubeQuery: title || url })
-  }).then(() => loadQueue()).catch(() => {});
-}
-
-function loadQueue() {
-  fetch('/api/queue').then(r => r.json()).then(d => {
-    document.getElementById('queueList').innerHTML = d.queue.map((t, i) =>
-      '<div class="hw-item">' +
-      '<span style="color:#555;">' + (i + 1) + '</span>' +
-      '<span style="flex:1">' + t.title + '</span>' +
-      '<span style="font-size:9px; color:#555;">' + (t.artist || '') + '</span>' +
-      '<button class="hw-btn" style="padding:2px 8px; font-size:8px;" onclick="removeQueue('' + t.id + '')">EJECT</button>' +
-      '</div>'
-    ).join('') || '<p style="color:#555; padding:10px;">QUEUE EMPTY</p>';
-  }).catch(() => {});
-}
-
-function removeQueue(id) {
-  fetch('/api/queue/' + id, { method: 'DELETE' }).then(loadQueue).catch(() => {});
-}
-
-function loadPlaylists() {
-  fetch('/api/playlists').then(r => r.json()).then(d => {
-    document.getElementById('playlistList').innerHTML = d.playlists.map(p =>
-      '<div class="hw-item">' +
-      '<span style="flex:1">' + p.name + '</span>' +
-      '<button class="hw-btn" style="padding:2px 8px; font-size:8px;" onclick="loadPlaylist('' + p.id + '')">LINK</button>' +
-      '<button class="hw-btn red" style="padding:2px 8px; font-size:8px;" onclick="deletePlaylist('' + p.id + '')">DEL</button>' +
-      '</div>'
-    ).join('') || '<p style="color:#555; padding:10px;">NO ARCHIVES</p>';
-  }).catch(() => {});
-}
-
-function loadPlaylist(id) {
-  fetch('/api/playlists/' + id + '/load', { method: 'POST' })
-    .then(refreshStatus).catch(() => {});
-}
-
-function deletePlaylist(id) {
-  if (!confirm('Delete this playlist?')) return;
-  fetch('/api/playlists/' + id, { method: 'DELETE' }).then(loadPlaylists).catch(() => {});
-}
-
-function savePlaylist() {
-  var n = prompt('Archive name?');
-  if (n) {
-    fetch('/api/playlists', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ name: n })
-    }).then(loadPlaylists).catch(() => {});
+  STATE.isPlaying = d.isPlaying;
+  if (d.currentTrack) {
+    STATE.currentTrack = d.currentTrack;
+    renderNowPlaying(d.currentTrack);
   }
+  if (d.listeners !== undefined) {
+    document.getElementById('listenerCount').textContent = d.listeners + ' listener' + (d.listeners === 1 ? '' : 's');
+  }
+  const playing = d.isPlaying;
+  document.getElementById('streamDot').className = 'dot ' + (playing ? 'green' : 'grey');
+  document.getElementById('streamStatus').textContent = playing ? 'Streaming' : 'Idle';
+  document.getElementById('btnPlay').textContent = '';
+  document.getElementById('btnPlay').innerHTML = playing
+    ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg> PAUSE'
+    : '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> PLAY';
+  document.getElementById('btnPlay').style.background = playing ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('btnPlay').style.color = playing ? '#000' : '#fff';
+}
+
+function renderNowPlaying(track) {
+  if (!track) return;
+  document.getElementById('trackTitle').textContent = track.title || 'Unknown Track';
+  document.getElementById('trackArtist').textContent = track.artist || track.channel || '';
+  document.getElementById('trackDuration').textContent = track.duration ? formatDur(track.duration) : '';
+  const thumb = document.getElementById('trackThumb');
+  if (track.thumbnail || track.videoId) {
+    const url = track.thumbnail || `https://img.youtube.com/vi/${track.videoId}/mqdefault.jpg`;
+    thumb.innerHTML = `<img src="${url}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;" onerror="this.style.display='none'">`;
+  }
+}
+
+/* ════════ TRANSPORT ════════ */
+async function playStation() {
+  try {
+    if (STATE.isPlaying) {
+      await apiFetch('/api/stop', 'POST');
+    } else {
+      await apiFetch('/api/play', 'POST');
+    }
+    await fetchStatus();
+    await fetchQueue();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function stopStation() {
+  try {
+    await apiFetch('/api/stop', 'POST');
+    await fetchStatus();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function skipTrack() {
+  try {
+    await apiFetch('/api/skip', 'POST');
+    await fetchStatus();
+    await fetchQueue();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function setVolume(val) {
+  document.getElementById('volumeVal').textContent = val + '%';
+  try {
+    await apiFetch('/api/volume', 'POST', { volume: parseInt(val) });
+  } catch(_) {}
+}
+
+/* ════════ MONITOR ════════ */
+function toggleMonitor() {
+  const audio = document.getElementById('monitorAudio');
+  STATE.monitorOn = !STATE.monitorOn;
+  if (STATE.monitorOn) {
+    audio.play().catch(() => {});
+    document.getElementById('monitorBtn').classList.add('active');
+    document.getElementById('monitorStatus').textContent = 'Listening...';
+  } else {
+    audio.pause();
+    audio.currentTime = 0;
+    document.getElementById('monitorBtn').classList.remove('active');
+    document.getElementById('monitorStatus').textContent = 'Off';
+  }
+}
+
+/* ════════ MICS ════════ */
+function renderMics() {
+  const grid = document.getElementById('micGrid');
+  grid.innerHTML = STATE.mics.map((m, i) => `
+    <div class="mic-card">
+      <div class="mic-label">${m.label}</div>
+      <div class="mic-btn-group">
+        <button class="mic-btn ${m.mode==='talk'?'active-talk':''}" onclick="setMic(${i},'talk')">TALK</button>
+        <button class="mic-btn ${m.mode==='solo'?'active-solo':''}" onclick="setMic(${i},'solo')">SOLO</button>
+        <button class="mic-btn ${m.mode==='off'?'active-off':''}" onclick="setMic(${i},'off')">OFF</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function setMic(idx, mode) {
+  const mic = STATE.mics[idx];
+  const wasActive = mic.mode !== 'off';
+  mic.mode = mode;
+  renderMics();
+  if (mode !== 'off' && !wasActive) {
+    await startMicStream(idx, mode);
+  } else if (mode === 'off') {
+    stopMicStream(idx);
+  }
+  try {
+    await apiFetch('/api/mic', 'POST', { micId: mic.id, mode });
+  } catch(_) {}
+}
+
+function startMicStream(idx, mode) {
+  return navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
+    STATE.micStream = stream;
+    const ws = STATE.ws;
+    if (!ws || ws.readyState !== 1) return;
+    ws.send(JSON.stringify({ type: 'micStart', micId: STATE.mics[idx].id, mode }));
+    const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+    recorder.ondataavailable = e => {
+      if (e.data.size > 0 && ws.readyState === 1) {
+        ws.send(e.data);
+      }
+    };
+    recorder.start(100);
+    STATE.micRecorder = recorder;
+  }).catch(e => alert('Mic error: ' + e.message));
+}
+
+function stopMicStream(idx) {
+  if (STATE.micRecorder) { try { STATE.micRecorder.stop(); } catch(_){} STATE.micRecorder = null; }
+  if (STATE.micStream) { STATE.micStream.getTracks().forEach(t => t.stop()); STATE.micStream = null; }
+  if (STATE.ws && STATE.ws.readyState === 1) {
+    STATE.ws.send(JSON.stringify({ type: 'micStop', micId: STATE.mics[idx].id }));
+  }
+}
+
+/* ════════ SEARCH ════════ */
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  document.getElementById('searchStatus').textContent = 'Searching...';
+  document.getElementById('resultsList').innerHTML = '';
+  try {
+    const r = await fetch('/api/youtube/search?q=' + encodeURIComponent(q));
+    const data = await r.json();
+    const results = data.results || data;
+    document.getElementById('searchStatus').textContent = results.length + ' result' + (results.length===1?'':'s');
+    document.getElementById('resultsList').innerHTML = results.map(item => `
+      <div class="result-item">
+        <img src="https://img.youtube.com/vi/${item.videoId || item.id}/default.jpg" onerror="this.style.display='none'">
+        <div class="result-text">
+          <div class="result-title">${escHtml(item.title)}</div>
+          <div class="result-dur">${item.duration || ''}</div>
+        </div>
+        <button class="result-add" onclick='addToQueue(${JSON.stringify(JSON.stringify(item))})'>+ Queue</button>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('searchStatus').textContent = 'Error: ' + e.message;
+  }
+}
+
+async function addToQueue(itemJson) {
+  const item = JSON.parse(itemJson);
+  try {
+    await apiFetch('/api/queue/add', 'POST', { videoId: item.videoId || item.id, title: item.title, duration: item.duration });
+    await fetchQueue();
+  } catch(e) { alert('Error adding to queue: ' + e.message); }
+}
+
+/* ════════ QUEUE ════════ */
+async function fetchQueue() {
+  try {
+    const r = await fetch('/api/queue');
+    const d = await r.json();
+    renderQueue(d.queue || d || []);
+  } catch(_) {}
+}
+
+function renderQueue(queue) {
+  STATE.queue = queue;
+  const el = document.getElementById('queueList');
+  if (!queue.length) {
+    el.innerHTML = '<div class="queue-empty">Queue is empty — search for music above</div>';
+    return;
+  }
+  el.innerHTML = queue.map((item, i) => `
+    <div class="queue-item ${i===0?'playing':''}">
+      <span class="queue-num">${i===0?'▶':i+1}</span>
+      <span class="queue-title">${escHtml(item.title||'Track '+(i+1))}</span>
+      <span class="queue-dur">${item.duration||''}</span>
+      <button class="queue-remove" onclick="removeFromQueue(${i})" title="Remove">×</button>
+    </div>
+  `).join('');
+}
+
+async function removeFromQueue(idx) {
+  try {
+    await apiFetch('/api/queue/remove', 'POST', { index: idx });
+    await fetchQueue();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+/* ════════ HELPERS ════════ */
+async function apiFetch(url, method, body) {
+  const opts = {
+    method: method || 'GET',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': STATE.token, 'Authorization': 'Bearer ' + STATE.token },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(url, opts);
+  if (!r.ok) {
+    const txt = await r.text().catch(() => r.statusText);
+    throw new Error(txt || r.status);
+  }
+  return r.json().catch(() => ({}));
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDur(s) {
+  if (!s && s !== 0) return '';
+  if (typeof s === 'string') return s;
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2,'0');
 }
 </script>
 </body>
