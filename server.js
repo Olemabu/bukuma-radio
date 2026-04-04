@@ -524,6 +524,39 @@ app.post('/api/queue', (req, res) => {
   res.json({ success: true, id: entry.id, entry });
 });
 
+app.post('/api/queue/add', (req, res) => {
+  const { videoId, title, duration, url } = req.body;
+  if (!videoId && !title && !url) return res.status(400).json({ success: false, error: 'Need videoId, title, or url' });
+  const vid = videoId || (url && url.match(/[?&]v=([^&]+)/)?.[1]);
+  const entry = {
+    id: Math.random().toString(36).slice(2),
+    title: title || 'Unknown',
+    artist: 'YouTube',
+    youtubeQuery: vid ? ('https://www.youtube.com/watch?v=' + vid) : (url || title),
+    videoId: vid || null,
+    duration: duration || ''
+  };
+  queue.push(entry);
+  saveState();
+  broadcast(getStatus());
+  if (!isPlaying) startPlayback();
+  res.json({ success: true, id: entry.id, entry });
+});
+app.post('/api/queue/remove', (req, res) => {
+  const { index, id } = req.body;
+  let removed = 0;
+  if (id !== undefined) {
+    const before = queue.length;
+    queue = queue.filter(t => t.id !== id);
+    removed = before - queue.length;
+  } else if (index !== undefined) {
+    const idx = parseInt(index);
+    if (idx >= 0 && idx < queue.length) { queue.splice(idx, 1); removed = 1; }
+  }
+  if (removed) saveState();
+  broadcast(getStatus());
+  res.json({ success: true, removed });
+});
 app.delete('/api/queue/:id', (req, res) => {
   const before = queue.length;
   queue = queue.filter(t => t.id !== req.params.id);
@@ -543,6 +576,7 @@ app.get('/api/youtube/search', (req, res) => {
       const [vid, title, dur] = line.split('|||').map(s => s?.trim());
       if (!vid || vid.length < 5) return null;
       return {
+        videoId: vid,
         title: title || 'Unknown',
         url: 'https://www.youtube.com/watch?v=' + vid,
         thumbnail: 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg',
