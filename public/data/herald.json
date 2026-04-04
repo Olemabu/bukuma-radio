@@ -1,0 +1,28 @@
+{
+  "news": [
+    {
+      "id": "school-redevelopment",
+      "title": "SCHOOL REDEVELOPMENT",
+      "summary": "Proposed redevelopment plan to restore the primary school pillar of education.",
+      "content": "The Village Primary School, which has served our community for generations, has been in a state of dilapidation for too long. We are proud to announce a comprehensive proposed redevelopment plan to restore this pillar of education. Donations are currently ongoing to fund this vital project.",
+      "status": "Ongoing",
+      "link": "/#herald-school"
+    },
+    {
+      "id": "elders-communique",
+      "title": "ELDERS' COMMUNIQUE",
+      "summary": "Village elders encourage youth to focus on education and character.",
+      "content": "Our village elders recently gathered at the square to encourage the youth of Bukuma to remain focused on education and uphold the values of good character. 'Our strength lies in our knowledge,' the High Chief noted during the gathering.",
+      "status": "Official",
+      "link": "/#herald-elders"
+    },
+    {
+      "id": "compound-competitions",
+      "title": "COMPOUND COMPETITIONS",
+      "summary": "Upcoming children's inter-village compound games teaser.",
+      "content": "The Children Inter-Village Compound Competitions are approaching. This multi-day event will bring together the youth from all squares for sports and cultural displays. Full details and schedules will be beamed via this station soon.",
+      "status": "Upcoming",
+      "link": "/#herald-competitions"
+    }
+  ]
+}

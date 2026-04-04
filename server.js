@@ -13,7 +13,7 @@ const wss = new WebSocket.Server({ server });
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Olemabumabu123@#';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
 
 // State
 let queue = [];
@@ -50,6 +50,7 @@ const playlistsFile = path.join(dataDir, 'playlists.json');
 const scheduleFile = path.join(dataDir, 'schedule.json');
 const historyFile = path.join(dataDir, 'history.json');
 const requestsFile = path.join(dataDir, 'requests.json');
+const registeredListenersFile = path.join(dataDir, 'registered_listeners.json');
 
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
@@ -190,9 +191,10 @@ function handleCommand(msg, ws) {
 }
 
 async function getYouTubeUrl(query) {
+    const ytdlpPath = 'C:\\Users\\USER\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\yt-dlp.exe';
     return new Promise((resolve, reject) => {
           const q = query.startsWith('http') ? `"${query}"` : `"ytsearch1:${query}"`;
-          exec(`yt-dlp --get-url --format bestaudio ${q}`, { timeout: 30000 }, (err, stdout) => {
+          exec(`"${ytdlpPath}" --get-url --format bestaudio ${q}`, { timeout: 30000 }, (err, stdout) => {
                   if (err) reject(err); else resolve(stdout.trim().split('\n')[0]);
           });
     });
@@ -239,8 +241,8 @@ async function playNext() {
                   broadcast({ type: 'playJingle', url: startJingle.url });
           }
           scheduleRandomJingle();
-          if (currentProcess) { try { currentProcess.kill('SIGKILL'); } catch(e) {} }
-          currentProcess = spawn('ffmpeg', ['-reconnect', '1', '-reconnect_streamed', '1', '-i', url, '-af', `volume=${volume/100}`, '-f', 'mp3', '-br', '128k', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
+          const ffmpegPath = 'C:\\Users\\USER\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.WinGet.Source_8wekyb3d8bbwe\\ffmpeg-8.1-full_build\\bin\\ffmpeg.exe';
+          currentProcess = spawn(ffmpegPath, ['-reconnect', '1', '-reconnect_streamed', '1', '-i', url, '-af', `volume=${volume/100}`, '-f', 'mp3', '-br', '128k', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
           currentProcess.stdout.on('data', (chunk) => {
                   streamClients.forEach(res => { try { res.write(chunk); } catch(e) { streamClients.delete(res); } });
           });
@@ -309,6 +311,38 @@ app.get('/stream', (req, res) => {
 app.post('/api/admin/login', (req, res) => {
     if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
     else res.json({ success: false });
+});
+
+app.post('/api/register', (req, res) => {
+    const { name, phone, village } = req.body;
+    if (!name || !phone || !village) return res.json({ success: false, error: 'Name, phone, and village are required' });
+    
+    // Bukuma Village Captcha Validation
+    const validVillages = [
+        "okrigbo", "alaka", "anyama", "krigbo square", "alaka krigbo square",
+        "zion city square", "zion city", "area omomema", "omomema", "ayama square",
+        "ika square", "agbulabulo", "okpunadike square", "amkpa square",
+        "okpuruta square", "onugulo", "anangulo"
+    ];
+    
+    const v = village.toLowerCase().trim().replace(/[^a-z0-9 ]/g, '');
+    const isValid = validVillages.some(valid => v === valid || v.includes(valid));
+    
+    if (!isValid) {
+        return res.json({ success: false, error: 'Sorry, that is not a recognized Bukuma village. Activation Denied.' });
+    }
+
+    let registered = [];
+    try {
+        if (fs.existsSync(registeredListenersFile)) {
+            registered = JSON.parse(fs.readFileSync(registeredListenersFile, 'utf8'));
+        }
+    } catch(e) {}
+    registered.push({ name, phone, village, timestamp: new Date().toISOString() });
+    try {
+        fs.writeFileSync(registeredListenersFile, JSON.stringify(registered, null, 2));
+    } catch(e) {}
+    res.json({ success: true });
 });
 
 app.post('/api/duck', (req, res) => {

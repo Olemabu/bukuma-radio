@@ -3,983 +3,368 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agum Bukuma Radio</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>">
+  <title>AGUM BUKUMA RADIO - Master Console</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Playfair+Display:wght@700;800;900&display=swap');
     
     :root {
-      --primary: #FF6B35;
-      --primary-dark: #E55A24;
-      --secondary: #1A1A2E;
-      --accent: #FFD700;
-      --bg: #0D0D1A;
-      --card: #1A1A2E;
-      --card2: #16213E;
-      --text: #F0F0F0;
-      --text-muted: #8888AA;
-      --green: #00D084;
-      --red: #FF4757;
+      --primary: #8B4513;
+      --accent: #D4AF37;
+      --bg: #0D0805;
+      --card: #2b1b17;
+      --text: #F5DEB3;
+      --green: #4ade80;
+      --red: #ff4757;
+      --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
+      --wood: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+      --chassis-border: #1a1210;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg);
+      background: #0f0a08 var(--wood);
       color: var(--text);
-      min-height: 100vh;
       overflow-x: hidden;
     }
 
-    /* Animated background */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: 
-        radial-gradient(ellipse at 20% 50%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(255, 215, 0, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 80%, rgba(0, 208, 132, 0.08) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
+    /* TYPOGRAPHY */
+    h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 900; }
+    .label { font-size: 10px; letter-spacing: 3px; color: #777; font-weight: 900; text-transform: uppercase; }
 
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
-
-    /* Header */
-    header {
-      padding: 20px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      position: sticky; top: 0;
-      background: rgba(13, 13, 26, 0.95);
-      backdrop-filter: blur(20px);
-      z-index: 100;
-    }
-
-    .header-inner {
-      display: flex; align-items: center; justify-content: space-between;
-    }
-
-    .logo {
-      display: flex; align-items: center; gap: 12px;
-    }
-
-    .radio-icon {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 4px 20px rgba(255,107,53,0.4);
-      animation: pulse-logo 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-logo {
-      0%, 100% { box-shadow: 0 4px 20px rgba(255,107,53,0.4); }
-      50% { box-shadow: 0 4px 40px rgba(255,107,53,0.8); }
-    }
-
-    .logo-text h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px; font-weight: 900;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .logo-text span { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; display: block; }
-
-    .on-air-badge {
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(255,71,87,0.15);
-      border: 1px solid rgba(255,71,87,0.4);
-      padding: 8px 16px; border-radius: 50px;
-      font-size: 12px; font-weight: 600; color: var(--red);
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-
-    .on-air-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--red);
-      animation: blink 1s ease-in-out infinite;
-    }
-
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
-
-    /* Hero Section */
-    .hero {
-      padding: 60px 0 40px;
-      text-align: center;
-    }
-
-    .hero-tag {
-      display: inline-block;
-      background: rgba(255,107,53,0.1);
-      border: 1px solid rgba(255,107,53,0.3);
-      color: var(--primary);
-      padding: 6px 16px; border-radius: 50px;
-      font-size: 12px; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; margin-bottom: 20px;
-    }
-
-    .hero h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: clamp(36px, 6vw, 72px);
-      font-weight: 900; line-height: 1.1;
-      margin-bottom: 16px;
-    }
-
-    .hero h2 span {
-      background: linear-gradient(90deg, var(--primary), var(--accent), var(--green));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero p {
-      font-size: 18px; color: var(--text-muted);
-      max-width: 600px; margin: 0 auto 40px;
-      line-height: 1.6;
-    }
-
-    /* Main Player Card */
-    .player-section { padding: 20px 0 60px; }
-
-    .player-card {
-      background: linear-gradient(135deg, var(--card), var(--card2));
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 24px;
-      padding: 40px;
+    /* LAYOUT: THE HARDWARE RACK */
+    .rack-container {
+      max-width: 1400px;
+      margin: 40px auto;
+      background: #3D2B1F;
+      border: 20px solid #1a100c;
+      border-radius: 60px;
+      box-shadow: 0 100px 200px rgba(0,0,0,1), inset 0 0 100px rgba(0,0,0,0.5);
       position: relative;
       overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.5);
     }
 
-    .player-card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--primary), var(--accent), var(--green));
-    }
-
-    .player-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 40px;
-      align-items: center;
-    }
-
-    @media (max-width: 768px) {
-      .player-grid { grid-template-columns: 1fr; }
-    }
-
-    /* Vinyl / Album Art */
-    .album-art-wrapper {
-      display: flex; justify-content: center; align-items: center;
-    }
-
-    .vinyl {
-      width: 220px; height: 220px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    section {
+      padding: 100px 60px;
+      border-bottom: 2px solid rgba(212,175,55,0.05);
       position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      animation: spin 8s linear infinite paused;
     }
 
-    .vinyl.playing { animation-play-state: running; }
+    .screw {
+      position: absolute; width: 16px; height: 16px; background: var(--brass); border-radius: 50%; z-index: 10;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    }
+    .screw::after { content: ''; position: absolute; top:50%; left:15%; right:15%; height:2px; background:rgba(0,0,0,0.3); transform:rotate(45deg); }
+    .tl { top: 30px; left: 30px; } .tr { top: 30px; right: 30px; }
+    .bl { bottom: 30px; left: 30px; } .br { bottom: 30px; right: 30px; }
 
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    /* HERO SECTION */
+    #hero {
+      height: 85vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      background: linear-gradient(rgba(13,8,5,0.4), rgba(13,8,5,0.9)), url('/images/hero.png') center/cover;
+      background-position: center 25%; /* Adjust for head-to-knee focus */
+      border-bottom: 10px solid #1a1210;
+      position: relative;
+    }
+    #hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+    }
+    #hero h1 { font-size: 72px; color: var(--accent); margin-bottom: 20px; text-shadow: 0 10px 40px rgba(0,0,0,1); position: relative; z-index: 10; }
+    #hero p { font-size: 14px; letter-spacing: 5px; color: #a89f8e; text-transform: uppercase; font-weight: 900; position: relative; z-index: 10; }
 
-    .vinyl::before {
-      content: '';
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 70px; height: 70px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      box-shadow: 0 0 30px rgba(255,107,53,0.5);
+    /* TRANSMISSION SECTION */
+    #transmission { background: rgba(0,0,0,0.1); }
+    .crt-screen {
+      background: #050805; border: 12px solid #1a1210; border-radius: 20px;
+      padding: 40px; box-shadow: inset 0 0 60px #000, 0 20px 40px rgba(0,0,0,0.5);
+      color: var(--green); font-family: 'Courier New', monospace; position: relative; overflow: hidden;
+    }
+    .crt-screen::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px, rgba(74, 222, 128, 0.03) 2px);
     }
 
-    .vinyl::after {
-      content: '';
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: var(--bg);
+    .knob-unit { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    .knob {
+      width: 120px; height: 120px; background: var(--brass); border-radius: 50%;
+      position: relative; cursor: pointer; box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .knob::before { content: ''; position: absolute; top: 10%; left: 50%; width: 6px; height: 18%; background: #111; transform: translateX(-50%); border-radius: 3px; }
+    .knob.active { transform: rotate(45deg); box-shadow: 0 0 40px rgba(212,175,55,0.4); }
+
+    .meter-container {
+      width: 200px; height: 100px; background: #eee; border-radius: 100px 100px 0 0;
+      border: 6px solid #2b1b17; position: relative; overflow: hidden;
+      box-shadow: inset 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .needle {
+      position: absolute; bottom: 0; left: 50%; width: 3px; height: 80px;
+      background: #8b0000; transform-origin: bottom center; transform: rotate(-45deg);
+      transition: transform 0.1s ease-out;
     }
 
-    .vinyl-rings {
-      position: absolute; inset: 0; border-radius: 50%;
-      background: repeating-radial-gradient(
-        circle,
-        transparent,
-        transparent 8px,
-        rgba(255,255,255,0.03) 8px,
-        rgba(255,255,255,0.03) 9px
-      );
+    .rocker {
+      width: 50px; height: 80px; background: #333; border-radius: 6px;
+      position: relative; border: 3px solid #111; cursor: pointer;
+    }
+    .rocker::before { content: ''; position: absolute; top:5px; left:5px; right:5px; height:35px; background: linear-gradient(#555, #222); border-radius: 3px; }
+    .rocker.active::before { top: 40px; background: linear-gradient(#ff4757, #ab2c2c); box-shadow: 0 0 15px #ff4757; }
+
+    /* HERALD & REQUESTS */
+    .hardware-plate {
+      background: #1e1411; border: 4px solid #120a08; border-radius: 20px;
+      padding: 60px; box-shadow: inset 0 2px 30px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.5);
     }
 
-    /* Track Info */
-    .track-info { text-align: left; }
-
-    .now-playing-label {
-      font-size: 11px; color: var(--primary); font-weight: 600;
-      text-transform: uppercase; letter-spacing: 3px; margin-bottom: 8px;
-      display: flex; align-items: center; gap: 8px;
+    .hw-input {
+      width: 100%; padding: 20px; background: #0a0503; border: 3px inset #2b1b17;
+      color: var(--green); font-family: 'Courier New', monospace; margin-bottom: 25px; outline: none;
     }
-
-    .equalizer {
-      display: flex; align-items: flex-end; gap: 2px; height: 14px;
+    .hw-btn {
+      padding: 20px 40px; background: var(--brass); border: none; border-radius: 4px;
+      color: #222; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+      box-shadow: 0 6px 0 #b8860b; transition: all 0.1s;
     }
+    .hw-btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #b8860b; }
 
-    .eq-bar {
-      width: 3px; border-radius: 2px;
-      background: var(--primary);
-      animation: eq 0.8s ease-in-out infinite;
-    }
-
-    .eq-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
-    .eq-bar:nth-child(2) { height: 12px; animation-delay: 0.1s; }
-    .eq-bar:nth-child(3) { height: 8px; animation-delay: 0.2s; }
-    .eq-bar:nth-child(4) { height: 14px; animation-delay: 0.3s; }
-    .eq-bar:nth-child(5) { height: 6px; animation-delay: 0.4s; }
-
-    .eq-bar.paused { animation: none; }
-
-    @keyframes eq {
-      0%, 100% { transform: scaleY(0.4); }
-      50% { transform: scaleY(1); }
-    }
-
-    .track-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 32px; font-weight: 700;
-      margin-bottom: 8px; line-height: 1.2;
-    }
-
-    .track-artist {
-      font-size: 16px; color: var(--text-muted); margin-bottom: 24px;
-      display: flex; align-items: center; gap: 8px;
-    }
-
-    .track-artist::before { content: '♪'; color: var(--primary); }
-
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 14px; border-radius: 50px;
-      font-size: 12px; font-weight: 600;
-      margin-bottom: 24px;
-    }
-
-    .status-badge.live {
-      background: rgba(0,208,132,0.15);
-      border: 1px solid rgba(0,208,132,0.4);
-      color: var(--green);
-    }
-
-    .status-badge.loading {
-      background: rgba(255,215,0,0.15);
-      border: 1px solid rgba(255,215,0,0.4);
-      color: var(--accent);
-    }
-
-    .status-badge.idle {
-      background: rgba(136,136,170,0.15);
-      border: 1px solid rgba(136,136,170,0.3);
-      color: var(--text-muted);
-    }
-
-    /* Controls */
-    .controls {
-      display: flex; align-items: center; gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .btn {
-      border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%; transition: all 0.2s;
-      font-size: 18px;
-    }
-
-    .btn-play {
-      width: 64px; height: 64px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      box-shadow: 0 8px 25px rgba(255,107,53,0.5);
-      color: white; font-size: 22px;
-    }
-
-    .btn-play:hover {
-      transform: scale(1.1);
-      box-shadow: 0 12px 35px rgba(255,107,53,0.7);
-    }
-
-    .btn-skip {
-      width: 48px; height: 48px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text); font-size: 18px;
-    }
-
-    .btn-skip:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
-
-    /* Volume */
-    .volume-control {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .volume-icon { color: var(--text-muted); font-size: 16px; }
-
-    input[type=range] {
-      -webkit-appearance: none;
-      flex: 1; height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px; cursor: pointer;
-      outline: none;
-    }
-
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: var(--primary);
-      box-shadow: 0 2px 10px rgba(255,107,53,0.5);
-    }
-
-    .volume-value { color: var(--text-muted); font-size: 13px; min-width: 35px; }
-
-    /* Listeners */
-    .listeners-info {
-      display: flex; align-items: center; gap: 8px;
-      color: var(--text-muted); font-size: 13px;
-    }
-
-    .listeners-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-
-    /* Audio player */
-    audio { display: none; }
-
-    /* Queue Section */
-    .queue-section { padding: 40px 0; }
-
-    .section-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .section-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 28px; font-weight: 700;
-    }
-
-    .section-badge {
-      background: rgba(255,107,53,0.1);
-      border: 1px solid rgba(255,107,53,0.3);
-      color: var(--primary);
-      padding: 4px 12px; border-radius: 50px;
-      font-size: 13px; font-weight: 600;
-    }
-
-    .queue-list {
-      display: flex; flex-direction: column; gap: 8px;
-    }
-
-    .queue-item {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 16px;
-      padding: 16px 20px;
-      display: flex; align-items: center; gap: 16px;
-      transition: all 0.2s;
-    }
-
-    .queue-item:hover { border-color: rgba(255,107,53,0.3); transform: translateX(4px); }
-    .queue-item.active { border-color: var(--primary); background: rgba(255,107,53,0.08); }
-
-    .queue-num {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: rgba(255,255,255,0.05);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; color: var(--text-muted); flex-shrink: 0;
-      font-weight: 600;
-    }
-
-    .queue-item.active .queue-num {
-      background: var(--primary);
-      color: white;
-    }
-
-    .queue-info { flex: 1; }
-    .queue-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
-    .queue-artist { font-size: 13px; color: var(--text-muted); }
-    .queue-duration { font-size: 13px; color: var(--text-muted); }
-
-    /* Stats Bar */
-    .stats-bar {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 16px; margin: 40px 0;
-    }
-
-    @media (max-width: 576px) { .stats-bar { grid-template-columns: 1fr; } }
-
-    .stat-card {
-      background: var(--card);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 16px;
-      padding: 20px;
+    /* DONATIONS */
+    #donations {
+      background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('/images/community.png') center/cover;
       text-align: center;
     }
 
-    .stat-number { font-size: 32px; font-weight: 800; color: var(--primary); }
-    .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+    ::-webkit-scrollbar { width: 12px; }
+    ::-webkit-scrollbar-track { background: #0a0503; }
+    ::-webkit-scrollbar-thumb { background: #2b1b17; border: 3px solid #0a0503; border-radius: 6px; }
 
-    /* About section */
-    .about-section {
-      padding: 60px 0;
-      border-top: 1px solid rgba(255,255,255,0.05);
-    }
-
-    .about-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 40px; align-items: center;
-    }
-
-    @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; } }
-
-    .about-content h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 36px; font-weight: 700; margin-bottom: 16px;
-    }
-
-    .about-content p { color: var(--text-muted); line-height: 1.8; margin-bottom: 16px; }
-
-    .feature-list { list-style: none; }
-    .feature-list li {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-      font-size: 14px;
-    }
-    .feature-list li::before { content: '▸'; color: var(--primary); }
-
-    .about-visual {
-      background: linear-gradient(135deg, var(--card), var(--card2));
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 24px;
-      padding: 32px;
-      text-align: center;
-    }
-
-    .radio-wave {
-      font-size: 80px; margin-bottom: 16px;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    /* Footer */
-    footer {
-      padding: 40px 0;
-      border-top: 1px solid rgba(255,255,255,0.05);
-      text-align: center;
-    }
-
-    footer p { color: var(--text-muted); font-size: 14px; }
-    footer a { color: var(--primary); text-decoration: none; }
-
-    .footer-links {
-      display: flex; justify-content: center; gap: 24px;
-      margin-bottom: 16px; flex-wrap: wrap;
-    }
-
-    .footer-links a {
-      color: var(--text-muted); font-size: 13px;
-      transition: color 0.2s;
-    }
-
-    .footer-links a:hover { color: var(--primary); }
-
-    /* Loading state */
-    .loading-msg {
-      font-size: 13px; color: var(--accent);
-      margin-top: 8px; min-height: 20px;
-    }
-
-    /* Responsive */
-    @media (max-width: 576px) {
-      .player-card { padding: 24px; }
-      .track-title { font-size: 24px; }
-      .controls { gap: 12px; }
-    }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #0a0503; }
+    ::-webkit-scrollbar-thumb { background: #2b1b17; }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header>
-    <div class="container">
-      <div class="header-inner">
-        <div class="logo">
-          <div class="radio-icon">
-            📻
+  <div class="rack-container">
+    <!-- SECTION 1: HERO -->
+    <section id="hero">
+      <div class="screw tl"></div><div class="screw tr"></div>
+      <h1>AGUM BUKUMA<br>COMMUNITY RADIO</h1>
+      <p>Echoes of the Riverine • 24/7 Highlife & Heritage</p>
+      <div style="margin-top:40px; display:flex; gap:20px; position:relative; z-index:20;">
+         <a href="#transmission" class="hw-btn" style="text-decoration:none; background:rgba(0,0,0,0.5); color:var(--accent); border:1px solid var(--accent);">STAY FOR NEWS</a>
+         <a href="/app/" class="hw-btn" style="text-decoration:none; background:var(--brass); color:#000;">JOIN PRIVATE APP</a>
+      </div>
+    </section>
+
+    <!-- SECTION 2: TRANSMISSION -->
+    <section id="transmission">
+      <div class="screw bl"></div><div class="screw br"></div>
+      <div class="crt-screen" style="margin-bottom: 60px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+             <div class="label" style="opacity:0.6; margin-bottom:15px;">NOW BROADCASTING:</div>
+             <div id="trackTitle" style="font-size:42px; font-weight:900;">STATION IDLE</div>
+             <div id="trackArtist" style="font-size:22px; opacity:0.8; margin-top:10px;">Awaiting transmission sync...</div>
           </div>
-          <div class="logo-text">
-            <h1>AGUM BUKUMA</h1>
-            <span>RADIO & COMMUNITY VOICE</span>
-          </div>
-        </div>
-        <div class="on-air-badge" id="onAirBadge">
-          <div class="on-air-dot"></div>
-          <span id="onAirText">LOADING...</span>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Hero -->
-  <section class="hero" style="text-align: left; padding: 60px 0;">
-    <div class="container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
-      <div class="hero-text">
-        <div class="hero-tag" style="margin-bottom: 20px;">🎵 Streaming Live 24/7</div>
-        <h2 style="font-family: 'Playfair Display', serif; font-size: clamp(32px, 4vw, 56px); font-weight: 900; line-height: 1.1; margin-bottom: 16px;">Agum Bukuma<br><span style="background: linear-gradient(90deg, var(--primary), var(--accent), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Sound & Soul</span></h2>
-        <p style="font-size: 16px; color: var(--text-muted); line-height: 1.6; margin-bottom: 30px;">Experience the rhythm of Bukuma — live music, cultural celebrations, and the legendary sounds of Highlife music that connect us all.</p>
-      </div>
-      <div class="hero-visual" style="border-radius: 24px; overflow: hidden; position: relative; min-height: 350px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-        <img src="/images/community.png" style="width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;" alt="Bukuma Community gathering">
-        <div style="position: relative; z-index: 1; padding: 24px; background: linear-gradient(to top, rgba(13,13,26,0.9) 0%, rgba(13,13,26,0) 100%); height: 100%; display: flex; flex-direction: column; justify-content: flex-end;">
-          <h4 style="font-family: Playfair Display, serif; font-size: 22px; margin-bottom: 8px; color: white;">The Heart of Bukuma</h4>
-          <p style="color: rgba(255,255,255,0.8); font-size: 14px; line-height: 1.6;">Connecting our people through the timeless rhythm and soul of true Highlife.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Player -->
-  <section class="player-section">
-    <div class="container">
-      <div class="player-card">
-        <div class="player-grid">
-          <!-- Album Art -->
-          <div class="album-art-wrapper">
-            <div class="vinyl" id="vinyl">
-              <div class="vinyl-rings"></div>
-            </div>
-          </div>
-
-          <!-- Controls -->
-          <div class="track-info">
-            <div class="now-playing-label">
-              <div class="equalizer" id="equalizer">
-                <div class="eq-bar paused"></div>
-                <div class="eq-bar paused"></div>
-                <div class="eq-bar paused"></div>
-                <div class="eq-bar paused"></div>
-                <div class="eq-bar paused"></div>
-              </div>
-              Now Playing
-            </div>
-
-            <div class="track-title" id="trackTitle">Loading...</div>
-            <div class="track-artist" id="trackArtist">Connecting to station...</div>
-
-            <div class="status-badge loading" id="statusBadge">
-              <span id="statusText">⏳ Connecting...</span>
-            </div>
-
-            <div class="loading-msg" id="loadingMsg"></div>
-
-            <div class="controls">
-              <button class="btn btn-play" id="playBtn" onclick="togglePlay()">▶</button>
-              <button class="btn btn-skip" onclick="skipTrack()" title="Skip">⏭</button>
-            </div>
-
-            <div class="volume-control">
-              <span class="volume-icon">🔊</span>
-              <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
-              <span class="volume-value" id="volumeVal">80%</span>
-            </div>
-
-            <div class="listeners-info">
-              <div class="listeners-dot"></div>
-              <span id="listenersCount">0</span> listeners tuned in
-            </div>
-          </div>
-        </div>
-
-        <audio id="radioAudio" src="/stream" preload="none" autoplay></audio>
-      </div>
-
-      <!-- Stats -->
-      <div class="stats-bar">
-        <div class="stat-card">
-          <div class="stat-number" id="statListeners">0</div>
-          <div class="stat-label">Live Listeners</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" id="statQueue">0</div>
-          <div class="stat-label">Songs in Queue</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">24/7</div>
-          <div class="stat-label">Always On Air</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Queue -->
-  <section class="queue-section">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">🎶 Up Next</h2>
-        <span class="section-badge" id="queueBadge">0 songs</span>
-      </div>
-      <div class="queue-list" id="queueList">
-        <div class="queue-item">
-          <div class="queue-num">♪</div>
-          <div class="queue-info">
-            <div class="queue-title">Loading queue...</div>
-            <div class="queue-artist">Please wait</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- About & Community -->
-  <section class="about-section">
-    <div class="container">
-      <div class="about-grid" style="margin-bottom: 60px; grid-template-columns: 1fr; max-width: 800px; margin-left: auto; margin-right: auto; text-align: center;">
-        <div class="about-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <h3>About Agum Bukuma Community Radio 📻</h3>
-          <p>The core purpose of our station is to deliver vital news, drive community initiatives, and ultimately foster unity among our people.</p>
-          <p>Through our broadcasts—including the legendary sounds of Highlife—we are dedicated to sharing the rich stories and giving the world a true taste of our vibrant riverine community.</p>
-          <ul class="feature-list" style="margin-bottom: 30px;">
-            <li>Live 24/7 streaming music</li>
-            <li>Community-curated playlists</li>
-            <li>Live DJ sessions and presenters</li>
-            <li>Call in directly from the app</li>
-          </ul>
-          
-          <div class="app-downloads">
-            <h4 style="margin-bottom: 10px; font-family: 'Playfair Display', serif;">Get the Mobile App</h4>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-              <a href="#" class="btn-app android-btn" style="background: var(--card2); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 8px; display: inline-flex; align-items: center; gap: 10px; color: white; text-decoration: none; font-weight: 600; transition: background 0.2s;">
-                <span style="font-size: 20px;">🤖</span> Download for Android
-              </a>
-              <a href="#" class="btn-app ios-btn" style="background: var(--card2); border: 1px solid rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 8px; display: inline-flex; align-items: center; gap: 10px; color: white; text-decoration: none; font-weight: 600; transition: background 0.2s;">
-                <span style="font-size: 20px;">🍎</span> Download for iOS
-              </a>
-            </div>
-          </div>
-
-          <!-- Call In Feature -->
-          <div style="margin-top: 30px; background: rgba(0,208,132,0.1); border: 1px solid rgba(0,208,132,0.3); border-radius: 12px; padding: 20px;">
-            <h4 style="margin-bottom: 10px; font-family: 'Playfair Display', serif;">Live Call-In</h4>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">Hold the button below to stream your voice directly to the DJ. Make sure your volume is lowered to prevent echo!</p>
-            <div style="display: flex; align-items: center;">
-              <button id="callInBtn" onmousedown="startCallIn()" onmouseup="stopCallIn()" ontouchstart="startCallIn()" ontouchend="stopCallIn()" style="background: linear-gradient(90deg, #00D084, #008f5d); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 16px; transition: transform 0.1s;">
-                📞 Hold to Call In
-              </button>
-              <span id="callInStatus" style="color: var(--text-muted); font-size: 13px; margin-left: 15px;">(Microphone required)</span>
-            </div>
+          <div style="text-align: right;">
+             <div class="label" style="opacity:0.6; margin-bottom:15px;">SIGNAL QUALITY:</div>
+             <div id="signalStatus" style="font-size:20px; font-weight:900; color:var(--green);">READY</div>
           </div>
         </div>
       </div>
 
-      <!-- Support & Donate -->
-      <div style="background: linear-gradient(135deg, rgba(255,107,53,0.1), rgba(255,215,0,0.05)); border: 1px solid rgba(255,107,53,0.3); border-radius: 24px; padding: 40px; text-align: center; margin-bottom: 20px;">
-        <h3 style="font-family: 'Playfair Display', serif; font-size: 32px; margin-bottom: 16px;">Support Our Community Radio</h3>
-        <p style="color: var(--text-muted); max-width: 600px; margin: 0 auto 24px;">Your donations help us keep the servers running, support our local DJs, and bring you the best programming 24/7. Any amount makes a huge difference to the Bukuma community.</p>
-        <button class="donate-btn" style="background: linear-gradient(90deg, var(--primary), var(--accent)); color: white; border: none; padding: 14px 32px; border-radius: 50px; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 15px rgba(255,107,53,0.3); transition: transform 0.2s;">
-          💝 Donate Now
-        </button>
+      <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap:80px; align-items: center; margin-bottom: 60px;">
+         <div style="display: flex; flex-direction: column; align-items: center; gap:20px;">
+            <div class="meter-container">
+               <div class="needle" id="needle1"></div>
+            </div>
+            <span class="label">SIGNAL GAIN</span>
+         </div>
+         
+         <div class="knob-unit">
+            <div class="knob" id="powerKnob" onclick="togglePower()"></div>
+            <span id="knobLabel" class="label">POWER / OFF</span>
+         </div>
+
+         <div style="display: flex; gap:40px; justify-content: center;">
+            <div style="text-align:center;">
+               <div class="rocker" id="onAirLed"></div>
+               <span class="label">ON AIR</span>
+            </div>
+            <div style="text-align:center;">
+               <div class="rocker" id="streamLed"></div>
+               <span class="label">STATUS</span>
+            </div>
+         </div>
       </div>
-    </div>
-  </section>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap:30px;">
+         <div class="hardware-plate" style="padding:30px; text-align:center;">
+            <div id="statListeners" style="font-size:48px; color:var(--green); font-weight:900; text-shadow:0 0 10px rgba(74,222,128,0.3);">000</div>
+            <div class="label" style="margin-top:10px;">ACTIVE UPLINKS</div>
+         </div>
+         <div class="hardware-plate" style="padding:30px; text-align:center;">
+            <div id="statQueue" style="font-size:48px; color:var(--green); font-weight:900; text-shadow:0 0 10px rgba(74,222,128,0.3);">0</div>
+            <div class="label" style="margin-top:10px;">QUEUED ASSETS</div>
+         </div>
+         <div class="hardware-plate" style="padding:30px; text-align:center;">
+            <div style="font-size:48px; color:var(--accent); font-weight:900;">24/7</div>
+            <div class="label" style="margin-top:10px;">TRANSMISSION</div>
+         </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: THE HERALD -->
+    <section id="herald">
+      <div class="hardware-plate">
+        <h2 style="font-size:52px; color:var(--accent); margin-bottom:40px;">The Bukuma Herald</h2>
+        
+        <div id="heraldGrid" style="display: grid; grid-template-columns: 1fr 1fr; gap:60px;">
+          <!-- Fetched dynamically -->
+        </div>
+
+        <div id="heraldActivities" style="margin-top:60px; padding:30px; background:rgba(0,0,0,0.2); border-radius:12px; border-left:4px solid var(--accent);">
+           <h4 class="label" style="color:var(--accent); margin-bottom:15px;">UPCOMING COMMUNITY ACTIVITIES</h4>
+           <div id="activitiesContent" style="font-size:16px; color:#888;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: PUSH-IN REQUESTS -->
+    <section id="requests">
+       <div style="max-width:800px; margin:0 auto;" class="hardware-plate">
+          <div style="text-align:center; margin-bottom:40px;">
+             <h2 style="font-size:42px; color:var(--accent);">UPLINK UNIT</h2>
+             <p class="label">BEAM REQUEST TO DJ</p>
+          </div>
+          <input type="text" id="reqName" class="hw-input" placeholder="INPUT OPERATOR NAME">
+          <input type="text" id="reqSong" class="hw-input" placeholder="INPUT SONG / ARTIST DATA">
+          <button class="hw-btn" style="width:100%" onclick="sendRequest()">INITIATE UPLINK TRANSMISSION</button>
+       </div>
+    </section>
+
+    <!-- SECTION 5: DONATIONS -->
+    <section id="donations">
+       <div class="screw tl"></div><div class="screw tr"></div>
+       <div style="max-width:700px; margin:0 auto;">
+          <h2 style="font-size:48px; color:var(--accent); margin-bottom:20px;">Support the Mission</h2>
+          <p style="font-size:18px; color:#a89f8e; margin-bottom:40px;">Your contributions keep the Agum Bukuma Community Radio live and help fund our community development projects, including the Primary School redevelopment.</p>
+          <button class="hw-btn" style="background:#4ade80; color:#000; box-shadow:0 6px 0 #2d8a50;" onclick="alert('Squad API Integration Coming Soon...')">DONATE TO THE RADIO CAUSE</button>
+       </div>
+    </section>
+
+    <footer style="padding: 40px; background: rgba(0,0,0,0.6); text-align: center; border-top: 2px solid #1a1210;">
+       <div class="label" style="opacity:0.4;">AGUM BUKUMA BROADCASTING CORP • AUTHENTIC HARDWARE INTERFACE • EST. 2024</div>
+    </footer>
+  </div>
+
+  <audio id="radioAudio" src="/stream" preload="none"></audio>
 
   <script>
-    let callInStream=null, callInCtx=null, callInScriptNode=null, isAwaitingCall=false;
-    function startCallIn() {
-      if(!ws || ws.readyState !== 1) return;
-      isAwaitingCall = true;
-      document.getElementById('callInStatus').textContent = '⏳ Waiting for DJ...';
-      ws.send(JSON.stringify({action: 'requestCallIn', name: 'Listener'}));
-    }
-    function goLiveCaller() {
-      navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-        callInStream=stream; 
-        callInCtx=new AudioContext({sampleRate:22050});
-        var src=callInCtx.createMediaStreamSource(stream);
-        callInScriptNode=callInCtx.createScriptProcessor(4096,1,1);
-        src.connect(callInScriptNode);
-        callInScriptNode.connect(callInCtx.destination);
-        callInScriptNode.onaudioprocess=function(e){
-          if(!callInStream) return;
-          var cd=e.inputBuffer.getChannelData(0);
-          var i16=new Int16Array(cd.length);
-          for(var i=0;i<cd.length;i++){ var s=Math.max(-1,Math.min(1,cd[i])); i16[i]=s<0?s*32768:s*32767; }
-          if(ws&&ws.readyState===1) ws.send(i16.buffer);
-        };
-        document.getElementById('callInBtn').style.background = 'linear-gradient(90deg, #FF4757, #cc0011)';
-        document.getElementById('callInBtn').style.transform = 'scale(0.95)';
-        document.getElementById('callInStatus').textContent = '🔴 LIVE - Speak now!';
-        document.getElementById('callInStatus').style.color = '#FF4757';
-      }).catch(function(){alert('Microphone access denied');stopCallIn();});
-    }
-    function stopCallIn() {
-      isAwaitingCall = false;
-      if(callInStream) { callInStream.getTracks().forEach(t=>t.stop()); callInStream=null; }
-      if(callInScriptNode) { callInScriptNode.disconnect(); callInScriptNode=null; }
-      if(callInCtx) { callInCtx.close(); callInCtx=null; }
-      if(ws&&ws.readyState===1) ws.send(JSON.stringify({action: 'hangUpCall'}));
-      document.getElementById('callInBtn').style.background = 'linear-gradient(90deg, #00D084, #008f5d)';
-      document.getElementById('callInBtn').style.transform = '';
-      document.getElementById('callInStatus').textContent = '(Microphone required)';
-      document.getElementById('callInStatus').style.color = '';
-    }
-  </script>
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-links">
-        <a href="/">Home</a>
-        <a href="/admin/">Admin App</a>
-        <a href="/stream" target="_blank">Direct Stream</a>
-        <a href="mailto:radio@bukuma.com">Contact</a>
-      </div>
-      <p>© 2026 Bukuma Radio — Broadcasting Love, Culture & Music to the World 🌍</p>
-    </div>
-  </footer>
-
-  <script>
-    // WebSocket connection
-    const WS_URL = (location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host;
-    let ws = null;
-    let isPlaying = false;
-    let reconnectTimer = null;
-    let audioStarted = false;
+    var ws = null, audioPlaying = false, needleTimer = null;
 
     function connect() {
+      var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(proto + '://' + location.host);
+      ws.onopen = () => {
+        document.getElementById('streamLed').classList.add('active');
+        document.getElementById('signalStatus').textContent = 'CONNECTED';
+        ws.send(JSON.stringify({ action: 'getStatus' }));
+      };
+      ws.onmessage = (e) => {
+        try { var d = JSON.parse(e.data); handleMessage(d); } catch(err) {}
+      };
+      ws.onclose = () => {
+        document.getElementById('streamLed').classList.remove('active');
+        document.getElementById('signalStatus').textContent = 'OFFLINE';
+        setTimeout(connect, 3000);
+      };
+    }
+
+    function handleMessage(d) {
+      if(d.type === 'status') {
+        document.getElementById('trackTitle').textContent = d.currentTrack ? d.currentTrack.title : 'STATION IDLE';
+        document.getElementById('trackArtist').textContent = d.currentTrack ? (d.currentTrack.artist || 'Unknown') : 'Awaiting sync...';
+        document.getElementById('statListeners').textContent = (d.listeners || 0).toString().padStart(3, '0');
+        document.getElementById('statQueue').textContent = (d.queue || []).length;
+        document.getElementById('onAirLed').classList.toggle('active', d.isPlaying);
+      }
+    }
+
+    function togglePower() {
+      var audio = document.getElementById('radioAudio');
+      var knob = document.getElementById('powerKnob');
+      if(audioPlaying) {
+        audio.pause(); audio.src = '';
+        knob.classList.remove('active');
+        audioPlaying = false;
+        document.getElementById('knobLabel').textContent = 'POWER / OFF';
+        stopNeedle();
+      } else {
+        audio.src = '/stream?' + Date.now();
+        audio.play().catch(()=>{});
+        knob.classList.add('active');
+        audioPlaying = true;
+        document.getElementById('knobLabel').textContent = 'POWER / ON';
+        startNeedle();
+      }
+    }
+
+    function sendRequest() {
+      var n = document.getElementById('reqName').value;
+      var s = document.getElementById('reqSong').value;
+      if(!n || !s) return alert('Clearance Denied: All fields required.');
+      ws.send(JSON.stringify({ action: 'request', listener: n, song: s }));
+      alert('REQUEST BEAMED TO MASTER CONSOLE');
+      document.getElementById('reqName').value = '';
+      document.getElementById('reqSong').value = '';
+    }
+
+    function startNeedle() {
+      needleTimer = setInterval(() => {
+        var angle = -30 + Math.random() * 60;
+        document.getElementById('needle1').style.transform = 'rotate(' + angle + 'deg)';
+      }, 150);
+    }
+    function stopNeedle() {
+      clearInterval(needleTimer);
+      document.getElementById('needle1').style.transform = 'rotate(-45deg)';
+    }
+
+    async function loadHerald() {
       try {
-        ws = new WebSocket(WS_URL);
-        
-        ws.onopen = () => {
-          clearTimeout(reconnectTimer);
-          updateOnAir(true);
-          ws.send(JSON.stringify({ action: 'getStatus' }));
-        };
-
-        ws.onmessage = async (e) => {
-          if (e.data instanceof Blob) {
-            if(!window.liveCtx) window.liveCtx = new AudioContext({sampleRate: 22050});
-            if(liveCtx.state === 'suspended') liveCtx.resume();
-            const arr = await e.data.arrayBuffer();
-            const i16 = new Int16Array(arr);
-            const f32 = new Float32Array(i16.length);
-            for(let i=0; i<i16.length; i++) f32[i] = i16[i]/32768;
-            const buf = liveCtx.createBuffer(1, f32.length, 22050);
-            buf.copyToChannel(f32, 0);
-            const src = liveCtx.createBufferSource();
-            src.buffer = buf; src.connect(liveCtx.destination);
-            if(!window.nextPlayTime || window.nextPlayTime < liveCtx.currentTime) window.nextPlayTime = liveCtx.currentTime;
-            src.start(window.nextPlayTime);
-            window.nextPlayTime += buf.duration;
-            return;
-          }
-          try { const msg = JSON.parse(e.data); handleMessage(msg); } catch(err) {}
-        };
-
-        ws.onclose = () => {
-          updateOnAir(false);
-          reconnectTimer = setTimeout(connect, 3000);
-        };
-
-        ws.onerror = () => {
-          ws.close();
-        };
-      } catch(e) {
-        reconnectTimer = setTimeout(connect, 5000);
-      }
-    }
-
-    function handleMessage(msg) {
-      if (msg.type === 'playJingle') { const a = new Audio(msg.url); a.volume = Math.min(1.0, document.getElementById('volumeSlider').value / 100 * 1.5); a.play(); return; }
-      if (msg.action === 'duck') { document.getElementById('radioAudio').volume = msg.active ? 0.2 : (document.getElementById('volumeSlider').value / 100); return; }
-      if (msg.type === 'callAccepted') { if (isAwaitingCall) goLiveCaller(); return; }
-      if (msg.type === 'callEnded') { stopCallIn(); return; }
-      switch(msg.type) {
-        case 'status':
-          updateStatus(msg);
-          break;
-        case 'nowPlaying':
-          updateTrack(msg.track);
-          break;
-        case 'loading':
-          document.getElementById('loadingMsg').textContent = msg.message;
-          break;
-        case 'listeners':
-          updateListeners(msg.count);
-          break;
-        case 'volume':
-          document.getElementById('volumeSlider').value = msg.value;
-          document.getElementById('volumeVal').textContent = msg.value + '%';
-          break;
-        case 'error':
-          document.getElementById('loadingMsg').textContent = '⚠ ' + msg.message;
-          setTimeout(() => { document.getElementById('loadingMsg').textContent = ''; }, 3000);
-          break;
-      }
-    }
-
-    function updateStatus(status) {
-      isPlaying = status.isPlaying;
-      updatePlayBtn();
-      updateQueue(status.queue);
-      updateListeners(status.listeners);
-      if (status.volume !== undefined) {
-        document.getElementById('volumeSlider').value = status.volume;
-        document.getElementById('volumeVal').textContent = status.volume + '%';
-      }
-      if (status.currentTrack) updateTrack(status.currentTrack);
-      else {
-        document.getElementById('trackTitle').textContent = isPlaying ? 'Loading...' : 'Ready to Play';
-        document.getElementById('trackArtist').textContent = isPlaying ? 'Please wait...' : 'Click play to start';
-      }
-      updateStatusBadge(status);
-    }
-
-    function updateTrack(track) {
-      if (!track) return;
-      document.getElementById('trackTitle').textContent = track.title || 'Unknown';
-      document.getElementById('trackArtist').textContent = track.artist || 'Unknown Artist';
-      document.getElementById('loadingMsg').textContent = '';
-    }
-
-    function updateStatusBadge(status) {
-      const badge = document.getElementById('statusBadge');
-      const text = document.getElementById('statusText');
-      if (status.isPlaying && status.currentTrack) {
-        badge.className = 'status-badge live';
-        text.textContent = '🔴 LIVE ON AIR';
-      } else if (status.isPlaying) {
-        badge.className = 'status-badge loading';
-        text.textContent = '⏳ Loading track...';
-      } else {
-        badge.className = 'status-badge idle';
-        text.textContent = '⏸ Paused';
-      }
-    }
-
-    function updatePlayBtn() {
-      const btn = document.getElementById('playBtn');
-      const vinyl = document.getElementById('vinyl');
-      const eqBars = document.querySelectorAll('.eq-bar');
-      
-      btn.textContent = isPlaying ? '⏸' : '▶';
-      
-      if (isPlaying) {
-        vinyl.classList.add('playing');
-        eqBars.forEach(b => b.classList.remove('paused'));
-      } else {
-        vinyl.classList.remove('playing');
-        eqBars.forEach(b => b.classList.add('paused'));
-      }
-    }
-
-    function updateOnAir(connected) {
-      const badge = document.getElementById('onAirBadge');
-      if (connected) {
-        badge.classList.add('live');
-        badge.innerHTML = '<span></span>ON AIR';
-        if (document.getElementById('radioAudio').paused) { document.getElementById('radioAudio').play().catch(e=>{}); }
-      } else {
-        badge.classList.remove('live');
-        badge.innerHTML = 'OFF AIR';
-      }
-    }
-
-    function updateQueue(queue) {
-      if (!queue) return;
-      const list = document.getElementById('queueList');
-      const badge = document.getElementById('queueBadge');
-      const statQueue = document.getElementById('statQueue');
-      
-      badge.textContent = queue.length + ' song' + (queue.length !== 1 ? 's' : '');
-      statQueue.textContent = queue.length;
-
-      if (queue.length === 0) {
-        list.innerHTML = '<div class="queue-item"><div class="queue-num">♪</div><div class="queue-info"><div class="queue-title">Queue is empty</div><div class="queue-artist">Songs will appear here</div></div></div>';
-        return;
-      }
-
-      list.innerHTML = queue.map((song, i) => `
-        <div class="queue-item ${i === 0 && isPlaying ? 'active' : ''}">
-          <div class="queue-num">${i === 0 && isPlaying ? '♫' : (i + 1)}</div>
-          <div class="queue-info">
-            <div class="queue-title">${escHtml(song.title)}</div>
-            <div class="queue-artist">${escHtml(song.artist || 'Unknown')}</div>
+        const r = await fetch('/data/herald.json');
+        const d = await r.json();
+        const grid = document.getElementById('heraldGrid');
+        grid.innerHTML = d.news.slice(0, 2).map(n => `
+          <div id="herald-${n.id}">
+             <h3 style="color:var(--accent); font-size:24px; margin-bottom:20px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:10px;">${n.title}</h3>
+             <p style="font-size:16px; line-height:1.7; color:#a89f8e; margin-bottom:20px;">${n.content}</p>
+             <p style="font-size:14px; font-weight:700; color:var(--green);">[ ${n.status.toUpperCase()} ]</p>
           </div>
-          <div class="queue-duration">${escHtml(song.duration || '')}</div>
-        </div>
-      `).join('');
+        `).join('');
+        
+        const acts = d.news.find(n => n.id === 'compound-competitions');
+        if(acts) {
+          document.getElementById('activitiesContent').innerHTML = `
+            <p>${acts.content}</p>
+            <p style="margin-top:15px; color:var(--accent); font-weight:700;">Full data broadcast via Public App.</p>
+          `;
+          document.getElementById('herald-compound-competitions')?.remove();
+        }
+      } catch(err) {}
     }
 
-    function updateListeners(count) {
-      document.getElementById('listenersCount').textContent = count || 0;
-      document.getElementById('statListeners').textContent = count || 0;
-    }
-
-    function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    function togglePlay() {
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
-      if (isPlaying) {
-        ws.send(JSON.stringify({ action: 'pause' }));
-        stopAudio();
-      } else {
-        ws.send(JSON.stringify({ action: 'play' }));
-        startAudio();
-      }
-    }
-
-    function skipTrack() {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ action: 'skip' }));
-      }
-    }
-
-    function setVolume(val) {
-      document.getElementById('volumeVal').textContent = val + '%';
-      const audio = document.getElementById('radioAudio');
-      audio.volume = val / 100;
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ action: 'volume', value: val }));
-      }
-    }
-
-    function startAudio() {
-      const audio = document.getElementById('radioAudio');
-      audio.src = '/stream?' + Date.now();
-      audio.play().catch(() => {});
-      audioStarted = true;
-    }
-
-    function stopAudio() {
-      const audio = document.getElementById('radioAudio');
-      audio.pause();
-      audio.src = '';
-      audioStarted = false;
-    }
-
-    // Initialize
     connect();
+    loadHerald();
+    setInterval(() => { if(ws && ws.readyState === 1) ws.send(JSON.stringify({ action: 'getStatus' })); }, 5000);
   </script>
 </body>
 </html>
