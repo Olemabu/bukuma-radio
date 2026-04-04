@@ -1,0 +1,25 @@
+ffmpeg version 8.1-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers
+  built with gcc 15.2.0 (Rev11, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-cairo --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libsvtjpegxs --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint --enable-whisper
+  libavutil      60. 26.100 / 60. 26.100
+  libavcodec     62. 28.100 / 62. 28.100
+  libavformat    62. 12.100 / 62. 12.100
+  libavdevice    62.  3.100 / 62.  3.100
+  libavfilter    11. 14.100 / 11. 14.100
+  libswscale      9.  5.100 /  9.  5.100
+  libswresample   6.  3.100 /  6.  3.100
+Input #0, matroska,webm, from 'https://rr1---sn-huoob-5c8s.googlevideo.com/videoplayback?expire=1775312138&ei=qsjQaZnABYXVi9oP_eyEoAs&ip=102.91.96.51&id=o-AO65-SKcx_hMWZoQ0K0m9LmmS7h1DpxLImnyEmvGqt8O&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&cps=293&met=1775290538%2C&mh=yk&mm=31%2C29&mn=sn-huoob-5c8s%2Csn-avn7ln7e&ms=au%2Crdu&mv=m&mvi=1&pl=24&rms=au%2Cau&initcwndbps=290000&bui=AUUZDGIgUIvg5hej3SFPYpr0pGtcZNYQGmyDeSgDMIA5Dmcf9yH9EPgICVQIVEiCJl7S6uoAQRmMmtcR&spc=jlWavePDY4mvxzldqEeiYdce5EpaFqy06BBG_6EVD_U8&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=4311355&dur=257.281&lmt=1636143877950140&mt=1775289926&fvip=2&keepalive=yes&fexp=51565116%2C51565682&c=ANDROID_VR&txp=5311224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cspc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AHEqNM4wRQIhAJDKYkjlVGy8bgUUgageVhjjI6BvSchT6M8j-kur5h10AiBGEHzBN7qtGrDNdJ4QBJPMZjot3PJkILRMtHUGY2jfwQ%3D%3D&lsparams=cps%2Cmet%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=APaTxxMwRAIgCYUgTPPzSu2rMJ4ILNqAkzml9VG7J3vBefzfZnZ908UCICbU9aqfafrL2ilnZwyJ-LJEI9rR2dvtw5lHKU6Mq11T':
+  Metadata:
+    encoder         : google/video-file
+  Duration: 00:04:17.28, start: 0.000000, bitrate: 134 kb/s
+  Stream #0:0(eng): Audio: opus, 48000 Hz, stereo, fltp (default)
+Stream mapping:
+  Stream #0:0 -> #0:0 (opus (native) -> pcm_s16le (native))
+Press [q] to stop, [?] for help
+Output #0, null, to 'pipe:':
+  Metadata:
+    encoder         : Lavf62.12.100
+  Stream #0:0(eng): Audio: pcm_s16le, 48000 Hz, stereo, s16, 1536 kb/s (default)
+    Metadata:
+      encoder         : Lavc62.28.100 pcm_s16le
+size=N/A time=00:00:40.89 bitrate=N/A speed=  79x elapsed=0:00:00.51    size=N/A time=00:01:46.45 bitrate=N/A speed= 102x elapsed=0:00:01.04    size=N/A time=00:01:46.45 bitrate=N/A speed=  68x elapsed=0:00:01.56    size=N/A time=00:01:46.45 bitrate=N/A speed=  51x elapsed=0:00:02.08    size=N/A time=00:01:54.71 bitrate=N/A speed=44.2x elapsed=0:00:02.59    size=N/A time=00:02:42.49 bitrate=N/A speed=52.2x elapsed=0:00:03.11    size=N/A time=00:02:59.05 bitrate=N/A speed=49.3x elapsed=0:00:03.63    size=N/A time=00:02:59.05 bitrate=N/A speed=43.2x elapsed=0:00:04.14    

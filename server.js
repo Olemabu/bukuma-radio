@@ -206,71 +206,109 @@ async function getYouTubeUrl(query) {
     });
 }
 
+let isPlayingInternal = false;
+let isTransitioning = false;
+let playNextTimeout = null;
+
 async function startPlayback() {
-    if (queue.length === 0) { console.log('[PLAY] Queue is empty'); broadcast({ type: 'error', message: 'Queue is empty' }); return; }
-    console.log('[PLAY] Starting playback, queue:', queue.length, 'tracks');
+    if (isPlaying && currentProcess) return;
     isPlaying = true;
+    if (queue.length === 0) {
+        const pl = playlists.find(p => p.id === '1') || playlists[0];
+        if (pl) {
+            queue = pl.tracks.map(t => ({ ...t, id: Date.now().toString() + Math.random() }));
+            saveQueue();
+        }
+    }
     playNext();
 }
 
 async function playNext() {
-    if (!isPlaying || queue.length === 0) {
-          if (loopEnabled) {
-                  const loopPl = loopPlaylistId ? playlists.find(p => p.id === loopPlaylistId) : null;
-                  if (loopPl && loopPl.tracks.length > 0) {
-                            queue = loopPl.tracks.map(t => ({ ...t, id: Date.now().toString() + Math.random() }));
-                            saveQueue();
-                            playNext();
-                            return;
-                  }
-          }
-          console.log('[PLAY] Queue exhausted, stopping.');
-          isPlaying = false;
-          currentTrack = null;
-          broadcast(getStatus());
-          saveState();
-          return;
+    if (!isPlaying || isTransitioning) return;
+    if (queue.length === 0) {
+        if (loopEnabled && loopPlaylistId) {
+            const pl = playlists.find(p => p.id === loopPlaylistId);
+            if (pl && pl.tracks.length > 0) {
+                queue = pl.tracks.map(t => ({ ...t, id: Date.now().toString() + Math.random() }));
+                saveQueue();
+                return playNext();
+            }
+        }
+        isPlaying = false;
+        currentTrack = null;
+        broadcast(getStatus());
+        return;
     }
+
+    isTransitioning = true;
+    if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
+
     currentTrack = { ...queue[0] };
-    console.log('[PLAY] Now playing:', currentTrack.title, '-', currentTrack.artist);
+    const localTrackId = currentTrack.id;
+    console.log('[PLAY] Now playing:', currentTrack.title);
     broadcast({ type: 'nowPlaying', track: currentTrack });
     broadcast(getStatus());
     saveState();
-    playHistory.unshift({ ...currentTrack, playedAt: new Date().toISOString() });
-    if (playHistory.length > 200) playHistory = playHistory.slice(0, 200);
-    saveHistory();
-    broadcast({ type: 'history_update' });
+
     try {
-          const q = currentTrack.youtubeQuery || `${currentTrack.artist} ${currentTrack.title}`;
-          broadcast({ type: 'loading', message: `Loading: ${currentTrack.title}...` });
-          const url = await getYouTubeUrl(q);
-          if (!isPlaying) return;
-          if (autoJingles.start && jingles.length > 0) {
-                  const startJingle = jingles[Math.floor(Math.random() * jingles.length)];
-                  broadcast({ type: 'playJingle', url: startJingle.url });
-          }
-          scheduleRandomJingle();
-          if (currentProcess) { try { currentProcess.kill('SIGKILL'); } catch(e) {} }
-          const ffmpegPath = 'C:\\Users\\USER\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.WinGet.Source_8wekyb3d8bbwe\\ffmpeg-8.1-full_build\\bin\\ffmpeg.exe';
-          console.log('[FFMPEG] Spawning for:', currentTrack.title);
-          currentProcess = spawn(ffmpegPath, ['-reconnect', '1', '-reconnect_streamed', '1', '-i', url, '-af', `volume=${volume/100}`, '-f', 'mp3', '-b:a', '128k', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
-          currentProcess.stdout.on('data', (chunk) => {
-                  streamClients.forEach(res => { try { res.write(chunk); } catch(e) { streamClients.delete(res); } });
-          });
-          currentProcess.stderr.on('data', (d) => {});
-          currentProcess.on('close', (code) => {
-                  console.log('[FFMPEG] Process closed for:', currentTrack?.title, 'code:', code);
-                  if (isPlaying) { queue.shift(); saveQueue(); setTimeout(playNext, 500); }
-          });
-          currentProcess.on('error', (e) => {
-                  console.error('[FFMPEG] Error:', e.message);
-                  broadcast({ type: 'error', message: 'Playback error: ' + e.message });
-                  if (isPlaying) { queue.shift(); saveQueue(); setTimeout(playNext, 2000); }
-          });
+        const q = currentTrack.youtubeQuery || `${currentTrack.artist} ${currentTrack.title}`;
+        const url = await getYouTubeUrl(q);
+        
+        if (!isPlaying || currentTrack.id !== localTrackId) {
+            isTransitioning = false;
+            return;
+        }
+
+        if (currentProcess) {
+            currentProcess.removeAllListeners();
+            try { currentProcess.kill('SIGKILL'); } catch(e) {}
+            currentProcess = null;
+        }
+
+        if (autoJingles.start && jingles.length > 0) {
+            const j = jingles[Math.floor(Math.random() * jingles.length)];
+            broadcast({ type: 'playJingle', url: j.url });
+        }
+        scheduleRandomJingle();
+
+        const ffmpegPath = 'C:\\Users\\USER\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.WinGet.Source_8wekyb3d8bbwe\\ffmpeg-8.1-full_build\\bin\\ffmpeg.exe';
+        currentProcess = spawn(ffmpegPath, ['-reconnect', '1', '-reconnect_streamed', '1', '-i', url, '-af', `volume=${volume/100}`, '-f', 'mp3', '-b:a', '128k', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
+        
+        currentProcess.stdout.on('data', (c) => {
+            streamClients.forEach(res => { try { res.write(c); } catch(e) { streamClients.delete(res); } });
+        });
+        
+        currentProcess.stderr.on('data', () => {});
+        
+        currentProcess.on('close', (code) => {
+            console.log('[FFMPEG] Finished:', currentTrack?.title, 'code:', code);
+            if (isPlaying && currentTrack && currentTrack.id === localTrackId) {
+                queue.shift();
+                saveQueue();
+                isTransitioning = false;
+                playNextTimeout = setTimeout(playNext, 500);
+            }
+        });
+
+        currentProcess.on('error', (e) => {
+            console.error('[FFMPEG] Error:', e.message);
+            if (isPlaying && currentTrack && currentTrack.id === localTrackId) {
+                queue.shift();
+                saveQueue();
+                isTransitioning = false;
+                playNextTimeout = setTimeout(playNext, 2000);
+            }
+        });
+
+        isTransitioning = false;
     } catch(e) {
-          console.error('[PLAY] CATCH ERROR for', currentTrack?.title, ':', e.message);
-          broadcast({ type: 'error', message: 'Could not load: ' + (currentTrack ? currentTrack.title : 'track') });
-          if (isPlaying) { queue.shift(); saveQueue(); setTimeout(playNext, 2000); }
+        console.error('[PLAY] Error loading track:', e.message);
+        isTransitioning = false;
+        if (isPlaying) {
+            queue.shift();
+            saveQueue();
+            playNextTimeout = setTimeout(playNext, 2000);
+        }
     }
 }
 
