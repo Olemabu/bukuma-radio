@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const { exec, spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const multer = require('multer');
+const multer = require('multer');h
 
 const app = express();
 const server = http.createServer(app);
@@ -139,7 +139,7 @@ async function getYouTubeUrl(query) {
   return new Promise((resolve, reject) => {
     const q = query.replace(/['"]/g, '');
     // Try audio-only first, fall back to best
-    const cmd = YTDLP_PATH + ' --get-url --format "bestaudio/best" --no-playlist --ignore-errors --socket-timeout 20 "ytsearch1:' + q + '"';
+    const cmd = YTDLP_PATH + ' --get-url --format "bestaudio/best" --no-playlist --ignore-errors --socket-timeout 20 --extractor-args "youtube:player_client=android,web" "ytsearch1:' + q + '"';
     exec(cmd, { timeout: 50000 }, (err, stdout, stderr) => {
       if (err) {
         console.error('[YT-DLP] error for:', q, '-', (stderr || err.message).substring(0, 120));
