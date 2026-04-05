@@ -5,219 +5,220 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AGUM BUKUMA HERALD - Community News & Radio</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:wght@700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@400;600;700;900&display=swap');
     
     :root {
-      --primary: #8B4513;
-      --accent: #D4AF37;
-      --bg: #0D0805;
-      --card: #1f140f;
-      --text: #F5DEB3;
-      --green: #4ade80;
+      --primary: #5d3a1a;
+      --accent: #b8860b;
+      --bg: #fdfaf5;
+      --card: #ffffff;
+      --text: #2d2d2d;
+      --muted: #6b6b6b;
+      --green: #27ae60;
+      --parchment: #fdf6e3;
       --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
-      --wood: url('https://www.transparenttextures.com/patterns/dark-wood.png');
+      --mahogany: #4e2b10;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
       font-family: 'Inter', sans-serif;
-      background: #0f0a08 var(--wood);
+      background-color: var(--bg);
+      background-image: radial-gradient(#e5e5f7 0.5px, transparent 0.5px);
+      background-size: 10px 10px;
       color: var(--text);
       line-height: 1.6;
     }
 
-    /* TYPOGRAPHY */
-    h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 900; }
-    .label { font-size: 10px; letter-spacing: 3px; color: var(--accent); font-weight: 900; text-transform: uppercase; }
+    .container { max-width: 1400px; margin: 0 auto; padding: 40px; display: grid; grid-template-columns: 380px 1fr; gap: 60px; }
 
-    /* LAYOUT */
-    .container { max-width: 1400px; margin: 0 auto; padding: 40px; display: grid; grid-template-columns: 400px 1fr; gap: 40px; }
-
-    @media (max-width: 1000px) {
-      .container { grid-template-columns: 1fr; }
+    @media (max-width: 1100px) {
+      .container { grid-template-columns: 1fr; padding: 20px; }
       .sidebar { order: 2; }
       .main-content { order: 1; }
     }
 
+    /* TYPOGRAPHY */
+    h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 900; color: var(--mahogany); }
+    .label { font-size: 10px; letter-spacing: 3px; color: var(--accent); font-weight: 900; text-transform: uppercase; }
+
     /* HEADER */
-    header { border-bottom: 2px solid var(--accent); padding-bottom: 20px; margin-bottom: 40px; text-align: center; }
-    header h1 { font-size: 72px; letter-spacing: -3px; color: var(--accent); line-height: 1; }
+    .herald-header { border-bottom: 3px double var(--mahogany); padding-bottom: 30px; margin-bottom: 50px; text-align: center; }
+    .herald-header h1 { font-size: 64px; letter-spacing: -2px; line-height: 0.9; margin: 10px 0; }
+    .herald-subtitle { border-top: 1px solid var(--mahogany); border-bottom: 1px solid var(--mahogany); padding: 10px 0; margin-top: 15px; font-weight: 700; font-size: 13px; color: var(--mahogany); }
 
-    /* RADIO WIDGET */
-    .radio-widget {
-      background: #2b1b17 var(--wood); border: 8px solid #1a1210; border-radius: 20px;
-      padding: 20px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); position: sticky; top: 40px;
-      border-bottom: 12px solid #111;
+    /* RADIO RECEIVER WIDGET (SKEUOMORPHIC LIGHT) */
+    .radio-receiver {
+      background: #f4e9d5; border: 10px solid #c8b595; border-radius: 24px;
+      padding: 25px; box-shadow: 0 30px 60px rgba(0,0,0,0.15), inset 0 2px 2px rgba(255,255,255,0.5);
+      position: sticky; top: 40px; border-bottom-width: 18px; border-right-width: 14px;
     }
-    .widget-display {
-      background: #050805; border: 4px solid #111; border-radius: 12px; padding: 15px;
-      margin-bottom: 20px; color: var(--green); font-family: 'Courier New', monospace; box-shadow: inset 0 0 20px #000;
-      min-height: 100px; display: flex; flex-direction: column; justify-content: center;
+    .receiver-screen {
+      background: #0a0c0a; border: 4px solid #3d424d; border-radius: 12px; padding: 20px;
+      margin-bottom: 25px; color: #4ade80; font-family: 'Courier New', monospace;
+      box-shadow: inset 0 0 15px #000; min-height: 120px; position: relative;
     }
-    .widget-knob {
-      width: 100px; height: 100px; background: var(--brass); border-radius: 50%;
-      margin: 0 auto 15px; cursor: pointer; box-shadow: 0 8px 15px rgba(0,0,0,0.6); border: 4px solid #111;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    .receiver-screen::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.02), rgba(0,255,0,0.01), rgba(0,0,255,0.02)); background-size: 100% 3px, 3px 100%; pointer-events: none; }
+
+    .btn-tune {
+      width: 100%; padding: 18px; background: var(--brass); border: 2px solid #a3811f;
+      border-radius: 12px; color: #5d3a1a; font-weight: 900; font-size: 14px; cursor: pointer;
+      box-shadow: 0 6px 0 #8c6d17; transition: all 0.1s; letter-spacing: 1px;
     }
-    .widget-knob.active { transform: rotate(45deg); box-shadow: 0 0 30px var(--accent); }
+    .btn-tune:active { transform: translateY(4px); box-shadow: 0 2px 0 #8c6d17; }
+    .btn-tune.active { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 6px 0 #922b21; }
 
-    /* NEWS GRID */
-    .news-grid { display: grid; grid-template-columns: 1fr; gap: 60px; }
-    .news-item { border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 60px; }
-    .news-item h2 { font-size: 48px; margin-bottom: 15px; color: #fff; line-height: 1; }
-    .news-summary { font-size: 20px; opacity: 0.8; margin-bottom: 25px; font-weight: 700; }
-    .news-status { display: inline-block; padding: 5px 12px; background: var(--accent); color: #000; font-weight: 900; font-size: 11px; border-radius: 4px; margin-bottom: 20px; }
+    /* NEWS FEED */
+    .news-card { background: var(--card); border: 1px solid #e0ddd5; border-radius: 12px; padding: 40px; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: transform 0.2s; }
+    .news-card:hover { transform: translateY(-5px); }
+    .news-card h2 { font-size: 42px; line-height: 1.1; margin-bottom: 15px; }
+    .news-card .summary { font-size: 19px; font-weight: 700; color: var(--primary); margin-bottom: 20px; }
+    .news-card .content { color: var(--text); font-size: 17px; opacity: 0.9; }
+    .news-status { display: inline-block; padding: 4px 10px; background: var(--mahogany); color: #fff; font-weight: 900; font-size: 10px; border-radius: 4px; margin-bottom: 15px; }
 
-    /* VU METER (Mini) */
-    .vu-meter { width: 100%; height: 8px; background: #000; border-radius: 4px; position: relative; overflow: hidden; margin-top: 15px; }
-    .vu-bar { position: absolute; inset: 0; background: var(--green); width: 0%; transition: width 0.1s; opacity: 0.6; box-shadow: 0 0 10px var(--green); }
+    /* VU METER */
+    .vu-meter { width: 100%; height: 10px; background: #000; border-radius: 5px; overflow: hidden; margin-top: 15px; }
+    .vu-bar { height: 100%; width: 0%; background: #4ade80; transition: width 0.1s; opacity: 0.8; }
 
-    footer { text-align: center; padding: 100px 60px; opacity: 0.3; font-size: 11px; letter-spacing: 3px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 100px; }
-
-    /* LOGO SCANLINES */
-    .logo-wrap { position: relative; display: inline-block; }
-    .logo-wrap::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(rgba(0,0,0,0) 0px, rgba(0,0,0,0) 1px, rgba(212,175,55,0.05) 2px); }
+    footer { border-top: 1px solid #e0ddd5; padding: 60px 0; text-align: center; font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: 2px; }
   </style>
 </head>
 <body>
 
   <div class="container">
     
-    <!-- SIDEBAR: RADIO WIDGET -->
+    <!-- SIDEBAR: RECEIVER -->
     <aside class="sidebar">
-      <header style="border:none; margin-bottom:20px; text-align:left;">
-        <p class="label">LIVE FROM BUKUMA SQUARE</p>
-        <h2 style="font-size:36px; line-height:1;">Nature & Wood FM</h2>
+      <header style="text-align:left; margin-bottom:30px;">
+        <p class="label">TRANSISTOR UNIT MODEL-7</p>
+        <h3 style="font-size:28px;">Community Radio</h3>
       </header>
 
-      <div class="radio-widget">
-        <p class="label" style="font-size:8px; margin-bottom:12px; opacity:0.6;">TRANSISTOR UPLINK • ACTIVE</p>
-        <div class="widget-display">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div id="widgetThumb" style="width:44px;height:44px;border-radius:6px;background:#111;flex-shrink:0;overflow:hidden"></div><div style="min-width:0"><div id="trackTitle" style="font-size:15px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">STATION IDLE</div><div id="trackArtist" style="font-size:10px; opacity:0.6; font-weight:700; margin-top:2px;">AWAITING SIGNAL...</div></div></div>
-          <div id="trackArtist" style="font-size:11px; opacity:0.6; font-weight:700;">AWAITING SIGNAL...</div>
-          <div style="font-size:10px; margin-top:15px; display:flex; justify-content:space-between; font-weight:900;">
-            <span>STATUS: <span id="sigStatus" style="color:var(--green)">LOCKED</span></span>
-            <span>UPLINKS: <span id="statListeners" style="color:var(--accent)">000</span></span>
+      <div class="radio-receiver">
+        <p class="label" style="font-size:8px; margin-bottom:15px; color:var(--mahogany);">BROADCAST RECEPTION ACTIVE</p>
+        <div class="receiver-screen">
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom:15px;">
+            <div id="widgetThumb" style="width:50px;height:50px;background:#111;border:1px solid #333;border-radius:6px;overflow:hidden"></div>
+            <div style="min-width:0">
+              <div id="trackTitle" style="font-size:16px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">STATION IDLE</div>
+              <div id="trackArtist" style="font-size:10px; opacity:0.7; font-weight:700;">AWAITING SIGNAL...</div>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:900; opacity:0.8;">
+            <span>SIGNAL: <span id="sigStatus" style="color:#4ade80">LOCKED</span></span>
+            <span>AIRTIME: <span id="airTime">00:00</span></span>
           </div>
           <div class="vu-meter"><div id="vuBar" class="vu-bar"></div></div>
         </div>
 
-        <div style="text-align: center;">
-          <div class="widget-knob" id="powerKnob" onclick="togglePower()"></div>
-          <p class="label" id="knobLabel" style="margin-top:20px;">POWER / OFF</p>
-        <button id="listenBtn" onclick="togglePower()" style="margin-top:16px;width:100%;padding:13px;background:#D4AF37;color:#000;font-weight:900;font-size:.95rem;border:none;border-radius:8px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px;" >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          <span id="listenBtnLabel">LISTEN LIVE</span>
+        <button id="tuneBtn" class="btn-tune" onclick="togglePower()">
+          TUNE IN TO BROADCAST
         </button>
-        </div>
+        <p id="tuneStatus" class="label" style="text-align:center; margin-top:15px; font-size:9px;">SPEAKER: MUTED</p>
       </div>
 
-      <div style="margin-top:50px; padding:30px; background:rgba(0,0,0,0.2); border-radius:15px; border:1px solid rgba(255,255,255,0.05);">
-        <h3 style="margin-bottom:20px;">Community Radio</h3>
-        <p style="font-size:15px; opacity:0.7;">Broadcasting highlife and community news 24/7 across Bukuma Square and surrounding square regions. Digital relay provided via the Nature & Wood system.</p>
-        <div style="margin-top:30px;">
-          <a href="/admin" style="color:var(--accent); text-decoration:none; font-weight:900; font-size:11px; letter-spacing:2px; border:1px solid var(--accent); padding:10px 20px; border-radius:5px;">STATION MASTER ACCESS ➔</a>
-        </div>
+      <div style="margin-top:40px; padding:25px; border:2px solid #e0ddd5; border-radius:15px;">
+        <p class="label" style="margin-bottom:10px;">About the station</p>
+        <p style="font-size:14px; color:var(--muted); font-weight:600;">Broadcasting the heartbeat of Bukuma Square since 1952. News, culture, and highlife 24/7.</p>
+        <a href="/admin" style="display:inline-block; margin-top:20px; font-size:11px; font-weight:900; color:var(--mahogany); text-decoration:none; border-bottom:2px solid var(--mahogany);">STATION MASTER LOGIN ➔</a>
       </div>
     </aside>
 
-    <!-- MAIN: NEWS HERALD -->
+    <!-- MAIN: HERALD -->
     <main class="main-content">
-      <header>
-        <p class="label" style="margin-bottom:10px;">VOL. LXXIV • NO. 127 • BUKUMA, NIGERIA</p>
-        <div class="logo-wrap"><h1>AGUM BUKUMA HERALD</h1></div>
-        <div style="border-top:1px solid var(--accent); border-bottom:1px solid var(--accent); padding:10px 0; margin-top:20px;">
-          <p class="label" style="opacity:0.8; letter-spacing:5px;">TRUTH • COMMUNITY • HIGHLIFE</p>
-        </div>
-      </header>
+      <div class="herald-header">
+        <p class="label">VOL. LXXIV • NO. 128 • BUKUMA, NIGERIA • 2026</p>
+        <h1>AGUM BUKUMA HERALD</h1>
+        <div class="herald-subtitle">COMMUNITY • CULTURE • INTEGRITY</div>
+      </div>
 
-      <div class="news-grid" id="newsGrid">
-        <!-- Dynmically loaded from herald.json -->
+      <div id="newsGrid">
+        <!-- Articles populating here -->
       </div>
 
       <footer>
-          THE BUKUMA HERALD • EST. 1952 • PRINTED IN BUKUMA SQUARE • DISTRIBUTED VIA THE AIRWAVES • © 2026 AGUM BUKUMA HERALD
+        © 2026 THE AGUM BUKUMA HERALD • REPRODUCED FOR DIGITAL AIRWAVES • ALL RIGHTS RESERVED
       </footer>
     </main>
-
   </div>
 
   <audio id="radioAudio" preload="none"></audio>
 
   <script>
-    var ws = null, audioPlaying = false;
+    let ws = null, isTunedIn = false;
 
     function connectWS() {
-      var proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      ws = new WebSocket(proto + '://' + location.host);
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${proto}://${location.host}`);
       ws.onopen = () => { ws.send(JSON.stringify({ action: 'getStatus' })); };
-      ws.onmessage = e => { try { handleStatus(JSON.parse(e.data)); } catch(err){} };
+      ws.onmessage = e => { try { handleMsg(JSON.parse(e.data)); } catch(err){} };
       ws.onclose = () => setTimeout(connectWS, 3000);
     }
 
-    function handleStatus(d) {
+    function handleMsg(d) {
       if(d.type === 'status' || d.type === 'nowPlaying') {
-        const title = d.currentTrack ? d.currentTrack.title : 'STATION IDLE';
-        const artist = d.currentTrack ? d.currentTrack.artist : 'AWAITING SIGNAL...';
+        const track = d.currentTrack || d.track;
+        const title = track ? track.title : 'STATION IDLE';
+        const artist = track ? track.artist : 'AWAITING SIGNAL...';
+        
         document.getElementById('trackTitle').textContent = title.toUpperCase();
         document.getElementById('trackArtist').textContent = artist.toUpperCase();
-    const thumb = document.getElementById('widgetThumb');
-    if(d.currentTrack && (d.currentTrack.thumbnail || d.currentTrack.videoId)) {
-      const url = d.currentTrack.thumbnail || 'https://img.youtube.com/vi/'+d.currentTrack.videoId+'/default.jpg';
-      thumb.innerHTML = '<img src="'+url+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;" onerror="this.style.display=\'none\'">';
-    } else { thumb.innerHTML=''; }
-        document.getElementById('statListeners').textContent = (d.listeners || 0).toString().padStart(3, '0');
         
-        if(audioPlaying) {
-          document.getElementById('vuBar').style.width = (40 + Math.random() * 60) + '%';
+        const thumb = document.getElementById('widgetThumb');
+        if(track?.thumbnail) {
+          thumb.innerHTML = `<img src="${track.thumbnail}" style="width:100%;height:100%;object-fit:cover">`;
+        } else { thumb.innerHTML = ''; }
+
+        if(isTunedIn) {
+          document.getElementById('vuBar').style.width = (30 + Math.random() * 60) + '%';
         }
       }
     }
 
     function togglePower() {
-       var audio = document.getElementById('radioAudio');
-       var knob = document.getElementById('powerKnob');
-       if(audioPlaying) {
-         audio.pause(); audio.src = '';
-         knob.classList.remove('active');
-         audioPlaying = false;
-         document.getElementById('knobLabel').textContent = 'POWER / OFF';
-    if(document.getElementById('listenBtnLabel')) { document.getElementById('listenBtnLabel').textContent='LISTEN LIVE'; document.getElementById('listenBtn').style.background='#D4AF37'; }
-         document.getElementById('vuBar').style.width = '0%';
-       } else {
-         audio.src = '/stream?' + Date.now();
-         audio.play().catch(()=>{});
-         knob.classList.add('active');
-         audioPlaying = true;
-         document.getElementById('knobLabel').textContent = 'POWER / ON';
-    if(document.getElementById('listenBtnLabel')) { document.getElementById('listenBtnLabel').textContent='■ STOP STREAM'; document.getElementById('listenBtn').style.background='#ef4444'; document.getElementById('listenBtn').style.color='#fff'; }
-       }
+      const audio = document.getElementById('radioAudio');
+      const btn = document.getElementById('tuneBtn');
+      const status = document.getElementById('tuneStatus');
+      
+      if(isTunedIn) {
+        audio.pause(); audio.src = '';
+        isTunedIn = false;
+        btn.classList.remove('active');
+        btn.textContent = 'TUNE IN TO BROADCAST';
+        status.textContent = 'SPEAKER: MUTED';
+        document.getElementById('vuBar').style.width = '0%';
+      } else {
+        audio.src = '/stream?' + Date.now();
+        audio.play().catch(()=>{});
+        isTunedIn = true;
+        btn.classList.add('active');
+        btn.textContent = 'TUNE OUT (SILENCE)';
+        status.textContent = 'SPEAKER: ACTIVE';
+      }
     }
 
     async function loadHerald() {
       try {
-        const r = await fetch('/data/herald.json');
+        const r = await fetch('/api/herald');
         const d = await r.json();
         const grid = document.getElementById('newsGrid');
         grid.innerHTML = d.news.map(item => `
-          <article class="news-item">
+          <article class="news-card">
             <span class="news-status">${item.status.toUpperCase()}</span>
-            <h2><a href="${item.link}" style="color:inherit; text-decoration:none;">${item.title}</a></h2>
-            <p class="news-summary">${item.summary}</p>
-            <p style="font-size:18px; opacity:0.7; color:var(--text);">${item.content}</p>
-            <div style="margin-top:30px;">
-              <a href="${item.link}" style="color:var(--accent); font-weight:900; font-size:12px; text-decoration:none; letter-spacing:2px; border-bottom:2px solid var(--accent);">READ THE FULL HERALD ➔</a>
-            </div>
+            <h2>${item.title}</h2>
+            <p class="summary">${item.summary || ''}</p>
+            <div class="content">${item.content}</div>
           </article>
         `).join('');
-      } catch(e) {
-        console.error('FAILED TO LOAD HERALD');
-      }
+      } catch(e) {}
     }
 
     connectWS();
     loadHerald();
+    setInterval(() => {
+        document.getElementById('airTime').textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }, 1000);
   </script>
 </body>
 </html>

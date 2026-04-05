@@ -3,588 +3,573 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bukuma Radio — Admin</title>
+<title>Bukuma Radio — Station Master</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0f1117;--surface:#1a1d27;--border:#2a2d3a;
-  --accent:#e63946;--accent2:#4cc9f0;--green:#2dc653;
-  --yellow:#f4d03f;--text:#e8eaf6;--muted:#8890a6;--radius:10px;
+:root {
+  --bg: #1a1c22;
+  --panel: #2d313a;
+  --chassis: #3d424d;
+  --ledge: #181a1f;
+  --accent: #ff4757;
+  --accent2: #70a1ff;
+  --green: #2ed573;
+  --yellow: #ffa502;
+  --text: #ffffff;
+  --muted: #a4b0be;
+  --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
+  --shadow-raised: 0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
+  --shadow-inset: inset 0 2px 5px rgba(0,0,0,0.5);
 }
-html,body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,sans-serif}
-#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh}
-.login-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:40px;width:340px;text-align:center}
-.login-card h1{font-size:1.6rem;margin-bottom:6px}
-.login-card p{color:var(--muted);margin-bottom:28px;font-size:.9rem}
-.login-card input{width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:1rem;margin-bottom:14px}
-.login-card input:focus{outline:none;border-color:var(--accent2)}
-.btn-login{width:100%;padding:13px;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-size:1rem;font-weight:600;cursor:pointer}
-.btn-login:hover{opacity:.85}
-#loginError{color:var(--accent);margin-top:12px;font-size:.9rem}
-#mainScreen{display:none;flex-direction:column}
-header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
-.logo{font-size:1.2rem;font-weight:700}.logo span{color:var(--accent)}
-.on-air-badge{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;background:rgba(230,57,70,.15);border:1px solid rgba(230,57,70,.4);padding:6px 14px;border-radius:20px;color:var(--accent)}
-.on-air-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
-.listener-count{color:var(--muted);font-size:.85rem}
-.tab-bar{display:flex;gap:4px;padding:12px 16px 0;background:var(--surface);border-bottom:1px solid var(--border)}
-.tab-btn{padding:8px 16px;font-size:.82rem;font-weight:600;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
-.tab-btn.active{color:var(--text);border-bottom-color:var(--accent2)}
-.tab-pane{display:none;padding:16px}.tab-pane.active{display:block}
-.main-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
-@media(max-width:800px){.main-grid{grid-template-columns:1fr}}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
-.card:last-child{margin-bottom:0}
-.card-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px}
-.track-display{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px}
-.track-thumb{width:64px;height:64px;border-radius:8px;background:#222;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.track-thumb img{width:64px;height:64px;object-fit:cover;border-radius:8px}
-.track-thumb svg{opacity:.4}
-.track-title{font-size:1.05rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.track-artist{color:var(--muted);font-size:.85rem;margin-top:4px}
-.transport{display:flex;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
-.btn-play{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 28px;height:52px;font-size:1.05rem;font-weight:700;background:var(--green);color:#fff;border:none;border-radius:12px;cursor:pointer;transition:.2s}
-.btn-play:hover{opacity:.9}
-.btn-stop{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 24px;height:52px;font-size:1.05rem;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:12px;cursor:pointer;transition:.2s}
-.btn-stop:hover{opacity:.9}
-.btn-skip{display:flex;align-items:center;justify-content:center;gap:6px;padding:0 18px;height:52px;font-size:.95rem;font-weight:600;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:.2s}
-.btn-skip:hover{background:#23263a}
-.btn-seed{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:.8rem;font-weight:600;background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:.2s;white-space:nowrap}
-.btn-seed:hover{color:var(--text);border-color:var(--text)}
-.volume-row{display:flex;align-items:center;gap:10px;margin-top:16px}
-.volume-row label{color:var(--muted);font-size:.85rem;white-space:nowrap}
-input[type=range]{flex:1;height:4px;accent-color:var(--accent2);cursor:pointer}
-.volume-val{color:var(--text);font-size:.85rem;width:36px;text-align:right}
-.monitor-row{display:flex;align-items:center;gap:10px;margin-top:12px}
-.btn-monitor{display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:.88rem;font-weight:600;background:var(--bg);color:var(--muted);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:.2s}
-.btn-monitor.active{background:rgba(76,201,240,.12);color:var(--accent2);border-color:var(--accent2)}
-.mic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
-.mic-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
-.mic-label{font-size:.78rem;color:var(--muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.mic-btn-group{display:flex;gap:4px;justify-content:center}
-.mic-btn{flex:1;padding:7px 3px;font-size:.72rem;font-weight:700;border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:6px;cursor:pointer;transition:.15s}
-.mic-btn.active-talk{background:rgba(230,57,70,.2);color:var(--accent);border-color:var(--accent)}
-.mic-btn.active-solo{background:rgba(244,208,63,.18);color:var(--yellow);border-color:var(--yellow)}
-.mic-btn.active-off{background:rgba(44,44,60,.4);color:var(--muted)}
-.search-row{display:flex;gap:8px}
-.search-row input{flex:1;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.92rem}
-.search-row input:focus{outline:none;border-color:var(--accent2)}
-.search-row button,.btn-primary{padding:10px 16px;background:var(--accent2);color:#000;font-weight:700;font-size:.88rem;border:none;border-radius:var(--radius);cursor:pointer;white-space:nowrap}
-.search-row button:hover,.btn-primary:hover{opacity:.85}
-.results-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto}
-.result-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;transition:.15s}
-.result-item:hover{border-color:var(--accent2)}
-.result-item img{width:44px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0}
-.result-text{flex:1;min-width:0}
-.result-title{font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.result-dur{font-size:.73rem;color:var(--muted);margin-top:2px}
-.result-add{padding:5px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.78rem;font-weight:600;cursor:pointer;flex-shrink:0}
-.result-add:hover{background:var(--accent2);color:#000;border-color:var(--accent2)}
-.result-add.in-queue{background:rgba(44,198,83,.1);color:var(--green);border-color:var(--green);cursor:default}
-#searchStatus{margin-top:6px;font-size:.8rem;color:var(--muted)}
-.queue-list{display:flex;flex-direction:column;gap:6px}
-.queue-item{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px}
-.queue-item.playing{border-color:var(--green)}
-.queue-num{color:var(--muted);font-size:.78rem;width:20px;text-align:center;flex-shrink:0}
-.queue-title{flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.queue-dur{color:var(--muted);font-size:.76rem;flex-shrink:0}
-.queue-remove{width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.queue-remove:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-.queue-empty{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
-.req-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
-.req-song{flex:1;font-size:.88rem;font-weight:600}.req-from{font-size:.76rem;color:var(--muted);margin-top:2px}
-.req-badge{font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:700;flex-shrink:0}
-.req-badge.pending{background:rgba(244,208,63,.15);color:var(--yellow)}
-.req-badge.approved{background:rgba(44,198,83,.15);color:var(--green)}
-.req-badge.dismissed{background:rgba(100,100,100,.15);color:var(--muted)}
-.req-actions{display:flex;gap:6px}
-.btn-approve{padding:5px 10px;background:rgba(44,198,83,.15);color:var(--green);border:1px solid var(--green);border-radius:6px;font-size:.76rem;font-weight:700;cursor:pointer}
-.btn-approve:hover{background:var(--green);color:#000}
-.btn-dismiss{padding:5px 10px;background:none;color:var(--muted);border:1px solid var(--border);border-radius:6px;font-size:.76rem;font-weight:700;cursor:pointer}
-.btn-dismiss:hover{border-color:var(--muted);color:var(--text)}
-.req-empty{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
-.news-form{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius)}
-.news-form input,.news-form textarea,.news-form select{padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.88rem;font-family:inherit}
-.news-form input:focus,.news-form textarea:focus{outline:none;border-color:var(--accent2)}
-.news-form textarea{min-height:80px;resize:vertical}
-.news-item-row{display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
-.news-item-body{flex:1;min-width:0}.news-item-title{font-size:.9rem;font-weight:600;margin-bottom:4px}
-.news-item-summary{font-size:.8rem;color:var(--muted)}
-.news-status-badge{font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:700;flex-shrink:0;background:rgba(76,201,240,.15);color:var(--accent2)}
-.btn-del{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.btn-del:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-.listener-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
-.listener-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#000;flex-shrink:0}
-.listener-name{font-size:.88rem;font-weight:600}.listener-village{font-size:.76rem;color:var(--muted)}
-.statusbar{padding:7px 16px;background:var(--surface);border-top:1px solid var(--border);font-size:.76rem;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
-.statusbar span{display:flex;align-items:center;gap:5px}
-.dot{width:7px;height:7px;border-radius:50%}.dot.green{background:var(--green)}.dot.red{background:var(--accent)}.dot.grey{background:var(--muted)}
-.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.88rem;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
-.toast.show{opacity:1}
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+#loginScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(circle at center, #2d313a, #1a1c22);
+}
+
+.login-card {
+  background: var(--panel);
+  border: 4px solid var(--chassis);
+  border-radius: 20px;
+  padding: 50px;
+  width: 380px;
+  text-align: center;
+  box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+  position: relative;
+}
+.login-card::before { content: 'MODEL 24-B SERIAL: 001'; position: absolute; top: 15px; right: 20px; font-size: 8px; font-weight: 700; color: var(--muted); opacity: 0.5; }
+
+.login-card h1 { font-size: 1.8rem; margin-bottom: 30px; letter-spacing: -1px; }
+.login-card input {
+  width: 100%; padding: 15px; background: var(--ledge); border: 2px solid var(--chassis);
+  border-radius: 8px; color: var(--text); font-size: 1.1rem; margin-bottom: 20px;
+  box-shadow: var(--shadow-inset); text-align: center;
+}
+.login-card button {
+  width: 100%; padding: 15px; background: var(--accent); color: white;
+  border: none; border-radius: 8px; font-weight: 900; cursor: pointer;
+  box-shadow: 0 6px 0 #b33939; transition: all 0.1s;
+}
+.login-card button:active { transform: translateY(4px); box-shadow: 0 2px 0 #b33939; }
+
+#mainScreen { display: none; flex-direction: column; min-height: 100vh; }
+
+.chassis {
+  background: var(--panel);
+  border: 6px solid var(--chassis);
+  border-bottom: 12px solid #111;
+  border-right: 12px solid #222;
+  border-radius: 24px;
+  margin: 20px auto;
+  width: 95%; max-width: 1200px;
+  padding: 30px;
+  box-shadow: 0 80px 150px rgba(0,0,0,0.9);
+}
+
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid var(--ledge); padding-bottom: 20px; }
+.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s; }
+.on-air-badge.active { background: #ff4757; color: white; border-color: #ff4757; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); animation: pulse-red 2s infinite; }
+@keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+.sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #666; display: inline-block; margin-left: 10px; transition: background 0.3s; }
+.sync-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+
+.btn-hardware {
+  background: var(--chassis);
+  border: none;
+  border-bottom: 5px solid #111;
+  border-radius: 12px;
+  color: white;
+  padding: 15px 25px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.btn-hardware:active, .btn-hardware.active { transform: translateY(3px); border-bottom-width: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+.btn-green { background: #26ae60; border-bottom-color: #1e8449; }
+.btn-red { background: #c0392b; border-bottom-color: #922b21; }
+.btn-blue { background: #2980b9; border-bottom-color: #1a5276; }
+
+.matrix-display {
+  background: #050805;
+  border: 4px solid var(--ledge);
+  border-radius: 12px;
+  padding: 20px;
+  color: var(--green);
+  font-family: "Courier New", monospace;
+  box-shadow: inset 0 0 20px #000;
+  margin-bottom: 25px;
+}
+
+.main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 30px; }
+
+.key-hint { font-size: 10px; color: var(--muted); background: var(--ledge); padding: 2px 5px; border-radius: 3px; font-weight: 900; border: 1px solid #111; margin-right: 5px; vertical-align: middle; }
+
+.card { background: var(--panel); padding: 5px 0; }
+.card-title { font-size: 11px; font-weight: 900; letter-spacing: 2px; opacity: 0.6; margin-bottom: 12px; text-transform: uppercase; }
+
+.mic-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+.mic-unit { background: var(--ledge); padding: 15px; border-radius: 12px; border: 2px solid var(--chassis); text-align: center; }
+
+.vu-meter { width: 100%; height: 12px; background: #000; border-radius: 6px; overflow: hidden; margin-top: 10px; position: relative; }
+.vu-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--green); transition: width 0.1s; }
+
+.queue-panel { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; max-height: 500px; overflow-y: auto; }
+
+.nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+.nav-btn { background: var(--ledge); border: none; padding: 10px 20px; border-radius: 8px; color: var(--muted); cursor: pointer; font-weight: 700; transition: 0.2s; }
+.nav-btn.active { background: var(--accent2); color: #000; box-shadow: 0 0 15px var(--accent2); }
+
+#searchStatus { margin: 10px 0; font-size: 12px; color: var(--yellow); font-weight: 700; }
+.results-list { max-height: 300px; overflow-y: auto; }
+.result-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid var(--chassis); }
+
+/* Pulse Animations */
+@keyframes pulse-green { 0% { box-shadow: 0 0 5px #2ecc71; } 50% { box-shadow: 0 0 20px #2ecc71; } 100% { box-shadow: 0 0 5px #2ecc71; } }
+@keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+
+.sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; display: inline-block; margin-left: 10px; vertical-align: middle; transition: all 0.3s; }
+.sync-dot.connected { background: #2ed573; box-shadow: 0 0 10px #2ed573; animation: pulse-green 3s infinite; }
+
+.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; }
+.on-air-badge.active { background: #ff4757; color: white; border-color: #ff4757; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); animation: pulse-red 2s infinite; }
+
+::selection { background: var(--accent); color: white; }
+
+/* Status Badges */
+.status-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-left: 8px;
+    border: 1px solid currentColor;
+}
+.status-pending { color: var(--muted); }
+.status-downloading { color: var(--yellow); animation: pulse 1s infinite; }
+.status-ready { color: var(--green); }
+.status-error { color: var(--accent); }
+
+@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+/* VERTICAL VU MONITOR */
+.master-monitor-bay {
+  background: var(--ledge);
+  border: 4px solid var(--chassis);
+  border-radius: 15px;
+  padding: 20px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--shadow-inset);
+  height: 100%;
+  position: relative;
+}
+.peak-light {
+  width: 12px; height: 12px;
+  background: #330000;
+  border-radius: 50%;
+  border: 2px solid #111;
+  transition: background 0.1s, box-shadow 0.1s;
+}
+.peak-light.active {
+  background: #ff4757;
+  box-shadow: 0 0 15px #ff4757;
+}
+.vu-vertical-track {
+  width: 24px;
+  height: 300px;
+  background: #000;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 2px;
+  gap: 2px;
+  border: 2px solid #222;
+}
+.vu-segment {
+  width: 100%;
+  height: 6px;
+  background: #1a1a1a;
+  border-radius: 1px;
+  transition: background 0.05s;
+}
+.vu-segment.green.on  { background: #2ed573; box-shadow: 0 0 5px #2ed573; }
+.vu-segment.yellow.on { background: #ffa502; box-shadow: 0 0 5px #ffa502; }
+.vu-segment.red.on    { background: #ff4757; box-shadow: 0 0 8px #ff4757; }
 </style>
 </head>
 <body>
+
 <div id="loginScreen">
   <div class="login-card">
-    <h1>&#127908; Bukuma Radio</h1>
-    <p>Admin Panel — Sign In</p>
-    <input type="password" id="pwInput" placeholder="Password" autocomplete="current-password">
-    <button class="btn-login" onclick="doLogin()">Sign In</button>
-    <div id="loginError"></div>
+    <p class="card-title" style="margin-bottom:10px">Station Authenticator</p>
+    <h1>&#127899; STATION MASTER</h1>
+    <input type="password" id="pwInput" placeholder="ENTER ACCESS CODE">
+    <button onclick="doLogin()">AUTHORIZE LOGIN</button>
+    <div id="loginError" style="color:var(--accent); margin-top:15px; font-size:12px; font-weight:700;"></div>
   </div>
 </div>
+
 <div id="mainScreen">
-  <header>
-    <div class="logo"><span>BUKUMA</span> RADIO</div>
-    <div class="on-air-badge"><span class="on-air-dot"></span> ON AIR</div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <span class="listener-count" id="listenerCount">— listeners</span>
-    </div>
-  </header>
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="showTab('play',this)">&#9654; Playback</button>
-    <button class="tab-btn" onclick="showTab('requests',this)">&#127925; Requests <span id="reqBadge"></span></button>
-    <button class="tab-btn" onclick="showTab('news',this)">&#128240; News</button>
-    <button class="tab-btn" onclick="showTab('listeners',this)">&#128101; Listeners</button>
-  </div>
-  <div class="tab-pane active" id="tab-play">
-    <div class="main-grid">
-      <div>
-        <div class="card">
-          <div class="card-title">Now Playing</div>
-          <div class="track-display">
-            <div class="track-thumb" id="trackThumb"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg></div>
-            <div style="flex:1;min-width:0">
-              <div class="track-title" id="trackTitle">— Station Idle —</div>
-              <div class="track-artist" id="trackArtist">Start playing to see track info</div>
+  <div class="chassis">
+    <header>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div class="logo" style="font-size:24px; font-weight:900;">AGUM <span style="color:var(--accent2)">BUKUMA</span></div>
+        <div class="on-air-badge" id="onAirBadge">OFF AIR</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px">
+        <span id="listenerCount" style="font-size:11px; font-weight:900; letter-spacing:1px; opacity:0.8;">0 UPLINKS ACTIVE</span>
+        <div id="wsStatusDot" class="sync-dot"></div>
+      </div>
+    </header>
+
+    <nav class="nav-tabs">
+      <button class="nav-btn active" onclick="showTab('play',this)">CONSOLE</button>
+      <button class="nav-btn" onclick="showTab('requests',this)">REQS</button>
+      <button class="nav-btn" onclick="showTab('news',this)">HERALD</button>
+      <button class="nav-btn" onclick="showTab('community',this)">PEOPLE</button>
+    </nav>
+
+    <div id="tab-play" class="tab-pane">
+      <div class="main-grid">
+        <div>
+          <div class="matrix-display">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px">
+              <span style="font-size:10px">TRANSMISSION FEED</span>
+              <span id="currentTime" style="font-size:10px">00:00:00</span>
+            </div>
+            <div style="display:flex; gap:15px; align-items:center">
+               <div id="trackThumb" style="width:60px;height:60px;background:#111;border:1px solid #333;border-radius:6px;overflow:hidden"></div>
+               <div style="min-width:0">
+                 <div id="trackTitle" style="font-size:18px; font-weight:900; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">STATION IDLE</div>
+                 <div id="trackArtist" style="font-size:12px; opacity:0.8">AWAITING SEED...</div>
+               </div>
+            </div>
+            <div class="vu-meter"><div id="vuBar" class="vu-bar"></div></div>
+          </div>
+
+          <div style="display:flex; gap:15px; margin-bottom:30px">
+            <button class="btn-hardware btn-green" id="btnPlay" onclick="playStation()" title="Shortcut: P">
+               <span class="key-hint">P</span> PLAY
+            </button>
+            <button class="btn-hardware btn-red" onclick="pausePlayback()" title="Shortcut: P">
+               STOP
+            </button>
+            <button class="btn-hardware" onclick="skipTrack()" title="Shortcut: S">
+               <span class="key-hint">S</span> SKIP
+            </button>
+          </div>
+
+          <div class="mic-panel">
+            <div class="mic-unit">
+               <div class="card-title">STUDIO MIC (<span class="key-hint">SPACE</span>)</div>
+               <div style="display:flex; gap:8px">
+                 <button class="btn-hardware" id="micBtnTalk" style="flex:1" onclick="setMic(1)">TALK</button>
+                 <button class="btn-hardware" id="micBtnSolo" style="flex:1" onclick="setMic(2)">SOLO</button>
+                 <button class="btn-hardware btn-red" id="micBtnOff" style="flex:1" onclick="setMic(0)">OFF</button>
+               </div>
+               <div id="micStatus" style="font-size:10px; font-weight:900; margin-top:10px; color:var(--muted)">READY</div>
+            </div>
+            <div class="mic-unit">
+               <div class="card-title">GAIN (<span class="key-hint">↑</span> / <span class="key-hint">↓</span>)</div>
+               <input type="range" id="volumeSlider" style="width:100%; margin-top:10px" oninput="setVolume(this.value)">
+               <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:900; margin-top:5px">
+                 <span>0%</span>
+                 <span id="volumeVal">80%</span>
+                 <span>100%</span>
+               </div>
             </div>
           </div>
-          <div class="transport">
-            <button class="btn-play" id="btnPlay" onclick="playStation()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>PLAY</button>
-            <button class="btn-stop" onclick="stopStation()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>STOP</button>
-            <button class="btn-skip" onclick="skipTrack()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>SKIP</button>
-            <button class="btn-seed" onclick="seedRexLawson()">&#127926; Rex Lawson</button>
-          </div>
-          <div class="volume-row">
-            <label>Volume</label>
-            <input type="range" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
-            <span class="volume-val" id="volumeVal">80%</span>
-          </div>
-          <div class="monitor-row">
-            <button class="btn-monitor" id="monitorBtn" onclick="toggleMonitor()">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-              Monitor Stream
-            </button>
-            <span id="monitorStatus" style="font-size:.8rem;color:var(--muted)">Off</span>
+
+          <div style="margin-top:30px">
+            <div class="card-title">INTELLIGENT SEARCH</div>
+            <div style="display:flex; gap:10px">
+              <input type="text" id="searchInput" placeholder="Universal Search..." style="flex:1; padding:12px; background:var(--ledge); border:2px solid var(--chassis); border-radius:8px; color:white">
+              <button class="btn-hardware btn-blue" onclick="doSearch()">SEARCH</button>
+            </div>
+            <div id="searchStatus">Awaiting Input...</div>
+            <div class="results-list" id="resultsList"></div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-title">Microphone Controls</div>
-          <div class="mic-grid" id="micGrid"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">YouTube Search</div>
-          <div class="search-row">
-            <input type="text" id="searchInput" placeholder="Search for music..." onkeydown="if(event.key==='Enter')doSearch()">
-            <button onclick="doSearch()">Search</button>
+
+        <div>
+          <div class="card-title">MASTER BROADCAST FEED</div>
+          <div class="master-monitor-bay">
+             <div class="peak-light" id="peakLight"></div>
+             <p style="font-size:8px; font-weight:900; margin-bottom:5px">PEAK</p>
+             <div class="vu-vertical-track" id="masterVU">
+                <!-- 40 segments -->
+             </div>
+             <p style="font-size:10px; font-weight:900; writing-mode: vertical-rl; text-orientation: mixed; margin-top:10px; opacity:0.5; letter-spacing:2px">STRICT OUTPUT</p>
           </div>
-          <div id="searchStatus"></div>
-          <div class="results-list" id="resultsList"></div>
         </div>
-      </div>
-      <div>
-        <div class="card">
-          <div class="card-title">Play Queue</div>
-          <div class="queue-list" id="queueList"><div class="queue-empty">Queue is empty</div></div>
+
+        <div>
+          <div class="card-title">PLAYBACK QUEUE</div>
+          <div class="queue-panel" id="queueList">
+            <p style="text-align:center; opacity:0.5; padding:20px">Queue empty</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="tab-pane" id="tab-requests" style="max-width:700px">
-    <div class="card">
-      <div class="card-title">Song Requests from Listeners</div>
-      <div id="requestsList"><div class="req-empty">No requests yet</div></div>
+
+    <div id="tab-requests" class="tab-pane" style="display:none">
+       <div class="card-title">LISTENER REQUESTS</div>
+       <div id="requestsList"></div>
     </div>
-  </div>
-  <div class="tab-pane" id="tab-news" style="max-width:700px">
-    <div class="card">
-      <div class="card-title">Add News Item</div>
-      <div class="news-form">
-        <input type="text" id="newsTitle" placeholder="Headline *">
-        <input type="text" id="newsSummary" placeholder="One-line summary">
-        <textarea id="newsContent" placeholder="Full story..."></textarea>
-        <select id="newsStatus"><option value="new">New</option><option value="ongoing">Ongoing</option><option value="upcoming">Upcoming</option><option value="breaking">Breaking</option></select>
-        <input type="text" id="newsLink" placeholder="Link (optional, default #)">
-        <button class="btn-primary" onclick="publishNews()">Publish</button>
-      </div>
+    <div id="tab-news" class="tab-pane" style="display:none">
+       <div class="card-title">HERALD PUBLISHER</div>
+       <div class="matrix-display" style="color:white; font-family:inherit">
+          <input type="text" id="newsTitle" placeholder="HEADLINE" style="width:100%; padding:10px; margin-bottom:10px; background:#111; border:1px solid #333; color:white">
+          <textarea id="newsContent" placeholder="CONTENT" style="width:100%; height:100px; padding:10px; background:#111; border:1px solid #333; color:white"></textarea>
+          <button class="btn-hardware btn-green" onclick="publishNews()">COMMIT TO HERALD</button>
+       </div>
+       <div id="newsList" style="margin-top:20px"></div>
     </div>
-    <div class="card">
-      <div class="card-title">Published News</div>
-      <div id="newsList"><div class="queue-empty">Loading...</div></div>
+    <div id="tab-community" class="tab-pane" style="display:none">
+       <div class="card-title">VILLAGE REGISTRY</div>
+       <div id="listenersList"></div>
     </div>
-  </div>
-  <div class="tab-pane" id="tab-listeners" style="max-width:700px">
-    <div class="card">
-      <div class="card-title">Registered Community Members</div>
-      <div id="listenersList"><div class="queue-empty">Loading...</div></div>
-    </div>
-  </div>
-  <div class="statusbar">
-    <span><span class="dot" id="streamDot"></span><span id="streamStatus">—</span></span>
-    <span><span class="dot grey" id="wsDot"></span>WS: <span id="wsStatus">disconnected</span></span>
   </div>
 </div>
-<div class="toast" id="toast"></div>
-<audio id="monitorAudio" src="/stream" preload="none"></audio>
+
 <script>
 'use strict';
-var S={token:null,isPlaying:false,mics:[{id:'mic1',label:'Mic 1',mode:'off'},{id:'mic2',label:'Mic 2',mode:'off'}],queue:[],ws:null,monitorOn:false,micStream:null,micRecorder:null};
+const S = { 
+    token: null, isPlaying: false, currentTrack: null, 
+    ws: null, micState: 0, volume: 80,
+    audioCtx: null, scriptNode: null, micStream: null
+};
 
-document.getElementById('pwInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+function doLogin() {
+    const pw = document.getElementById('pwInput').value;
+    fetch('/api/admin/login', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ password: pw })
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            S.token = pw;
+            document.getElementById('loginScreen').style.display='none';
+            document.getElementById('mainScreen').style.display='flex';
+            init();
+        } else {
+            document.getElementById('loginError').textContent = 'INVALID ACCESS CODE';
+        }
+    });
+}
 
-function doLogin(){
-  var pw=document.getElementById('pwInput').value.trim();
-  if(!pw)return;
-  fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})})
-  .then(function(r){return r.json();})
-  .then(function(d){
-    if(d.success){
-      S.token=d.token||pw;
-      document.getElementById('loginScreen').style.display='none';
-      document.getElementById('mainScreen').style.display='flex';
-      initDashboard();
-    } else {
-      document.getElementById('loginError').textContent='Incorrect password';
+function init() {
+    connectWS();
+    fetchStatus();
+    setInterval(fetchStatus, 5000);
+    setInterval(() => { document.getElementById('currentTime').textContent = new Date().toLocaleTimeString(); }, 1000);
+
+    // KEYBOARD SHORTCUTS
+    window.addEventListener('keydown', e => {
+        if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+        switch(e.key.toLowerCase()) {
+            case ' ': e.preventDefault(); toggleSpaceMic(); break;
+            case 's': skipTrack(); break;
+            case 'p': playStation(); break;
+            case 'arrowup': e.preventDefault(); setVolume(Math.min(100, S.volume + 5)); break;
+            case 'arrowdown': e.preventDefault(); setVolume(Math.max(0, S.volume - 5)); break;
+        }
+    });
+}
+
+function toggleSpaceMic() { setMic(S.micState === 0 ? 1 : 0); }
+
+function connectWS() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    S.ws = new WebSocket(`${proto}://${location.host}`);
+    S.ws.onopen = () => {
+        document.getElementById('wsStatusDot').style.background = 'var(--green)';
+        S.ws.send(JSON.stringify({ action: 'adminLogin', password: S.token }));
+    };
+    S.ws.onmessage = e => {
+        if (typeof e.data === 'string') handleMsg(JSON.parse(e.data));
+    };
+    S.ws.onclose = () => setTimeout(connectWS, 2000);
+}
+
+function handleMsg(d) {
+    if (d.type === 'status' || d.type === 'nowPlaying') updateUI(d);
+    if (d.type === 'listeners') document.getElementById('listenerCount').textContent = d.count + ' UPLINKS ACTIVE';
+    if (d.type === 'vu') updateMasterVU(d.level);
+    
+    // Heartbeat for sync status
+    document.getElementById('wsStatusDot').classList.add('connected');
+}
+
+let peakTimeout = null;
+function updateMasterVU(level) {
+    const track = document.getElementById('masterVU');
+    const segments = track.querySelectorAll('.vu-segment');
+    const onCount = Math.floor((level / 100) * segments.length);
+    
+    segments.forEach((seg, i) => {
+        if (i < onCount) seg.classList.add('on');
+        else seg.classList.remove('on');
+    });
+
+    if (level > 92) {
+        document.getElementById('peakLight').classList.add('active');
+        if (peakTimeout) clearTimeout(peakTimeout);
+        peakTimeout = setTimeout(() => {
+            document.getElementById('peakLight').classList.remove('active');
+        }, 1000);
     }
-  })
-  .catch(function(e){document.getElementById('loginError').textContent='Error: '+e.message;});
 }
 
-function showTab(id,btn){
-  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
-  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active');});
-  document.getElementById('tab-'+id).classList.add('active');
-  btn.classList.add('active');
-  if(id==='requests')fetchRequests();
-  if(id==='news')fetchNews();
-  if(id==='listeners')fetchListeners();
+// ── Mic logic: 16-bit PCM (Match FFmpeg Mixer) ───────────────────────────────
+async function setMic(state) {
+    if (state === S.micState && state !== 0) return;
+    S.micState = state;
+    
+    document.getElementById('micBtnTalk').classList.toggle('active', state === 1);
+    document.getElementById('micBtnSolo').classList.toggle('active', state === 2);
+    document.getElementById('micBtnOff').classList.toggle('active', state === 0);
+    document.getElementById('micStatus').textContent = state === 0 ? 'OFF' : (state === 1 ? 'TALK ACTIVE' : 'SOLO MODE');
+    document.getElementById('micStatus').style.color = state === 0 ? 'var(--muted)' : (state === 1 ? 'var(--green)' : 'var(--yellow)');
+
+    fetch('/api/duck', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state}) });
+
+    if (state > 0) startMicStream();
+    else stopMicStream();
 }
 
-function initDashboard(){
-  renderMics();connectWS();fetchStatus();fetchQueue();
-  setInterval(fetchStatus,8000);
-  setInterval(fetchQueue,10000);
+async function startMicStream() {
+    try {
+        if (S.audioCtx) return;
+        S.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        S.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
+        const source = S.audioCtx.createMediaStreamSource(S.micStream);
+        S.scriptNode = S.audioCtx.createScriptProcessor(4096, 1, 1);
+        
+        S.scriptNode.onaudioprocess = e => {
+            if (S.micState === 0) return;
+            const inputData = e.inputBuffer.getChannelData(0);
+            const pcmData = new Int16Array(inputData.length);
+            for (let i = 0; i < inputData.length; i++) {
+                pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+            }
+            if (S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(pcmData.buffer);
+        };
+        source.connect(S.scriptNode);
+        S.scriptNode.connect(S.audioCtx.destination);
+    } catch(err) { setMic(0); }
 }
 
-function connectWS(){
-  var proto=location.protocol==='https:'?'wss':'ws';
-  var ws=new WebSocket(proto+'://'+location.host);
-  S.ws=ws;
-  ws.onopen=function(){setWsStatus('connected',true);ws.send(JSON.stringify({type:'auth',token:S.token}));};
-  ws.onclose=function(){setWsStatus('disconnected',false);setTimeout(connectWS,4000);};
-  ws.onerror=function(){setWsStatus('error',false);};
-  ws.onmessage=function(ev){try{handleWS(JSON.parse(ev.data));}catch(_){}};
+function stopMicStream() {
+    if (S.scriptNode) { S.scriptNode.disconnect(); S.scriptNode = null; }
+    if (S.audioCtx) { S.audioCtx.close(); S.audioCtx = null; }
+    if (S.micStream) { S.micStream.getTracks().forEach(t => t.stop()); S.micStream = null; }
 }
 
-function handleWS(msg){
-  if(msg.type==='status')updateStatus(msg);
-  if(msg.type==='queueUpdate')renderQueue(msg.queue||[]);
-  if(msg.type==='request_new'){fetchRequests();showToast('New request: '+msg.request.song);updateReqBadge(1);}
-  if(msg.type==='listenerCount')document.getElementById('listenerCount').textContent=msg.count+' listener'+(msg.count===1?'':'s');
+function fetchStatus() { fetch('/api/status').then(r => r.json()).then(updateUI); }
+
+function updateUI(d) {
+    const track = d.currentTrack || d.track;
+    S.isPlaying = d.isPlaying; S.volume = d.volume;
+    
+    const badge = document.getElementById('onAirBadge');
+    badge.textContent = d.isPlaying ? 'ON AIR' : 'OFF AIR';
+    badge.classList.toggle('active', d.isPlaying);
+    
+    if (d.currentTrack) {
+        document.getElementById('trackTitle').textContent = d.currentTrack.title.toUpperCase();
+        document.getElementById('trackArtist').textContent = d.currentTrack.artist.toUpperCase();
+        if (d.currentTrack.thumbnail) document.getElementById('trackThumb').innerHTML = `<img src="${d.currentTrack.thumbnail}" style="width:100%;height:100%;object-fit:cover">`;
+    } else {
+        document.getElementById('trackTitle').textContent = "STATION IDLE";
+        document.getElementById('trackArtist').textContent = "AWAITING SIGNAL...";
+        document.getElementById('trackThumb').innerHTML = "";
+    }
+    
+    document.getElementById('volumeSlider').value = d.volume;
+    document.getElementById('volumeVal').textContent = d.volume + '%';
+    
+    const qEl = document.getElementById('queueList');
+    if (d.queue?.length) {
+        qEl.innerHTML = d.queue.map((t, i) => {
+            const statusClass = t.status ? `status-${t.status}` : 'status-pending';
+            const statusLabel = t.status ? t.status.toUpperCase() : 'PENDING';
+            return `
+            <div style="display:flex; align-items:center; padding:12px; background:rgba(0,0,0,0.3); margin-bottom:5px; border-radius:8px; font-size:12px; border:1px solid #333">
+                <span style="font-weight:900; opacity:0.5; width:20px">${i+1}</span>
+                <span style="flex:1; margin:0 10px; font-weight:700">${t.title}</span>
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
+                <button onclick="removeFromQueue('${t.id}')" style="background:none; border:none; color:var(--accent); cursor:pointer; margin-left:10px; font-size:16px">×</button>
+            </div>
+        `}).join('');
+    } else qEl.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px">Queue empty</p>';
+
+    if (d.isPlaying) document.getElementById('vuBar').style.width = (30 + Math.random() * 60) + '%';
+    else document.getElementById('vuBar').style.width = '0%';
 }
 
-function setWsStatus(t,ok){
-  document.getElementById('wsStatus').textContent=t;
-  document.getElementById('wsDot').className='dot '+(ok?'green':'red');
-}
+function playStation() { fetch('/api/play', {method:'POST'}).then(fetchStatus); }
+function pausePlayback() { fetch('/api/pause', {method:'POST'}).then(fetchStatus); }
+function skipTrack() { fetch('/api/skip', {method:'POST'}).then(fetchStatus); }
+function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; fetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
+function removeFromQueue(id) { fetch(`/api/queue/${id}`, {method:'DELETE'}).then(fetchStatus); }
 
-function fetchStatus(){
-  fetch('/api/status').then(function(r){return r.json();}).then(updateStatus).catch(function(){});
-}
-
-function updateStatus(d){
-  S.isPlaying=d.isPlaying;
-  if(d.currentTrack){S.currentTrack=d.currentTrack;renderNowPlaying(d.currentTrack);}
-  if(d.listeners!==undefined)document.getElementById('listenerCount').textContent=d.listeners+' listener'+(d.listeners===1?'':'s');
-  var playing=d.isPlaying;
-  document.getElementById('streamDot').className='dot '+(playing?'green':'grey');
-  document.getElementById('streamStatus').textContent=playing?'Streaming':'Idle';
-  if(d.volume!==undefined){document.getElementById('volumeSlider').value=d.volume;document.getElementById('volumeVal').textContent=d.volume+'%';}
-  var btn=document.getElementById('btnPlay');
-  btn.style.background=playing?'var(--yellow)':'var(--green)';
-  btn.style.color=playing?'#000':'#fff';
-  if(playing){
-    btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>PAUSE';
-  } else {
-    btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>PLAY';
-  }
-}
-
-function renderNowPlaying(t){
-  if(!t)return;
-  document.getElementById('trackTitle').textContent=t.title||'Unknown';
-  document.getElementById('trackArtist').textContent=t.artist||t.channel||'';
-  var thumb=document.getElementById('trackThumb');
-  var url=t.thumbnail||null;
-  if(!url&&t.videoId){url='https://img.youtube.com/vi/'+t.videoId+'/mqdefault.jpg';}
-  if(url){
-    var img=document.createElement('img');
-    img.src=url;
-    img.style.width='64px';
-    img.style.height='64px';
-    img.style.objectFit='cover';
-    img.style.borderRadius='8px';
-    img.onerror=function(){this.style.display='none';};
-    thumb.innerHTML='';
-    thumb.appendChild(img);
-  } else {
-    thumb.innerHTML='<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg>';
-  }
-}
-
-function playStation(){
-  apiFetch(S.isPlaying?'/api/stop':'/api/play','POST').then(function(){fetchStatus();fetchQueue();}).catch(function(e){alert(e.message);});
-}
-function stopStation(){apiFetch('/api/stop','POST').then(function(){fetchStatus();}).catch(function(e){alert(e.message);});}
-function skipTrack(){apiFetch('/api/skip','POST').then(function(){fetchStatus();fetchQueue();}).catch(function(e){alert(e.message);});}
-function seedRexLawson(){
-  apiFetch('/api/queue/rex-lawson','POST').then(function(){fetchQueue();showToast('Rex Lawson classics added!');}).catch(function(e){alert(e.message);});
-}
-function setVolume(val){
-  document.getElementById('volumeVal').textContent=val+'%';
-  apiFetch('/api/volume','POST',{volume:parseInt(val)}).catch(function(){});
-}
-function toggleMonitor(){
-  var audio=document.getElementById('monitorAudio');
-  S.monitorOn=!S.monitorOn;
-  if(S.monitorOn){audio.play().catch(function(){});document.getElementById('monitorBtn').classList.add('active');document.getElementById('monitorStatus').textContent='Listening...';}
-  else{audio.pause();audio.currentTime=0;document.getElementById('monitorBtn').classList.remove('active');document.getElementById('monitorStatus').textContent='Off';}
-}
-
-function renderMics(){
-  var html='';
-  S.mics.forEach(function(m,i){
-    html+='<div class="mic-card"><div class="mic-label">'+m.label+'</div><div class="mic-btn-group">';
-    html+='<button class="mic-btn'+(m.mode==='talk'?' active-talk':'')+'" data-idx="'+i+'" data-mode="talk" onclick="handleMicBtn(this)">TALK</button>';
-    html+='<button class="mic-btn'+(m.mode==='solo'?' active-solo':'')+'" data-idx="'+i+'" data-mode="solo" onclick="handleMicBtn(this)">SOLO</button>';
-    html+='<button class="mic-btn'+(m.mode==='off'?' active-off':'')+'" data-idx="'+i+'" data-mode="off" onclick="handleMicBtn(this)">OFF</button>';
-    html+='</div></div>';
-  });
-  document.getElementById('micGrid').innerHTML=html;
-}
-
-function handleMicBtn(btn){
-  var idx=parseInt(btn.getAttribute('data-idx'));
-  var mode=btn.getAttribute('data-mode');
-  setMic(idx,mode);
-}
-
-function setMic(idx,mode){
-  var mic=S.mics[idx];
-  var was=mic.mode!=='off';
-  mic.mode=mode;
-  renderMics();
-  if(mode!=='off'&&!was){startMicStream(idx,mode);}
-  else if(mode==='off'){stopMicStream(idx);}
-  apiFetch('/api/mic','POST',{micId:mic.id,mode:mode}).catch(function(){});
-}
-
-function startMicStream(idx,mode){
-  return navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(function(stream){
-    S.micStream=stream;
-    var ws=S.ws;
-    if(!ws||ws.readyState!==1)return;
-    ws.send(JSON.stringify({type:'micStart',micId:S.mics[idx].id,mode:mode}));
-    var rec=new MediaRecorder(stream,{mimeType:'audio/webm;codecs=opus'});
-    rec.ondataavailable=function(e){if(e.data.size>0&&ws.readyState===1)ws.send(e.data);};
-    rec.start(100);
-    S.micRecorder=rec;
-  }).catch(function(e){alert('Mic: '+e.message);});
-}
-
-function stopMicStream(idx){
-  if(S.micRecorder){try{S.micRecorder.stop();}catch(_){}S.micRecorder=null;}
-  if(S.micStream){S.micStream.getTracks().forEach(function(t){t.stop();});S.micStream=null;}
-  if(S.ws&&S.ws.readyState===1){S.ws.send(JSON.stringify({type:'micStop',micId:S.mics[idx].id}));}
-}
-
-function doSearch(){
-  var q=document.getElementById('searchInput').value.trim();
-  if(!q)return;
-  document.getElementById('searchStatus').textContent='Searching...';
-  document.getElementById('resultsList').innerHTML='';
-  fetch('/api/youtube/search?q='+encodeURIComponent(q))
-  .then(function(r){return r.json();})
-  .then(function(data){
-    var results=data.results||data;
-    var qIds={};
-    S.queue.forEach(function(t){if(t.videoId)qIds[t.videoId]=true;});
-    document.getElementById('searchStatus').textContent=results.length+' result'+(results.length===1?'':'s');
-    var html='';
-    results.forEach(function(item){
-      var vid=item.videoId||item.id||'';
-      var inQ=qIds[vid];
-      var safeTitle=escHtml(item.title||'');
-      var safeDur=escHtml(item.duration||'');
-      html+='<div class="result-item">';
-      if(vid){html+='<img src="https://img.youtube.com/vi/'+vid+'/default.jpg" style="width:44px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';}
-      html+='<div class="result-text"><div class="result-title">'+safeTitle+'</div><div class="result-dur">'+safeDur+'</div></div>';
-      if(inQ){
-        html+='<button class="result-add in-queue" disabled>&#10003; Queued</button>';
-      } else {
-        html+='<button class="result-add" data-vid="'+escHtml(vid)+'" data-title="'+safeTitle+'" data-dur="'+safeDur+'" onclick="addToQueueFromBtn(this)">+ Queue</button>';
-      }
-      html+='</div>';
+function doSearch() {
+    const q = document.getElementById('searchInput').value; if (!q) return;
+    document.getElementById('searchStatus').textContent = 'Scanning Airwaves...';
+    fetch(`/api/youtube/search?q=${encodeURIComponent(q)}`).then(r => r.json()).then(d => {
+        const res = d.results || [];
+        document.getElementById('searchStatus').textContent = `${res.length} Matches Found`;
+        document.getElementById('resultsList').innerHTML = res.map(r => `<div class="result-item"><img src="${r.thumbnail}" width="40" height="40" style="border-radius:4px"><div style="flex:1; font-size:12px; font-weight:700">${r.title}</div><button class="btn-hardware btn-blue" style="padding:5px 10px; font-size:10px" onclick='addToQueue(${JSON.stringify(r)})'>+ QUEUE</button></div>`).join('');
     });
-    document.getElementById('resultsList').innerHTML=html;
-  })
-  .catch(function(e){document.getElementById('searchStatus').textContent='Error: '+e.message;});
 }
 
-function addToQueueFromBtn(btn){
-  var vid=btn.getAttribute('data-vid');
-  var title=btn.getAttribute('data-title');
-  var dur=btn.getAttribute('data-dur');
-  apiFetch('/api/queue/add','POST',{videoId:vid,title:title,duration:dur})
-  .then(function(){fetchQueue();showToast('Added: '+title);doSearch();})
-  .catch(function(e){alert('Error: '+e.message);});
+function addToQueue(track) { fetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(track) }).then(() => { document.getElementById('searchInput').value = ''; fetchStatus(); }); }
+
+function showTab(id, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.style.display='none');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+id).style.display='block';
+    btn.classList.add('active'); if (id === 'news') fetchNews();
 }
 
-function fetchQueue(){
-  fetch('/api/queue').then(function(r){return r.json();}).then(function(d){renderQueue(d.queue||[]);}).catch(function(){});
-}
-
-function renderQueue(queue){
-  S.queue=queue;
-  var el=document.getElementById('queueList');
-  if(!queue.length){el.innerHTML='<div class="queue-empty">Queue is empty</div>';return;}
-  var html='';
-  queue.forEach(function(item,i){
-    html+='<div class="queue-item'+(i===0?' playing':'')+'">';
-    html+='<span class="queue-num">'+(i===0?'&#9654;':i+1)+'</span>';
-    html+='<span class="queue-title">'+escHtml(item.title||'Track '+(i+1))+'</span>';
-    html+='<span class="queue-dur">'+escHtml(item.duration||'')+'</span>';
-    html+='<button class="queue-remove" data-id="'+escHtml(String(item.id||''))+'" onclick="removeFromQueueBtn(this)" title="Remove">&#215;</button>';
-    html+='</div>';
-  });
-  el.innerHTML=html;
-}
-
-function removeFromQueueBtn(btn){removeFromQueue(btn.getAttribute('data-id'));}
-
-function removeFromQueue(id){
-  apiFetch('/api/queue/remove','POST',{id:id}).then(function(){fetchQueue();}).catch(function(e){alert(e.message);});
-}
-
-var reqCount=0;
-function updateReqBadge(n){reqCount+=n;var b=document.getElementById('reqBadge');b.textContent=reqCount>0?' ('+reqCount+')':'';}
-
-function fetchRequests(){
-  fetch('/api/requests').then(function(r){return r.json();}).then(function(d){
-    var pending=d.requests.filter(function(r){return r.status==='pending';});
-    reqCount=pending.length;
-    document.getElementById('reqBadge').textContent=pending.length>0?' ('+pending.length+')':'';
-    var el=document.getElementById('requestsList');
-    if(!d.requests.length){el.innerHTML='<div class="req-empty">No requests yet</div>';return;}
-    var html='';
-    d.requests.slice().reverse().forEach(function(r){
-      html+='<div class="req-item">';
-      html+='<div style="flex:1"><div class="req-song">'+escHtml(r.song)+'</div><div class="req-from">from '+escHtml(r.listener)+'</div></div>';
-      html+='<span class="req-badge '+escHtml(r.status)+'">'+escHtml(r.status)+'</span>';
-      if(r.status==='pending'){
-        html+='<div class="req-actions">';
-        html+='<button class="btn-approve" data-rid="'+escHtml(r.id)+'" onclick="approveRequestBtn(this)">Add to queue</button>';
-        html+='<button class="btn-dismiss" data-rid="'+escHtml(r.id)+'" onclick="dismissRequestBtn(this)">Dismiss</button>';
-        html+='</div>';
-      }
-      html+='</div>';
+function fetchNews() {
+    fetch('/api/herald').then(r => r.json()).then(d => {
+        document.getElementById('newsList').innerHTML = d.news.map(n => `<div style="padding:15px; background:var(--ledge); border:1px solid #333; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between"><div><div style="font-weight:900">${n.title}</div><div style="font-size:10px; opacity:0.6">${n.content.substring(0, 100)}...</div></div><button onclick="deleteNews('${n.id}')" style="color:var(--accent); background:none; border:none; cursor:pointer">DELETE</button></div>`).join('');
     });
-    el.innerHTML=html;
-  }).catch(function(){});
 }
+function publishNews() { const title = document.getElementById('newsTitle').value; const content = document.getElementById('newsContent').value; fetch('/api/herald', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({title, content, status:'new'}) }).then(() => { document.getElementById('newsTitle').value=''; document.getElementById('newsContent').value=''; fetchNews(); }); }
+function deleteNews(id) { fetch(`/api/herald/${id}`, {method:'DELETE'}).then(fetchNews); }
+document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter')doLogin(); });
 
-function approveRequestBtn(btn){approveRequest(btn.getAttribute('data-rid'));}
-function dismissRequestBtn(btn){dismissRequest(btn.getAttribute('data-rid'));}
-
-function approveRequest(id){
-  apiFetch('/api/requests/'+id+'/approve','POST').then(function(){fetchRequests();fetchQueue();showToast('Request approved!');}).catch(function(e){alert(e.message);});
-}
-function dismissRequest(id){
-  apiFetch('/api/requests/'+id+'/dismiss','POST').then(function(){fetchRequests();}).catch(function(e){alert(e.message);});
-}
-
-function fetchNews(){
-  fetch('/api/herald').then(function(r){return r.json();}).then(function(d){
-    var el=document.getElementById('newsList');
-    if(!d.news||!d.news.length){el.innerHTML='<div class="queue-empty">No news published yet</div>';return;}
-    var html='';
-    d.news.forEach(function(n){
-      html+='<div class="news-item-row">';
-      html+='<div class="news-item-body"><div class="news-item-title">'+escHtml(n.title)+'</div><div class="news-item-summary">'+escHtml(n.summary||'')+'</div></div>';
-      html+='<span class="news-status-badge">'+escHtml(n.status)+'</span>';
-      html+='<button class="btn-del" data-nid="'+escHtml(String(n.id||''))+'" onclick="deleteNewsBtn(this)" title="Delete">&#215;</button>';
-      html+='</div>';
-    });
-    el.innerHTML=html;
-  }).catch(function(){});
-}
-
-function deleteNewsBtn(btn){deleteNews(btn.getAttribute('data-nid'));}
-
-function publishNews(){
-  var title=document.getElementById('newsTitle').value.trim();
-  if(!title){alert('Title required');return;}
-  apiFetch('/api/herald','POST',{
-    title:title,
-    summary:document.getElementById('newsSummary').value.trim(),
-    content:document.getElementById('newsContent').value.trim(),
-    status:document.getElementById('newsStatus').value,
-    link:document.getElementById('newsLink').value.trim()||'#'
-  }).then(function(){
-    document.getElementById('newsTitle').value='';
-    document.getElementById('newsSummary').value='';
-    document.getElementById('newsContent').value='';
-    document.getElementById('newsLink').value='';
-    fetchNews();
-    showToast('News published!');
-  }).catch(function(e){alert(e.message);});
-}
-
-function deleteNews(id){
-  if(!confirm('Delete this news item?'))return;
-  fetch('/api/herald/'+id,{method:'DELETE',headers:{'x-admin-token':S.token,'Authorization':'Bearer '+S.token}})
-  .then(function(){fetchNews();showToast('Deleted');})
-  .catch(function(e){alert(e.message);});
-}
-
-function fetchListeners(){
-  fetch('/api/listeners').then(function(r){return r.json();}).then(function(d){
-    var el=document.getElementById('listenersList');
-    if(!d.users||!d.users.length){el.innerHTML='<div class="queue-empty">No registered members yet</div>';return;}
-    var html='';
-    d.users.slice().reverse().forEach(function(u){
-      html+='<div class="listener-item">';
-      html+='<div class="listener-avatar">'+escHtml((u.name||'?').charAt(0).toUpperCase())+'</div>';
-      html+='<div><div class="listener-name">'+escHtml(u.name)+'</div><div class="listener-village">'+escHtml(u.village||'')+'</div></div>';
-      html+='</div>';
-    });
-    el.innerHTML=html;
-  }).catch(function(){});
-}
-
-function apiFetch(url,method,body){
-  var opts={method:method||'GET',headers:{'Content-Type':'application/json','x-admin-token':S.token,'Authorization':'Bearer '+S.token}};
-  if(body)opts.body=JSON.stringify(body);
-  return fetch(url,opts).then(function(r){
-    if(!r.ok){return r.text().catch(function(){return r.statusText;}).then(function(t){throw new Error(t||r.status);});}
-    return r.json().catch(function(){return {};});
-  });
-}
-
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+// Build VU Segments
+(function() {
+    const track = document.getElementById('masterVU');
+    let html = '';
+    for(let i=0; i<40; i++) {
+        let color = 'green';
+        if (i > 25) color = 'yellow';
+        if (i > 34) color = 'red';
+        html += `<div class="vu-segment ${color}"></div>`;
+    }
+    track.innerHTML = html;
+})();
 </script>
 </body>
 </html>

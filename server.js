@@ -18,33 +18,17 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'bukuma2024';
 const PORT           = process.env.PORT            || 3000;
 
 // Binary paths
-const FFMPEG_PATH = process.env.FFMPEG_PATH
-    || 'C:\\Users\\USER\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.WinGet.Source_8wekyb3d8bbwe\\ffmpeg-8.1-full_build\\bin\\ffmpeg.exe';
-const YTDLP_PATH  = process.env.YTDLP_PATH
-    || 'C:\\Users\\USER\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\yt-dlp.exe';
+const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg'; // Default to PATH
+const YTDLP_PATH  = process.env.YTDLP_PATH  || 'yt-dlp'; // Default to PATH
 
 function verifyBinaries() {
-    const binaries = { ffmpeg: FFMPEG_PATH, 'yt-dlp': YTDLP_PATH };
-    for (const [name, resolvedPath] of Object.entries(binaries)) {
-        if (fs.existsSync(resolvedPath)) {
-            console.log(`[BINARY] ✓ ${name} found at: ${resolvedPath}`);
-        } else {
-            console.error(`[BINARY] ✗ ${name} NOT FOUND at: ${resolvedPath}`);
-        }
-    }
+    console.log(`[BINARY] FFmpeg Path: ${FFMPEG_PATH}`);
+    console.log(`[BINARY] yt-dlp Path: ${YTDLP_PATH}`);
 }
 
 // ── Seed tracks ───────────────────────────────────────────────────────────────
-const REX_LAWSON_SEED = [
-    { title: 'Jolly',         artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Jolly highlife' },
-    { title: 'Warri',         artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Warri highlife' },
-    { title: 'Kelegbe Megbe', artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Kelegbe Megbe' },
-    { title: 'So Tey',        artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson So Tey highlife' },
-    { title: 'Ibinabo',       artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Ibinabo' },
-    { title: 'Ogologo Obi',   artist: 'Cardinal Rex Lawson', youtubeQuery: 'Cardinal Rex Lawson Ogologo Obi' },
-];
 function seedQueue() {
-    return REX_LAWSON_SEED.map(t => ({ ...t, id: Math.random().toString(36).slice(2) }));
+    return []; // No longer using hardcoded seeds
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
@@ -58,7 +42,9 @@ let playNextTimeout  = null;
 let silenceInterval  = null;
 let playlists        = [];
 let autoJingles      = { start: false, random: false };
-const SAFE_FALLBACK_URL = 'https://archive.org/download/CardinalRexLawson/CardnalRexLawson-Jolly.mp3';
+
+// Neutral fallback (Station Ident) 
+const SAFE_FALLBACK_URL = 'https://archive.org/download/bukuma-radio-ident/ident.mp3'; 
 let consecutiveFailures = 0;
 let serverMicState      = 0; // 0=Off, 1=Talk/Duck, 2=Solo
 
@@ -72,11 +58,13 @@ let listeners = 0;
 
 // ── Persistence ───────────────────────────────────────────────────────────────
 const dataDir              = path.join(__dirname, 'data');
+const downloadsDir         = path.join(dataDir, 'downloads');
 const queueFile            = path.join(dataDir, 'queue.json');
 const stateFile            = path.join(dataDir, 'state.json');
 const playlistsFile        = path.join(dataDir, 'playlists.json');
 
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir, { recursive: true });
 
 function loadState() {
     try {
@@ -92,6 +80,16 @@ function loadState() {
         if (fs.existsSync(playlistsFile)) {
             playlists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
         }
+
+        // --- MANDATORY REX LAWSON PURGE ---
+        // Ensuring no 'Cardinal Rex Lawson' tracks persist in the production data
+        const filterFn = t => !t.artist?.toLowerCase().includes('rex lawson') && 
+                              !t.title?.toLowerCase().includes('jolly') && 
+                              !t.title?.toLowerCase().includes('warri');
+        queue = queue.filter(filterFn);
+        playlists.forEach(pl => { if (pl.tracks) pl.tracks = pl.tracks.filter(filterFn); });
+        // ----------------------------------
+
     } catch(e) { console.error('[INIT] loadState error:', e.message); }
 }
 
@@ -148,12 +146,37 @@ async function getYouTubeUrl(query) {
     });
 }
 
+function downloadTrack(track) {
+    if (track.status === 'ready' || track.status === 'downloading') return;
+    
+    track.status = 'downloading';
+    broadcast(getStatus());
+
+    const localPath = path.join(downloadsDir, `${track.id}.mp3`);
+    const extractorArgs = 'youtube:player_client=default,android_sdkless';
+    const cmd = `"${YTDLP_PATH}" -x --audio-format mp3 --no-playlist --ignore-errors --geo-bypass --no-check-certificates --extractor-args "${extractorArgs}" -o "${localPath}" "ytsearch1:${track.youtubeQuery || (track.artist + ' ' + track.title)}"`;
+
+    console.log(`[DOWNLOAD] Starting: ${track.title}`);
+    exec(cmd, (err) => {
+        if (err) {
+            console.error(`[DOWNLOAD] Fail: ${track.title}`, err.message);
+            track.status = 'error';
+        } else {
+            console.log(`[DOWNLOAD] Success: ${track.title}`);
+            track.status = 'ready';
+            track.localPath = localPath;
+        }
+        saveState();
+        broadcast(getStatus());
+    });
+}
+
 function startPlayback() {
     if (isPlaying && currentProcess) return;
     isPlaying = true;
     if (queue.length === 0) {
         const pl = playlists[0];
-        queue = (pl && pl.tracks.length > 0) ? pl.tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2) })) : seedQueue();
+        queue = (pl && pl.tracks.length > 0) ? pl.tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2) })) : [];
         saveState();
     }
     lastDataTime = Date.now();
@@ -168,12 +191,26 @@ async function playNext() {
     if (silenceInterval) { clearInterval(silenceInterval); silenceInterval = null; }
 
     currentTrack = { ...queue[0] };
+    
+    // If still downloading, wait a bit
+    if (currentTrack.status === 'downloading') {
+        console.log(`[PLAY] Waiting for download: ${currentTrack.title}`);
+        broadcast({ type: 'nowPlaying', track: { ...currentTrack, status: 'downloading' } });
+        playNextTimeout = setTimeout(playNext, 2000);
+        isTransitioning = false;
+        return;
+    }
+
     console.log('[PLAY] Loading:', currentTrack.title);
     broadcast({ type: 'nowPlaying', track: currentTrack });
     broadcast(getStatus());
 
     try {
-        const url = await getYouTubeUrl(currentTrack.youtubeQuery || currentTrack.title);
+        let inputSource = currentTrack.localPath;
+        if (!inputSource || !fs.existsSync(inputSource)) {
+            console.log(`[PLAY] Local file missing for ${currentTrack.title}, fetching URL...`);
+            inputSource = await getYouTubeUrl(currentTrack.youtubeQuery || currentTrack.title);
+        }
 
         if (currentProcess) {
             currentProcess.removeAllListeners();
@@ -188,15 +225,34 @@ async function playNext() {
             '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '10',
             '-user_agent', userAgent,
             '-headers', `Referer: https://www.youtube.com/\r\nOrigin: https://www.youtube.com\r\n`,
-            '-i', url,
+            '-i', inputSource,
             '-f', 's16le', '-ar', '22050', '-ac', '1', '-i', '-', // Input 1: Mic from Stdin
             '-vn',
-            '-filter_complex', `[0:a]volume=${musicVolume}[music];[1:a]asplit[mic][sc];[music][sc]sidechaincompress=threshold=0.01:ratio=20:attack=10:release=1000[ducked];[ducked][mic]amix=inputs=2:duration=first[out]`,
-            '-map', '[out]',
-            '-f', 'mp3', '-b:a', '128k', '-ar', '44100', '-ac', '2', '-'
+            '-filter_complex', `[0:a]volume=${musicVolume}[music];[1:a]asplit[mic][sc];[music][sc]sidechaincompress=threshold=0.01:ratio=20:attack=10:release=1000[ducked];[ducked][mic]amix=inputs=2:duration=first,asplit=2[out][vu]`,
+            '-map', '[out]', '-f', 'mp3', '-b:a', '128k', '-ar', '44100', '-ac', '2', '-',
+            '-map', '[vu]',  '-f', 's16le', '-ar', '22050', '-ac', '1', 'pipe:3'
         ];
 
-        currentProcess = spawn(FFMPEG_PATH, args, { stdio: ['pipe', 'pipe', 'pipe'] });
+        currentProcess = spawn(FFMPEG_PATH, args, { stdio: ['pipe', 'pipe', 'pipe', 'pipe'] });
+        
+        // Monitoring Pipe (Pipe 3)
+        currentProcess.stdio[3].on('data', chunk => {
+            let sum = 0;
+            const samples = chunk.length / 2;
+            for (let i = 0; i < chunk.length; i += 2) {
+                const s = chunk.readInt16LE(i) / 32768;
+                sum += s * s;
+            }
+            const rms = Math.sqrt(sum / samples);
+            const level = Math.min(100, Math.floor(rms * 250)); // Scale to 0-100
+            
+            // Broadcast level strictly to admins
+            const msg = JSON.stringify({ type: 'vu', level });
+            clients.forEach(ws => {
+                if (ws.readyState === WebSocket.OPEN && ws.isAdmin) ws.send(msg);
+            });
+        });
+
         let bytesOut = 0;
 
         const silenceBuffer = Buffer.alloc(4096, 0); 
@@ -256,7 +312,7 @@ async function playNext() {
         const retryDelay = Math.min(30000, 5000 * consecutiveFailures);
         queue.shift(); if (queue.length === 0) queue = seedQueue();
         saveState();
-        playNextTimeout = setTimeout(playNext, retryDelay);
+        // Removed: playNextTimeout = setTimeout(playNext, retryDelay);
     }
 }
 
@@ -287,7 +343,7 @@ function skipTrack() {
         try { currentProcess.kill('SIGKILL'); } catch(e) {}
         currentProcess = null;
     }
-    queue.shift(); if (queue.length === 0) queue = seedQueue();
+    queue.shift(); if (queue.length === 0) { isPlaying = false; broadcast(getStatus()); return; }
     saveState();
     isTransitioning = false;
     if (isPlaying) playNext();
@@ -327,8 +383,11 @@ wss.on('connection', ws => {
                     break;
                 case 'addSong':
                     if (msg.song) {
-                        queue.push({ id: Math.random().toString(36).slice(2), ...msg.song });
-                        saveState(); broadcast(getStatus());
+                        const track = { id: Math.random().toString(36).slice(2), status: 'pending', ...msg.song };
+                        queue.push(track);
+                        saveState(); 
+                        broadcast(getStatus());
+                        downloadTrack(track);
                         if (!isPlaying) startPlayback();
                     }
                     break;
@@ -390,8 +449,11 @@ app.post('/api/register', (req, res) => {
 
 app.post('/api/queue', (req, res) => {
     const { url, title, artist, youtubeQuery } = req.body;
-    const entry = { id: Math.random().toString(36).slice(2), title: title || url, artist: artist || 'Unknown', youtubeQuery: youtubeQuery || url || title };
-    queue.push(entry); saveState(); broadcast(getStatus());
+    const entry = { id: Math.random().toString(36).slice(2), status: 'pending', title: title || url, artist: artist || 'Unknown', youtubeQuery: youtubeQuery || url || title };
+    queue.push(entry); 
+    saveState(); 
+    broadcast(getStatus());
+    downloadTrack(entry);
     if (!isPlaying) startPlayback();
     res.json({ success: true, id: entry.id });
 });
@@ -401,11 +463,15 @@ app.post('/api/queue/add', (req, res) => {
     const vid = videoId || (url && url.match(/[?&]v=([^&]+)/)?.[1]);
     const entry = {
         id: Math.random().toString(36).slice(2),
+        status: 'pending',
         title: title || 'Unknown', artist: 'YouTube',
         youtubeQuery: vid ? ('https://www.youtube.com/watch?v=' + vid) : (url || title),
         duration: duration || ''
     };
-    queue.push(entry); saveState(); broadcast(getStatus());
+    queue.push(entry); 
+    saveState(); 
+    broadcast(getStatus());
+    downloadTrack(entry);
     if (!isPlaying) startPlayback();
     res.json({ success: true, id: entry.id });
 });
