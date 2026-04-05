@@ -94,7 +94,7 @@
       <div class="radio-widget">
         <p class="label" style="font-size:8px; margin-bottom:12px; opacity:0.6;">TRANSISTOR UPLINK • ACTIVE</p>
         <div class="widget-display">
-          <div id="trackTitle" style="font-size:16px; font-weight:900; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">STATION IDLE</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div id="widgetThumb" style="width:44px;height:44px;border-radius:6px;background:#111;flex-shrink:0;overflow:hidden"></div><div style="min-width:0"><div id="trackTitle" style="font-size:15px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">STATION IDLE</div><div id="trackArtist" style="font-size:10px; opacity:0.6; font-weight:700; margin-top:2px;">AWAITING SIGNAL...</div></div></div>
           <div id="trackArtist" style="font-size:11px; opacity:0.6; font-weight:700;">AWAITING SIGNAL...</div>
           <div style="font-size:10px; margin-top:15px; display:flex; justify-content:space-between; font-weight:900;">
             <span>STATUS: <span id="sigStatus" style="color:var(--green)">LOCKED</span></span>
@@ -106,6 +106,10 @@
         <div style="text-align: center;">
           <div class="widget-knob" id="powerKnob" onclick="togglePower()"></div>
           <p class="label" id="knobLabel" style="margin-top:20px;">POWER / OFF</p>
+        <button id="listenBtn" onclick="togglePower()" style="margin-top:16px;width:100%;padding:13px;background:#D4AF37;color:#000;font-weight:900;font-size:.95rem;border:none;border-radius:8px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;justify-content:center;gap:8px;" >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <span id="listenBtnLabel">LISTEN LIVE</span>
+        </button>
         </div>
       </div>
 
@@ -158,6 +162,11 @@
         const artist = d.currentTrack ? d.currentTrack.artist : 'AWAITING SIGNAL...';
         document.getElementById('trackTitle').textContent = title.toUpperCase();
         document.getElementById('trackArtist').textContent = artist.toUpperCase();
+    const thumb = document.getElementById('widgetThumb');
+    if(d.currentTrack && (d.currentTrack.thumbnail || d.currentTrack.videoId)) {
+      const url = d.currentTrack.thumbnail || 'https://img.youtube.com/vi/'+d.currentTrack.videoId+'/default.jpg';
+      thumb.innerHTML = '<img src="'+url+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;" onerror="this.style.display=\'none\'">';
+    } else { thumb.innerHTML=''; }
         document.getElementById('statListeners').textContent = (d.listeners || 0).toString().padStart(3, '0');
         
         if(audioPlaying) {
@@ -174,6 +183,7 @@
          knob.classList.remove('active');
          audioPlaying = false;
          document.getElementById('knobLabel').textContent = 'POWER / OFF';
+    if(document.getElementById('listenBtnLabel')) { document.getElementById('listenBtnLabel').textContent='LISTEN LIVE'; document.getElementById('listenBtn').style.background='#D4AF37'; }
          document.getElementById('vuBar').style.width = '0%';
        } else {
          audio.src = '/stream?' + Date.now();
@@ -181,6 +191,7 @@
          knob.classList.add('active');
          audioPlaying = true;
          document.getElementById('knobLabel').textContent = 'POWER / ON';
+    if(document.getElementById('listenBtnLabel')) { document.getElementById('listenBtnLabel').textContent='■ STOP STREAM'; document.getElementById('listenBtn').style.background='#ef4444'; document.getElementById('listenBtn').style.color='#fff'; }
        }
     }
 
