@@ -23,8 +23,7 @@ html,body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-u
 #loginError{color:var(--accent);margin-top:12px;font-size:.9rem}
 #mainScreen{display:none;flex-direction:column}
 header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border)}
-.logo{font-size:1.2rem;font-weight:700}
-.logo span{color:var(--accent)}
+.logo{font-size:1.2rem;font-weight:700}.logo span{color:var(--accent)}
 .on-air-badge{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;background:rgba(230,57,70,.15);border:1px solid rgba(230,57,70,.4);padding:6px 14px;border-radius:20px;color:var(--accent)}
 .on-air-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
@@ -32,8 +31,7 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
 .tab-bar{display:flex;gap:4px;padding:12px 16px 0;background:var(--surface);border-bottom:1px solid var(--border)}
 .tab-btn{padding:8px 16px;font-size:.82rem;font-weight:600;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
 .tab-btn.active{color:var(--text);border-bottom-color:var(--accent2)}
-.tab-pane{display:none;padding:16px}
-.tab-pane.active{display:block}
+.tab-pane{display:none;padding:16px}.tab-pane.active{display:block}
 .main-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
 @media(max-width:800px){.main-grid{grid-template-columns:1fr}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px}
@@ -95,8 +93,7 @@ input[type=range]{flex:1;height:4px;accent-color:var(--accent2);cursor:pointer}
 .queue-remove:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .queue-empty{color:var(--muted);font-size:.85rem;text-align:center;padding:20px}
 .req-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
-.req-song{flex:1;font-size:.88rem;font-weight:600}
-.req-from{font-size:.76rem;color:var(--muted);margin-top:2px}
+.req-song{flex:1;font-size:.88rem;font-weight:600}.req-from{font-size:.76rem;color:var(--muted);margin-top:2px}
 .req-badge{font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:700;flex-shrink:0}
 .req-badge.pending{background:rgba(244,208,63,.15);color:var(--yellow)}
 .req-badge.approved{background:rgba(44,198,83,.15);color:var(--green)}
@@ -112,27 +109,20 @@ input[type=range]{flex:1;height:4px;accent-color:var(--accent2);cursor:pointer}
 .news-form input:focus,.news-form textarea:focus{outline:none;border-color:var(--accent2)}
 .news-form textarea{min-height:80px;resize:vertical}
 .news-item-row{display:flex;align-items:flex-start;gap:10px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
-.news-item-body{flex:1;min-width:0}
-.news-item-title{font-size:.9rem;font-weight:600;margin-bottom:4px}
+.news-item-body{flex:1;min-width:0}.news-item-title{font-size:.9rem;font-weight:600;margin-bottom:4px}
 .news-item-summary{font-size:.8rem;color:var(--muted)}
 .news-status-badge{font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:700;flex-shrink:0;background:rgba(76,201,240,.15);color:var(--accent2)}
 .btn-del{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .btn-del:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 .listener-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
 .listener-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#000;flex-shrink:0}
-.listener-name{font-size:.88rem;font-weight:600}
-.listener-village{font-size:.76rem;color:var(--muted)}
+.listener-name{font-size:.88rem;font-weight:600}.listener-village{font-size:.76rem;color:var(--muted)}
 .statusbar{padding:7px 16px;background:var(--surface);border-top:1px solid var(--border);font-size:.76rem;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
 .statusbar span{display:flex;align-items:center;gap:5px}
-.dot{width:7px;height:7px;border-radius:50%}
-.dot.green{background:var(--green)}
-.dot.red{background:var(--accent)}
-.dot.grey{background:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%}.dot.green{background:var(--green)}.dot.red{background:var(--accent)}.dot.grey{background:var(--muted)}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:.88rem;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:var(--bg)}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 </style>
 </head>
 <body>
@@ -172,16 +162,10 @@ input[type=range]{flex:1;height:4px;accent-color:var(--accent2);cursor:pointer}
             </div>
           </div>
           <div class="transport">
-            <button class="btn-play" id="btnPlay" onclick="playStation()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>PLAY
-            </button>
-            <button class="btn-stop" onclick="stopStation()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>STOP
-            </button>
-            <button class="btn-skip" onclick="skipTrack()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>SKIP
-            </button>
-            <button class="btn-seed" onclick="seedRexLawson()" title="Re-seed Rex Lawson classics">&#127926; Rex Lawson</button>
+            <button class="btn-play" id="btnPlay" onclick="playStation()"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>PLAY</button>
+            <button class="btn-stop" onclick="stopStation()"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>STOP</button>
+            <button class="btn-skip" onclick="skipTrack()"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>SKIP</button>
+            <button class="btn-seed" onclick="seedRexLawson()">&#127926; Rex Lawson</button>
           </div>
           <div class="volume-row">
             <label>Volume</label>
@@ -231,12 +215,7 @@ input[type=range]{flex:1;height:4px;accent-color:var(--accent2);cursor:pointer}
         <input type="text" id="newsTitle" placeholder="Headline *">
         <input type="text" id="newsSummary" placeholder="One-line summary">
         <textarea id="newsContent" placeholder="Full story..."></textarea>
-        <select id="newsStatus">
-          <option value="new">New</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="breaking">Breaking</option>
-        </select>
+        <select id="newsStatus"><option value="new">New</option><option value="ongoing">Ongoing</option><option value="upcoming">Upcoming</option><option value="breaking">Breaking</option></select>
         <input type="text" id="newsLink" placeholder="Link (optional, default #)">
         <button class="btn-primary" onclick="publishNews()">Publish</button>
       </div>
@@ -261,16 +240,16 @@ input[type=range]{flex:1;height:4px;accent-color:var(--accent2);cursor:pointer}
 <audio id="monitorAudio" src="/stream" preload="none"></audio>
 <script>
 'use strict';
-const S={token:null,isPlaying:false,mics:[{id:'mic1',label:'Mic 1',mode:'off'},{id:'mic2',label:'Mic 2',mode:'off'}],queue:[],ws:null,monitorOn:false,micStream:null,micRecorder:null};
+var S={token:null,isPlaying:false,mics:[{id:'mic1',label:'Mic 1',mode:'off'},{id:'mic2',label:'Mic 2',mode:'off'}],queue:[],ws:null,monitorOn:false,micStream:null,micRecorder:null};
 
 document.getElementById('pwInput').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
 
-async function doLogin(){
+function doLogin(){
   var pw=document.getElementById('pwInput').value.trim();
   if(!pw)return;
-  try{
-    var r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
-    var d=await r.json();
+  fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})})
+  .then(function(r){return r.json();})
+  .then(function(d){
     if(d.success){
       S.token=d.token||pw;
       document.getElementById('loginScreen').style.display='none';
@@ -279,7 +258,8 @@ async function doLogin(){
     } else {
       document.getElementById('loginError').textContent='Incorrect password';
     }
-  }catch(e){document.getElementById('loginError').textContent='Error: '+e.message;}
+  })
+  .catch(function(e){document.getElementById('loginError').textContent='Error: '+e.message;});
 }
 
 function showTab(id,btn){
@@ -320,8 +300,8 @@ function setWsStatus(t,ok){
   document.getElementById('wsDot').className='dot '+(ok?'green':'red');
 }
 
-async function fetchStatus(){
-  try{var r=await fetch('/api/status');updateStatus(await r.json());}catch(_){}
+function fetchStatus(){
+  fetch('/api/status').then(function(r){return r.json();}).then(updateStatus).catch(function(){});
 }
 
 function updateStatus(d){
@@ -347,12 +327,15 @@ function renderNowPlaying(t){
   document.getElementById('trackTitle').textContent=t.title||'Unknown';
   document.getElementById('trackArtist').textContent=t.artist||t.channel||'';
   var thumb=document.getElementById('trackThumb');
-  var vidId=t.videoId||(t.thumbnail&&t.thumbnail.match&&t.thumbnail.match(/vi/([^/]+)//)?t.thumbnail.match(/vi/([^/]+)//)[1]:null);
-  var url=t.thumbnail||(vidId?'https://img.youtube.com/vi/'+vidId+'/mqdefault.jpg':null);
+  var url=t.thumbnail||null;
+  if(!url&&t.videoId){url='https://img.youtube.com/vi/'+t.videoId+'/mqdefault.jpg';}
   if(url){
     var img=document.createElement('img');
     img.src=url;
-    img.style.width='64px';img.style.height='64px';img.style.objectFit='cover';img.style.borderRadius='8px';
+    img.style.width='64px';
+    img.style.height='64px';
+    img.style.objectFit='cover';
+    img.style.borderRadius='8px';
     img.onerror=function(){this.style.display='none';};
     thumb.innerHTML='';
     thumb.appendChild(img);
@@ -361,17 +344,17 @@ function renderNowPlaying(t){
   }
 }
 
-async function playStation(){
-  try{await apiFetch(S.isPlaying?'/api/stop':'/api/play','POST');await fetchStatus();await fetchQueue();}catch(e){alert(e.message);}
+function playStation(){
+  apiFetch(S.isPlaying?'/api/stop':'/api/play','POST').then(function(){fetchStatus();fetchQueue();}).catch(function(e){alert(e.message);});
 }
-async function stopStation(){try{await apiFetch('/api/stop','POST');await fetchStatus();}catch(e){alert(e.message);}}
-async function skipTrack(){try{await apiFetch('/api/skip','POST');await fetchStatus();await fetchQueue();}catch(e){alert(e.message);}}
-async function seedRexLawson(){
-  try{await apiFetch('/api/queue/rex-lawson','POST');await fetchQueue();showToast('Rex Lawson classics added!');}catch(e){alert(e.message);}
+function stopStation(){apiFetch('/api/stop','POST').then(function(){fetchStatus();}).catch(function(e){alert(e.message);});}
+function skipTrack(){apiFetch('/api/skip','POST').then(function(){fetchStatus();fetchQueue();}).catch(function(e){alert(e.message);});}
+function seedRexLawson(){
+  apiFetch('/api/queue/rex-lawson','POST').then(function(){fetchQueue();showToast('Rex Lawson classics added!');}).catch(function(e){alert(e.message);});
 }
-async function setVolume(val){
+function setVolume(val){
   document.getElementById('volumeVal').textContent=val+'%';
-  try{await apiFetch('/api/volume','POST',{volume:parseInt(val)});}catch(_){}
+  apiFetch('/api/volume','POST',{volume:parseInt(val)}).catch(function(){});
 }
 function toggleMonitor(){
   var audio=document.getElementById('monitorAudio');
@@ -398,14 +381,14 @@ function handleMicBtn(btn){
   setMic(idx,mode);
 }
 
-async function setMic(idx,mode){
+function setMic(idx,mode){
   var mic=S.mics[idx];
   var was=mic.mode!=='off';
   mic.mode=mode;
   renderMics();
-  if(mode!=='off'&&!was)await startMicStream(idx,mode);
-  else if(mode==='off')stopMicStream(idx);
-  try{await apiFetch('/api/mic','POST',{micId:mic.id,mode});}catch(_){}
+  if(mode!=='off'&&!was){startMicStream(idx,mode);}
+  else if(mode==='off'){stopMicStream(idx);}
+  apiFetch('/api/mic','POST',{micId:mic.id,mode:mode}).catch(function(){});
 }
 
 function startMicStream(idx,mode){
@@ -424,17 +407,17 @@ function startMicStream(idx,mode){
 function stopMicStream(idx){
   if(S.micRecorder){try{S.micRecorder.stop();}catch(_){}S.micRecorder=null;}
   if(S.micStream){S.micStream.getTracks().forEach(function(t){t.stop();});S.micStream=null;}
-  if(S.ws&&S.ws.readyState===1)S.ws.send(JSON.stringify({type:'micStop',micId:S.mics[idx].id}));
+  if(S.ws&&S.ws.readyState===1){S.ws.send(JSON.stringify({type:'micStop',micId:S.mics[idx].id}));}
 }
 
-async function doSearch(){
+function doSearch(){
   var q=document.getElementById('searchInput').value.trim();
   if(!q)return;
   document.getElementById('searchStatus').textContent='Searching...';
   document.getElementById('resultsList').innerHTML='';
-  try{
-    var resp=await fetch('/api/youtube/search?q='+encodeURIComponent(q));
-    var data=await resp.json();
+  fetch('/api/youtube/search?q='+encodeURIComponent(q))
+  .then(function(r){return r.json();})
+  .then(function(data){
     var results=data.results||data;
     var qIds={};
     S.queue.forEach(function(t){if(t.videoId)qIds[t.videoId]=true;});
@@ -446,7 +429,7 @@ async function doSearch(){
       var safeTitle=escHtml(item.title||'');
       var safeDur=escHtml(item.duration||'');
       html+='<div class="result-item">';
-      if(vid)html+='<img src="https://img.youtube.com/vi/'+vid+'/default.jpg" style="width:44px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display='none'">';
+      if(vid){html+='<img src="https://img.youtube.com/vi/'+vid+'/default.jpg" style="width:44px;height:32px;object-fit:cover;border-radius:4px;flex-shrink:0" onerror="this.style.display=\'none\'">';}
       html+='<div class="result-text"><div class="result-title">'+safeTitle+'</div><div class="result-dur">'+safeDur+'</div></div>';
       if(inQ){
         html+='<button class="result-add in-queue" disabled>&#10003; Queued</button>';
@@ -456,29 +439,27 @@ async function doSearch(){
       html+='</div>';
     });
     document.getElementById('resultsList').innerHTML=html;
-  }catch(e){document.getElementById('searchStatus').textContent='Error: '+e.message;}
+  })
+  .catch(function(e){document.getElementById('searchStatus').textContent='Error: '+e.message;});
 }
 
-async function addToQueueFromBtn(btn){
+function addToQueueFromBtn(btn){
   var vid=btn.getAttribute('data-vid');
   var title=btn.getAttribute('data-title');
   var dur=btn.getAttribute('data-dur');
-  try{
-    await apiFetch('/api/queue/add','POST',{videoId:vid,title:title,duration:dur});
-    await fetchQueue();
-    showToast('Added: '+title);
-    doSearch();
-  }catch(e){alert('Error: '+e.message);}
+  apiFetch('/api/queue/add','POST',{videoId:vid,title:title,duration:dur})
+  .then(function(){fetchQueue();showToast('Added: '+title);doSearch();})
+  .catch(function(e){alert('Error: '+e.message);});
 }
 
-async function fetchQueue(){
-  try{var r=await fetch('/api/queue');renderQueue((await r.json()).queue||[]);}catch(_){}
+function fetchQueue(){
+  fetch('/api/queue').then(function(r){return r.json();}).then(function(d){renderQueue(d.queue||[]);}).catch(function(){});
 }
 
 function renderQueue(queue){
   S.queue=queue;
   var el=document.getElementById('queueList');
-  if(!queue.length){el.innerHTML='<div class="queue-empty">Queue is empty — search above</div>';return;}
+  if(!queue.length){el.innerHTML='<div class="queue-empty">Queue is empty</div>';return;}
   var html='';
   queue.forEach(function(item,i){
     html+='<div class="queue-item'+(i===0?' playing':'')+'">';
@@ -491,21 +472,17 @@ function renderQueue(queue){
   el.innerHTML=html;
 }
 
-function removeFromQueueBtn(btn){
-  var id=btn.getAttribute('data-id');
-  removeFromQueue(id);
-}
+function removeFromQueueBtn(btn){removeFromQueue(btn.getAttribute('data-id'));}
 
-async function removeFromQueue(id){
-  try{await apiFetch('/api/queue/remove','POST',{id:id});await fetchQueue();}catch(e){alert(e.message);}
+function removeFromQueue(id){
+  apiFetch('/api/queue/remove','POST',{id:id}).then(function(){fetchQueue();}).catch(function(e){alert(e.message);});
 }
 
 var reqCount=0;
 function updateReqBadge(n){reqCount+=n;var b=document.getElementById('reqBadge');b.textContent=reqCount>0?' ('+reqCount+')':'';}
 
-async function fetchRequests(){
-  try{
-    var d=await(await fetch('/api/requests')).json();
+function fetchRequests(){
+  fetch('/api/requests').then(function(r){return r.json();}).then(function(d){
     var pending=d.requests.filter(function(r){return r.status==='pending';});
     reqCount=pending.length;
     document.getElementById('reqBadge').textContent=pending.length>0?' ('+pending.length+')':'';
@@ -525,22 +502,21 @@ async function fetchRequests(){
       html+='</div>';
     });
     el.innerHTML=html;
-  }catch(_){}
+  }).catch(function(){});
 }
 
 function approveRequestBtn(btn){approveRequest(btn.getAttribute('data-rid'));}
 function dismissRequestBtn(btn){dismissRequest(btn.getAttribute('data-rid'));}
 
-async function approveRequest(id){
-  try{await apiFetch('/api/requests/'+id+'/approve','POST');await fetchRequests();await fetchQueue();showToast('Request approved!');}catch(e){alert(e.message);}
+function approveRequest(id){
+  apiFetch('/api/requests/'+id+'/approve','POST').then(function(){fetchRequests();fetchQueue();showToast('Request approved!');}).catch(function(e){alert(e.message);});
 }
-async function dismissRequest(id){
-  try{await apiFetch('/api/requests/'+id+'/dismiss','POST');await fetchRequests();}catch(e){alert(e.message);}
+function dismissRequest(id){
+  apiFetch('/api/requests/'+id+'/dismiss','POST').then(function(){fetchRequests();}).catch(function(e){alert(e.message);});
 }
 
-async function fetchNews(){
-  try{
-    var d=await(await fetch('/api/herald')).json();
+function fetchNews(){
+  fetch('/api/herald').then(function(r){return r.json();}).then(function(d){
     var el=document.getElementById('newsList');
     if(!d.news||!d.news.length){el.innerHTML='<div class="queue-empty">No news published yet</div>';return;}
     var html='';
@@ -552,42 +528,39 @@ async function fetchNews(){
       html+='</div>';
     });
     el.innerHTML=html;
-  }catch(_){}
+  }).catch(function(){});
 }
 
 function deleteNewsBtn(btn){deleteNews(btn.getAttribute('data-nid'));}
 
-async function publishNews(){
+function publishNews(){
   var title=document.getElementById('newsTitle').value.trim();
   if(!title){alert('Title required');return;}
-  try{
-    await apiFetch('/api/herald','POST',{
-      title:title,
-      summary:document.getElementById('newsSummary').value.trim(),
-      content:document.getElementById('newsContent').value.trim(),
-      status:document.getElementById('newsStatus').value,
-      link:document.getElementById('newsLink').value.trim()||'#'
-    });
+  apiFetch('/api/herald','POST',{
+    title:title,
+    summary:document.getElementById('newsSummary').value.trim(),
+    content:document.getElementById('newsContent').value.trim(),
+    status:document.getElementById('newsStatus').value,
+    link:document.getElementById('newsLink').value.trim()||'#'
+  }).then(function(){
     document.getElementById('newsTitle').value='';
     document.getElementById('newsSummary').value='';
     document.getElementById('newsContent').value='';
     document.getElementById('newsLink').value='';
-    await fetchNews();
+    fetchNews();
     showToast('News published!');
-  }catch(e){alert(e.message);}
+  }).catch(function(e){alert(e.message);});
 }
 
-async function deleteNews(id){
+function deleteNews(id){
   if(!confirm('Delete this news item?'))return;
-  try{
-    await fetch('/api/herald/'+id,{method:'DELETE',headers:{'x-admin-token':S.token,'Authorization':'Bearer '+S.token}});
-    await fetchNews();showToast('Deleted');
-  }catch(e){alert(e.message);}
+  fetch('/api/herald/'+id,{method:'DELETE',headers:{'x-admin-token':S.token,'Authorization':'Bearer '+S.token}})
+  .then(function(){fetchNews();showToast('Deleted');})
+  .catch(function(e){alert(e.message);});
 }
 
-async function fetchListeners(){
-  try{
-    var d=await(await fetch('/api/listeners')).json();
+function fetchListeners(){
+  fetch('/api/listeners').then(function(r){return r.json();}).then(function(d){
     var el=document.getElementById('listenersList');
     if(!d.users||!d.users.length){el.innerHTML='<div class="queue-empty">No registered members yet</div>';return;}
     var html='';
@@ -598,15 +571,16 @@ async function fetchListeners(){
       html+='</div>';
     });
     el.innerHTML=html;
-  }catch(_){}
+  }).catch(function(){});
 }
 
-async function apiFetch(url,method,body){
+function apiFetch(url,method,body){
   var opts={method:method||'GET',headers:{'Content-Type':'application/json','x-admin-token':S.token,'Authorization':'Bearer '+S.token}};
   if(body)opts.body=JSON.stringify(body);
-  var r=await fetch(url,opts);
-  if(!r.ok){var t=await r.text().catch(function(){return r.statusText;});throw new Error(t||r.status);}
-  return r.json().catch(function(){return {};});
+  return fetch(url,opts).then(function(r){
+    if(!r.ok){return r.text().catch(function(){return r.statusText;}).then(function(t){throw new Error(t||r.status);});}
+    return r.json().catch(function(){return {};});
+  });
 }
 
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
