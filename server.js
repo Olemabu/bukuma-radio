@@ -486,7 +486,7 @@ app.post('/api/skip',  (req, res) => { skipTrack();     res.json({ success: true
 app.post('/api/queue/skip', (req, res) => { skipTrack(); res.json({ success: true }); });
 
 app.post('/api/volume', (req, res) => {
-  volume = Math.min(100, Math.max(0, parseInt(req.body.value) || 80));
+  volume = Math.min(100, Math.max(0, parseInt(req.body.volume ?? req.body.value) || 80));
   saveState(); broadcast({ type: 'volume', value: volume });
   res.json({ success: true, volume });
 });
@@ -632,6 +632,60 @@ app.post('/api/requests/:id/approve', (req, res) => {
   if (!isPlaying) startPlayback();
   res.json({ success: true });
 });
+
+
+// ── Herald / News API ────────────────────────────────────────────────────────
+const heraldFile = path.join(dataDir, 'herald.json');
+const DEFAULT_HERALD = { news: [
+  { id: '1', title: 'School Redevelopment', summary: 'Proposed redevelopment plan to restore the primary school.', content: 'The Village Primary School has been in a state of disrepair. Donations are ongoing.', status: 'ongoing', link: '#' },
+  { id: '2', title: 'Community Harvest Festival', summary: 'Annual harvest festival coming up next month.', content: 'Join us for the annual harvest festival celebrating Bukuma culture and music.', status: 'upcoming', link: '#' }
+]};
+function loadHerald() {
+  try {
+    if (fs.existsSync(heraldFile)) return JSON.parse(fs.readFileSync(heraldFile, 'utf8'));
+  } catch(e) {}
+  return DEFAULT_HERALD;
+}
+function saveHerald(data) {
+  try { fs.writeFileSync(heraldFile, JSON.stringify(data, null, 2)); } catch(e) {}
+}
+app.get('/data/herald.json', (req, res) => res.json(loadHerald()));
+app.get('/api/herald', (req, res) => res.json(loadHerald()));
+app.post('/api/herald', (req, res) => {
+  const herald = loadHerald();
+  const { title, summary, content, status, link } = req.body;
+  if (!title) return res.status(400).json({ success: false, error: 'title required' });
+  const item = { id: Date.now().toString(), title, summary: summary||'', content: content||'', status: status||'new', link: link||'#' };
+  herald.news.unshift(item);
+  saveHerald(herald);
+  broadcast({ type: 'herald_update', herald });
+  res.json({ success: true, item });
+});
+app.put('/api/herald/:id', (req, res) => {
+  const herald = loadHerald();
+  const idx = herald.news.findIndex(n => n.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ success: false });
+  herald.news[idx] = { ...herald.news[idx], ...req.body, id: req.params.id };
+  saveHerald(herald);
+  broadcast({ type: 'herald_update', herald });
+  res.json({ success: true });
+});
+app.delete('/api/herald/:id', (req, res) => {
+  const herald = loadHerald();
+  herald.news = herald.news.filter(n => n.id !== req.params.id);
+  saveHerald(herald);
+  broadcast({ type: 'herald_update', herald });
+  res.json({ success: true });
+});
+// ── Song Request dismiss ──────────────────────────────────────────────────────
+app.post('/api/requests/:id/dismiss', (req, res) => {
+  const r = songRequests.find(r => r.id === req.params.id);
+  if (!r) return res.status(404).json({ success: false });
+  r.status = 'dismissed';
+  broadcast({ type: 'request_dismissed', id: req.params.id });
+  res.json({ success: true });
+});
+app.get('/api/listeners', (req, res) => res.json({ users: communityUsers, count: communityUsers.length }));
 
 app.get('/health', (req, res) => res.json({
   status: 'ok', uptime: Math.round(process.uptime()),
