@@ -414,6 +414,15 @@ function handleMsg(d) {
     if (d.type === 'listeners') document.getElementById('listenerCount').textContent = d.count + ' UPLINKS ACTIVE';
     if (d.type === 'vu') updateMasterVU(d.level);
     
+    if (d.type === 'server_mic_vu') {
+        document.getElementById('localMicVU').style.width = d.level + '%';
+        const isSpeaking = d.level > 10;
+        if (S.micState !== 0) {
+            document.getElementById('micStatus').textContent = isSpeaking ? '🎙 VOICE TRANSMITTING 🎙' : (S.micState === 1 ? 'TALK ACTIVE (SILENT)' : 'SOLO MODE (SILENT)');
+            document.getElementById('micStatus').style.color = isSpeaking ? 'var(--blue-neon, #00ffff)' : 'var(--green)';
+        }
+    }
+    
     // Heartbeat for sync status
     document.getElementById('wsStatusDot').classList.add('connected');
 }
@@ -466,20 +475,16 @@ async function startMicStream() {
         S.scriptNode.onaudioprocess = e => {
             if (S.micState === 0) {
                 document.getElementById('localMicVU').style.width = '0%';
+                document.getElementById('micStatus').textContent = 'OFF';
+                document.getElementById('micStatus').style.color = 'var(--muted)';
                 return;
             }
             const inputData = e.inputBuffer.getChannelData(0);
             const pcmData = new Int16Array(inputData.length);
-            let sum = 0;
             
             for (let i = 0; i < inputData.length; i++) {
-                sum += inputData[i] * inputData[i];
                 pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
             }
-            
-            const rms = Math.sqrt(sum / inputData.length);
-            const level = Math.min(100, Math.floor(rms * 400));
-            document.getElementById('localMicVU').style.width = level + '%';
             
             if (S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(pcmData.buffer);
         };
