@@ -59,7 +59,8 @@ const SAFE_FALLBACK_URL = 'https://archive.org/download/bukuma-radio-ident/ident
 let consecutiveFailures = 0;
 let serverMicState      = 0; // 0=Off, 1=Talk/Duck, 2=Solo
 
-// Confidence Monitor (Watchdog)
+// Confidence Monitor (Watchdog) & Atomic Locking
+let engineEpoch = 0;
 let lastDataTime = Date.now();
 let monitorTimer = null;
 
@@ -163,7 +164,7 @@ async function getYouTubeUrl(query) {
         const extractorArgs = 'youtube:player_client=default,android_sdkless';
         const cmd = `"${YTDLP_PATH}" --get-url --format "bestaudio/best" --no-playlist --ignore-errors --geo-bypass --no-check-certificates --extractor-args "${extractorArgs}" "ytsearch1:${query}"`;
         
-        exec(cmd, (err, stdout) => {
+        exec(cmd, { timeout: 20000 }, (err, stdout) => {
             if (err) return reject(err);
             const url = stdout.trim().split('\n').filter(l => l.startsWith('http'))[0];
             if (!url) return reject(new Error('No URL from yt-dlp'));
@@ -210,9 +211,17 @@ function startPlayback() {
 }
 
 async function playNext() {
-    if (!isPlaying || isTransitioning) return;
+    if (!isPlaying) return;
+    if (isTransitioning) {
+        console.log('[PLAY] Aborting - Engine already transitioning');
+        return;
+    }
+    
     if (queue.length === 0) { queue = seedQueue(); saveState(); }
+    
     isTransitioning = true;
+    const myEpoch = ++engineEpoch; // Acquire atomic lock for this specific playback sequence
+    
     if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
     if (silenceInterval) { clearInterval(silenceInterval); silenceInterval = null; }
 
@@ -222,8 +231,8 @@ async function playNext() {
     if (currentTrack.status === 'downloading') {
         console.log(`[PLAY] Waiting for download: ${currentTrack.title}`);
         broadcast({ type: 'nowPlaying', track: { ...currentTrack, status: 'downloading' } });
-        playNextTimeout = setTimeout(playNext, 2000);
         isTransitioning = false;
+        playNextTimeout = setTimeout(playNext, 2000);
         return;
     }
 
@@ -234,7 +243,7 @@ async function playNext() {
     try {
         let inputSource = currentTrack.localPath;
         if (!inputSource || !fs.existsSync(inputSource)) {
-            console.log(`[PLAY] Local file missing for ${currentTrack.title}, fetching URL...`);
+            console.log(`[PLAY] Local file missing for ${currentTrack.title}, fetching live URL...`);
             
             // UI Feedback: Mark as downloading while fetching
             const qIdx = queue.findIndex(t => t.id === currentTrack.id);
@@ -244,6 +253,13 @@ async function playNext() {
             }
             
             inputSource = await getYouTubeUrl(currentTrack.youtubeQuery || currentTrack.title);
+            
+            // Abort if the queue or playback was overridden while we were fetching the URL!
+            if (myEpoch !== engineEpoch) {
+                console.log('[PLAY] Transition overridden during URL fetch. Aborting.');
+                isTransitioning = false;
+                return;
+            }
             
             if (qIdx !== -1) { 
                 queue[qIdx].status = 'ready'; 
@@ -320,6 +336,8 @@ async function playNext() {
         });
 
         currentProcess.on('close', code => {
+            if (myEpoch !== engineEpoch) return; // Completely ignore close events from aborted processes
+            
             console.log(`[FFMPEG] Track closed (code: ${code}, delivery: ${bytesOut} bytes)`);
             clearInterval(silenceTimer);
             if (bytesOut < 1000 && isPlaying) consecutiveFailures++;
@@ -333,6 +351,7 @@ async function playNext() {
         });
 
         currentProcess.on('error', err => {
+            if (myEpoch !== engineEpoch) return;
             console.error('[FFMPEG] Spawn error:', err.message);
             isTransitioning = false;
             if (isPlaying) playNextTimeout = setTimeout(playNext, 3000);
@@ -341,6 +360,11 @@ async function playNext() {
         isTransitioning = false;
 
     } catch(e) {
+        if (myEpoch !== engineEpoch) {
+            console.log('[PLAY] Soft abort during engine error block due to epoch change.');
+            isTransitioning = false;
+            return;
+        }
         console.error('[PLAY] Error in engine:', e.message);
         isTransitioning = false;
         consecutiveFailures++;
@@ -349,8 +373,15 @@ async function playNext() {
             return;
         }
         const retryDelay = Math.min(30000, 5000 * consecutiveFailures);
-        queue.shift(); if (queue.length === 0) queue = seedQueue();
+        
+        queue[0].status = 'error';
+        const failedTrack = queue.shift(); 
+        queue.push(failedTrack); // Move to the bottom of the playlist instead of deleting it
+        
+        if (queue.length === 0) queue = seedQueue();
         saveState();
+        broadcast(getStatus()); // Update UI immediately so they see the red error status
+        
         if (isPlaying) playNextTimeout = setTimeout(playNext, retryDelay);
     }
 }
@@ -527,24 +558,28 @@ app.post('/api/queue/:id/play-now', (req, res) => {
     const idx = queue.findIndex(t => t.id === req.params.id);
     if (idx === -1) return res.status(404).json({ success: false });
     
-    // 1. Mark transition BEFORE killing process to stop the `close` event from shifting the queue!
+    // 1. HARD OVERRIDE: Destroy current epoch to instantly stop any internal playNext logic or awaiting URLs!
+    engineEpoch++;
     isTransitioning = true; 
     
-    // 2. Move track to top
+    // 2. Clear old timeouts so they don't fire midway
+    if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
+    
+    // 3. Move track to top
     const track = queue.splice(idx, 1)[0];
     queue.unshift(track); 
     saveState();
     
-    // 3. Brutally kill current process (the `close` event will fire, but isTransitioning stops it from deleting our new track)
+    // 4. Brutally kill current background process and listeners
     if (currentProcess) {
-        currentProcess.removeAllListeners(); // Prevent close events from doing ANY logic
+        currentProcess.removeAllListeners(); 
         try { currentProcess.kill('SIGKILL'); } catch(e) {}
         currentProcess = null;
     }
     
     isPlaying = true; 
-    isTransitioning = false; // Reset for the new track
-    playNext(); // This handles taking queue[0] and spawning the new process
+    isTransitioning = false; // Reset lock for the new track
+    playNext(); // Safely start the new track with a new epoch
     
     res.json({ success: true });
 });
