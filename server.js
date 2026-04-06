@@ -5,7 +5,7 @@ const { exec, spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-
+h
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -527,5 +527,5 @@ server.listen(PORT, () => {
     verifyBinaries();
     loadState();
     startMonitor();
-    setTimeout(() => { if (isPlaying) startPlayback(); }, 2000);
+    setTimeout(() => { if (isPlaying) { startPlayback(); } else if (queue.length === 0 && playlists.length > 0) { console.log('[BOOT] Auto-starting first playlist'); queue = playlists[0].tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2) })); saveState(); isPlaying = true; startPlayback(); } }, 2000);
 });
