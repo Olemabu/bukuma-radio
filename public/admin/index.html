@@ -473,7 +473,11 @@ async function startMicStream() {
         };
         source.connect(S.scriptNode);
         S.scriptNode.connect(S.audioCtx.destination);
-    } catch(err) { setMic(0); }
+    } catch(err) { 
+        console.error("Mic Access Error:", err);
+        alert("Microphone Access Blocked: " + err.message + "\nEnsure you are using HTTPS and have granted permissions.");
+        setMic(0); 
+    }
 }
 
 function stopMicStream() {

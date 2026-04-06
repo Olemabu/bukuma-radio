@@ -63,6 +63,7 @@ let serverMicState      = 0; // 0=Off, 1=Talk/Duck, 2=Solo
 let engineEpoch = 0;
 let lastDataTime = Date.now();
 let monitorTimer = null;
+let lastMicTime = 0;
 
 const clients       = new Set();
 const streamClients = new Set();
@@ -312,6 +313,7 @@ async function playNext() {
 
         const silenceBuffer = Buffer.alloc(4096, 0); 
         const silenceTimer = setInterval(() => {
+            if (Date.now() - lastMicTime < 300) return; // Prevent stuttering: don't inject silence if actively receiving mic data
             if (currentProcess && currentProcess.stdin && currentProcess.stdin.writable) {
                 try { currentProcess.stdin.write(silenceBuffer); } catch(e) {}
             }
@@ -430,7 +432,10 @@ wss.on('connection', ws => {
     ws.on('message', (data, isBinary) => {
         if (isBinary) {
             if (ws.isAdmin && currentProcess && currentProcess.stdin && currentProcess.stdin.writable) {
-                try { currentProcess.stdin.write(data); } catch(e) {}
+                try { 
+                    currentProcess.stdin.write(data); 
+                    lastMicTime = Date.now();
+                } catch(e) {}
             }
             return;
         }
