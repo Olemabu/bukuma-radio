@@ -173,15 +173,49 @@ function drawWaveform() {
 }
 
 // --- AUDIO LOGIC ---
+let greetingTimer = null;
+
+function playStationGreeting() {
+    const lastGreeting = localStorage.getItem('lastGreetingTS');
+    const now = Date.now();
+    // 4 hours = 14400000 ms
+    if (lastGreeting && (now - parseInt(lastGreeting)) < 14400000) {
+        return; // Handshake active, don't overloop
+    }
+    
+    localStorage.setItem('lastGreetingTS', now.toString()); // Perform handshake
+
+    const greetingAudio = new Audio('https://archive.org/download/bukuma-radio-ident/ident.mp3');
+    greetingAudio.volume = 1.0;
+    
+    const originalVolume = DOMElements.audio.volume;
+    DOMElements.audio.volume = 0.2; // Duck main stream
+    
+    greetingAudio.onended = () => { DOMElements.audio.volume = originalVolume; };
+    greetingAudio.onerror = () => { DOMElements.audio.volume = originalVolume; };
+    
+    greetingAudio.play().catch(e => {
+        DOMElements.audio.volume = originalVolume;
+        console.error("Greeting failed:", e);
+    });
+}
+
 function togglePlayback() {
     if (isPlaying) {
         DOMElements.audio.pause();
         if (appMode === 'radio') DOMElements.audio.src = ''; // Kill buffer to prevent dead air
         isPlaying = false;
+        if (greetingTimer) { clearTimeout(greetingTimer); greetingTimer = null; }
     } else {
         if (appMode === 'radio') {
             DOMElements.audio.src = '/stream?' + Date.now();
             DOMElements.audio.play().catch(()=>{});
+            
+            // Deliver greeting 10 seconds after coming online
+            if (greetingTimer) clearTimeout(greetingTimer);
+            greetingTimer = setTimeout(() => {
+                if (isPlaying && appMode === 'radio') playStationGreeting();
+            }, 10000);
         } else {
             if (localPlaylist.length === 0) {
                 DOMElements.fileInput.click();
