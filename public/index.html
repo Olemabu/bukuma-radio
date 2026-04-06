@@ -170,8 +170,17 @@
           thumb.innerHTML = `<img src="${track.thumbnail}" style="width:100%;height:100%;object-fit:cover">`;
         } else { thumb.innerHTML = ''; }
 
-        if(isTunedIn) {
+        // --- SYNC PLAYBACK STATE ---
+        // If station stops, we stop the listener's audio immediately
+        if (d.isPlaying === false && isTunedIn) {
+            console.log("[PLAYER] Station went offline. Cutting feed.");
+            togglePower(); 
+        }
+
+        if(isTunedIn && d.isPlaying) {
           document.getElementById('vuBar').style.width = (30 + Math.random() * 60) + '%';
+        } else {
+          document.getElementById('vuBar').style.width = '0%';
         }
       }
     }

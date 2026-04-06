@@ -101,6 +101,17 @@ function loadState() {
         playlists.forEach(pl => { if (pl.tracks) pl.tracks = pl.tracks.filter(filterFn); });
         // ----------------------------------
 
+        // --- SELF-HEAL MISSING FILES ---
+        // If a file is marked 'ready' but the physical file is gone, revert to 'pending'
+        queue.forEach(t => {
+            if (t.status === 'ready' && t.localPath && !fs.existsSync(t.localPath)) {
+                console.log(`[HEAL] File missing for ${t.title}. Reverting to pending.`);
+                t.status = 'pending';
+                t.localPath = null;
+            }
+        });
+        // ----------------------------------
+
     } catch(e) { console.error('[INIT] loadState error:', e.message); }
 }
 
@@ -509,6 +520,26 @@ app.delete('/api/queue/:id', (req, res) => {
     queue = queue.filter(t => t.id !== req.params.id);
     if (queue.length !== before) saveState();
     broadcast(getStatus());
+    res.json({ success: true });
+});
+
+app.post('/api/queue/:id/play-now', (req, res) => {
+    const idx = queue.findIndex(t => t.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ success: false });
+    const track = queue.splice(idx, 1)[0];
+    queue.unshift(track); // Move to top
+    saveState();
+    
+    // Kill current playback WITHOUT shifting the queue
+    if (currentProcess) {
+        currentProcess.removeAllListeners();
+        try { currentProcess.kill('SIGKILL'); } catch(e) {}
+        currentProcess = null;
+    }
+    isTransitioning = false;
+    isPlaying = true; // Ensure engine is active
+    playNext(); 
+    
     res.json({ success: true });
 });
 
