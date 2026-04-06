@@ -538,5 +538,5 @@ server.listen(PORT, () => {
     verifyBinaries();
     loadState();
     startMonitor();
-    setTimeout(() => { if (isPlaying) { startPlayback(); } else if (queue.length === 0 && playlists.length > 0) { console.log('[BOOT] Auto-starting first playlist'); queue = playlists[0].tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2) })); saveState(); isPlaying = true; startPlayback(); } }, 2000);
+    setTimeout(() => { if (isPlaying) { startPlayback(); } else if (queue.length === 0) { console.log('[BOOT] Auto-starting with seed queue'); queue = seedQueue(); if (queue.length > 0) { saveState(); isPlaying = true; startPlayback(); } } }, 2000);
 });
