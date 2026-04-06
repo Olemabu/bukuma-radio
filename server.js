@@ -526,19 +526,25 @@ app.delete('/api/queue/:id', (req, res) => {
 app.post('/api/queue/:id/play-now', (req, res) => {
     const idx = queue.findIndex(t => t.id === req.params.id);
     if (idx === -1) return res.status(404).json({ success: false });
+    
+    // 1. Mark transition BEFORE killing process to stop the `close` event from shifting the queue!
+    isTransitioning = true; 
+    
+    // 2. Move track to top
     const track = queue.splice(idx, 1)[0];
-    queue.unshift(track); // Move to top
+    queue.unshift(track); 
     saveState();
     
-    // Kill current playback WITHOUT shifting the queue
+    // 3. Brutally kill current process (the `close` event will fire, but isTransitioning stops it from deleting our new track)
     if (currentProcess) {
-        currentProcess.removeAllListeners();
+        currentProcess.removeAllListeners(); // Prevent close events from doing ANY logic
         try { currentProcess.kill('SIGKILL'); } catch(e) {}
         currentProcess = null;
     }
-    isTransitioning = false;
-    isPlaying = true; // Ensure engine is active
-    playNext(); 
+    
+    isPlaying = true; 
+    isTransitioning = false; // Reset for the new track
+    playNext(); // This handles taking queue[0] and spawning the new process
     
     res.json({ success: true });
 });
