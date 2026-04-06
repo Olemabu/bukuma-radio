@@ -28,7 +28,18 @@ function verifyBinaries() {
 
 // ── Seed tracks ───────────────────────────────────────────────────────────────
 function seedQueue() {
-    return []; // No longer using hardcoded seeds
+    return [
+        { id: 'seed001', status: 'pending', title: 'Ozigizaga', artist: 'Alfred J King', youtubeQuery: 'Alfred J King Ozigizaga Ijaw highlife', duration: 'Unknown' },
+        { id: 'seed002', status: 'pending', title: 'Earth Song', artist: 'Wizard Chan', youtubeQuery: 'Wizard Chan Earth Song Ijaw', duration: 'Unknown' },
+        { id: 'seed003', status: 'pending', title: 'Paddle of the Niger Delta', artist: 'Barrister Smooth', youtubeQuery: 'Chief Barrister Smooth Ijaw highlife Niger Delta', duration: 'Unknown' },
+        { id: 'seed004', status: 'pending', title: 'Tompolo', artist: 'Alfred J King', youtubeQuery: 'Alfred J King Tompolo Ijaw', duration: 'Unknown' },
+        { id: 'seed005', status: 'pending', title: 'Halo Halo', artist: 'Wizard Chan', youtubeQuery: 'Wizard Chan Halo Halo Ijaw', duration: 'Unknown' },
+        { id: 'seed006', status: 'pending', title: 'Ijaw Cultural Heritage', artist: 'Barrister Smooth', youtubeQuery: 'Barrister Smooth Ijaw cultural highlife best', duration: 'Unknown' },
+        { id: 'seed007', status: 'pending', title: 'Adaka Boro', artist: 'Alfred J King', youtubeQuery: 'Alfred J King Adaka Boro', duration: 'Unknown' },
+        { id: 'seed008', status: 'pending', title: 'HighLife', artist: 'Wizard Chan', youtubeQuery: 'Wizard Chan HighLife Ijaw Afro Teme', duration: 'Unknown' },
+        { id: 'seed009', status: 'pending', title: 'Miss You', artist: 'Wizard Chan', youtubeQuery: 'Wizard Chan Miss You Thousand Voice', duration: 'Unknown' },
+        { id: 'seed010', status: 'pending', title: 'Miekemedonmo', artist: 'Alfred J King', youtubeQuery: 'Alfred J King Miekemedonmo', duration: 'Unknown' }
+    ].map(t => ({ ...t, id: Math.random().toString(36).slice(2) }));
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
