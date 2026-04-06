@@ -493,8 +493,8 @@ function updateUI(d) {
     badge.classList.toggle('active', d.isPlaying);
     
     if (d.currentTrack) {
-        document.getElementById('trackTitle').textContent = d.currentTrack.title.toUpperCase();
-        document.getElementById('trackArtist').textContent = d.currentTrack.artist.toUpperCase();
+        document.getElementById('trackTitle').textContent = (d.currentTrack && d.currentTrack.title ? d.currentTrack.title.toUpperCase() : 'STATION IDLE');
+        document.getElementById('trackArtist').textContent = (d.currentTrack && d.currentTrack.artist ? d.currentTrack.artist.toUpperCase() : 'AWAITING SIGNAL');
         if (d.currentTrack.thumbnail) document.getElementById('trackThumb').innerHTML = `<img src="${d.currentTrack.thumbnail}" style="width:100%;height:100%;object-fit:cover">`;
     } else {
         document.getElementById('trackTitle').textContent = "STATION IDLE";
