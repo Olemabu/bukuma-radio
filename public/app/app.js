@@ -185,7 +185,7 @@ function playStationGreeting() {
     
     localStorage.setItem('lastGreetingTS', now.toString()); // Perform handshake
 
-    const greetingAudio = new Audio('https://archive.org/download/bukuma-radio-ident/ident.mp3');
+    const greetingAudio = new Audio('./ident.mp3');
     greetingAudio.volume = 1.0;
     
     const originalVolume = DOMElements.audio.volume;
