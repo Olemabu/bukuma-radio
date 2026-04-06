@@ -68,7 +68,7 @@ const streamClients = new Set();
 let listeners = 0;
 
 // ── Persistence ───────────────────────────────────────────────────────────────
-const dataDir              = path.join(__dirname, 'data');
+const dataDir              = process.env.DATA_DIR || path.join(__dirname, 'data');
 const downloadsDir         = path.join(dataDir, 'downloads');
 const queueFile            = path.join(dataDir, 'queue.json');
 const stateFile            = path.join(dataDir, 'state.json');
