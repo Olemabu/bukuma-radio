@@ -323,7 +323,7 @@ async function playNext() {
         const retryDelay = Math.min(30000, 5000 * consecutiveFailures);
         queue.shift(); if (queue.length === 0) queue = seedQueue();
         saveState();
-        // Removed: playNextTimeout = setTimeout(playNext, retryDelay);
+        if (isPlaying) playNextTimeout = setTimeout(playNext, retryDelay);
     }
 }
 
@@ -538,5 +538,5 @@ server.listen(PORT, () => {
     verifyBinaries();
     loadState();
     startMonitor();
-    setTimeout(() => { if (isPlaying) { startPlayback(); } else if (queue.length === 0) { console.log('[BOOT] Auto-starting with seed queue'); queue = seedQueue(); if (queue.length > 0) { saveState(); isPlaying = true; startPlayback(); } } }, 2000);
+    setTimeout(() => { if (isPlaying) { startPlayback(); } else if (queue.length === 0) { console.log('[BOOT] Auto-starting with seed queue'); queue = seedQueue(); if (queue.length > 0) { saveState(); isPlaying = true; startPlayback(); } } }, 5000);
 });
