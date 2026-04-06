@@ -173,57 +173,15 @@ function drawWaveform() {
 }
 
 // --- AUDIO LOGIC ---
-let greetingTimer = null;
-let loopTimer = null;
-
-function playStationGreeting() {
-    const greetingAudio = new Audio('./ident.mp3');
-    greetingAudio.volume = 1.0;
-    
-    const originalVolume = DOMElements.audio.volume;
-    DOMElements.audio.volume = 0.2; // Duck main stream
-    
-    greetingAudio.onended = () => { DOMElements.audio.volume = originalVolume; };
-    greetingAudio.onerror = () => { DOMElements.audio.volume = originalVolume; };
-    
-    greetingAudio.play().catch(e => {
-        DOMElements.audio.volume = originalVolume;
-        console.error("Greeting failed:", e);
-    });
-}
-
-function scheduleNextGreeting() {
-    if (loopTimer) clearTimeout(loopTimer);
-    // Random between 2 and 4 minutes (120,000ms to 240,000ms)
-    const nextInterval = Math.floor(Math.random() * (240000 - 120000 + 1)) + 120000;
-    loopTimer = setTimeout(() => {
-        if (isPlaying && appMode === 'radio') {
-            playStationGreeting();
-        }
-        scheduleNextGreeting();
-    }, nextInterval);
-}
-
 function togglePlayback() {
     if (isPlaying) {
         DOMElements.audio.pause();
         if (appMode === 'radio') DOMElements.audio.src = ''; // Kill buffer to prevent dead air
         isPlaying = false;
-        if (greetingTimer) { clearTimeout(greetingTimer); greetingTimer = null; }
-        if (loopTimer) { clearTimeout(loopTimer); loopTimer = null; }
     } else {
         if (appMode === 'radio') {
             DOMElements.audio.src = '/stream?' + Date.now();
             DOMElements.audio.play().catch(()=>{});
-            
-            // Deliver initial greeting after 10 seconds
-            if (greetingTimer) clearTimeout(greetingTimer);
-            greetingTimer = setTimeout(() => {
-                if (isPlaying && appMode === 'radio') {
-                    playStationGreeting();
-                    scheduleNextGreeting();
-                }
-            }, 10000);
         } else {
             if (localPlaylist.length === 0) {
                 DOMElements.fileInput.click();

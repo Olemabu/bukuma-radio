@@ -65,6 +65,49 @@ let lastDataTime = Date.now();
 let monitorTimer = null;
 let lastMicTime = 0;
 
+let autoJingleTimer = null;
+let activeJingleProcess = null;
+
+function startAutoJingleLoop() {
+    if (autoJingleTimer) { clearTimeout(autoJingleTimer); autoJingleTimer = null; }
+    if (!autoJingles.start) return;
+    
+    // Random between 2 and 4 minutes
+    const nextInterval = Math.floor(Math.random() * (240000 - 120000 + 1)) + 120000;
+    
+    autoJingleTimer = setTimeout(() => {
+        dropJingle();
+        startAutoJingleLoop();
+    }, nextInterval);
+}
+
+function dropJingle() {
+    if (!isPlaying || !currentProcess || !currentProcess.stdin || !currentProcess.stdin.writable) return;
+    if (Date.now() - lastMicTime < 8000) return; // Never interrupt the DJ.
+    if (activeJingleProcess) return; // Wait until previous is completely finished
+    
+    const jinglePath = path.join(__dirname, 'public/app/ident.mp3');
+    if (!fs.existsSync(jinglePath)) return;
+    
+    console.log('[JINGLE] Virtual DJ dropping branding loop on global broadcast stream.');
+    // Spawn internal ffmpeg to transcode the ident into exactly what the mic pipe expects
+    const args = ['-hide_banner', '-loglevel', 'error', '-i', jinglePath, '-f', 's16le', '-ar', '22050', '-ac', '1', '-'];
+    activeJingleProcess = spawn(FFMPEG_PATH, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+    
+    activeJingleProcess.stdout.on('data', chunk => {
+        try {
+            if (currentProcess && currentProcess.stdin && currentProcess.stdin.writable) {
+                currentProcess.stdin.write(chunk);
+            }
+        } catch(e) {}
+    });
+    
+    activeJingleProcess.on('close', () => {
+        activeJingleProcess = null;
+    });
+}
+
+
 const clients       = new Set();
 const streamClients = new Set();
 let listeners = 0;
@@ -436,6 +479,12 @@ wss.on('connection', ws => {
                     currentProcess.stdin.write(data); 
                     lastMicTime = Date.now();
                     
+                    if (activeJingleProcess) {
+                        try { activeJingleProcess.kill('SIGKILL'); } catch(e) {}
+                        activeJingleProcess = null;
+                        console.log('[JINGLE] Station Master mic keyed! Internal virtual DJ was violently preempted to prevent collision.');
+                    }
+                    
                     // Server-side Mic VU calculation to prove to the front-end that it is being received
                     if (data.length > 0) {
                         let sum = 0;
@@ -465,6 +514,13 @@ wss.on('connection', ws => {
                 case 'play':   if (!isPlaying) startPlayback(); break;
                 case 'pause':  pausePlayback(); break;
                 case 'skip':   skipTrack(); break;
+                case 'toggleAutoJingles':
+                    autoJingles.start = !autoJingles.start;
+                    saveState();
+                    if (autoJingles.start) startAutoJingleLoop();
+                    else if (autoJingleTimer) { clearTimeout(autoJingleTimer); autoJingleTimer = null; }
+                    broadcast(getStatus());
+                    break;
                 case 'volume':
                     volume = Math.min(100, Math.max(0, parseInt(msg.value) || 80));
                     saveState(); broadcast({ type: 'volume', value: volume });
@@ -645,5 +701,6 @@ server.listen(PORT, () => {
     verifyBinaries();
     loadState();
     startMonitor();
+    if (autoJingles.start) startAutoJingleLoop();
     setTimeout(() => { if (isPlaying) { startPlayback(); } else if (queue.length === 0) { console.log('[BOOT] Auto-starting with seed queue'); queue = seedQueue(); if (queue.length > 0) { saveState(); isPlaying = true; startPlayback(); } } }, 5000);
 });

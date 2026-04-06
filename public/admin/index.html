@@ -274,6 +274,9 @@ header { display: flex; justify-content: space-between; align-items: center; mar
             <button class="btn-hardware" onclick="skipTrack()" title="Shortcut: S">
                <span class="key-hint">S</span> SKIP
             </button>
+            <button class="btn-hardware" id="btnAutoJingles" onclick="toggleAutoJingles()" style="margin-left:auto">
+               JINGLES: <span style="color:var(--dark)">OFF</span>
+            </button>
           </div>
 
           <div class="mic-panel">
@@ -523,6 +526,23 @@ function updateUI(d) {
         document.getElementById('trackThumb').innerHTML = "";
     }
     
+    if (d.autoJingles) {
+        S.autoJingles = d.autoJingles;
+        const jBtn = document.getElementById('btnAutoJingles');
+        if (jBtn) {
+            jBtn.innerHTML = d.autoJingles.start 
+                ? `JINGLES: <span style="color:var(--green)">ON</span>` 
+                : `JINGLES: <span style="color:var(--accent)">OFF</span>`;
+            if (d.autoJingles.start) {
+                jBtn.classList.remove('btn-red');
+                jBtn.classList.add('btn-green');
+            } else {
+                jBtn.classList.remove('btn-green');
+                jBtn.classList.add('btn-red');
+            }
+        }
+    }
+    
     document.getElementById('volumeSlider').value = d.volume;
     document.getElementById('volumeVal').textContent = d.volume + '%';
     
@@ -555,6 +575,7 @@ function skipTrack() { fetch('/api/skip', {method:'POST'}).then(fetchStatus); }
 function playNow(id) { fetch(`/api/queue/${id}/play-now`, {method:'POST'}).then(fetchStatus); }
 function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; fetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
 function removeFromQueue(id) { fetch(`/api/queue/${id}`, {method:'DELETE'}).then(fetchStatus); }
+function toggleAutoJingles() { if(S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(JSON.stringify({ action: 'toggleAutoJingles' })); }
 
 function doSearch() {
     const q = document.getElementById('searchInput').value; if (!q) return;
