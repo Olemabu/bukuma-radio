@@ -126,20 +126,24 @@ function getStatus() {
     return { type: 'status', currentTrack, queue, isPlaying, volume, listeners, autoJingles, timestamp: Date.now(), serverMicState };
 }
 
-// ── Watchdog ──────────────────────────────────────────────────────────────────
+// ── Watchdog & Downloader ────────────────────────────────────────────────────
 function startMonitor() {
     if (monitorTimer) clearInterval(monitorTimer);
     monitorTimer = setInterval(() => {
+        // 1. Watchdog: Fix Dead Air
         if (isPlaying && !isTransitioning) {
             const idleMs = Date.now() - lastDataTime;
-            if (idleMs > 15000) {
+            if (idleMs > 20000) {
                 console.log(`[WATCHDOG] Dead air ${idleMs}ms — resyncing`);
                 lastDataTime = Date.now();
                 if (queue.length === 0) queue = seedQueue();
                 playNext();
             }
         }
-    }, 2000);
+        // 2. Downloader: Prepare next tracks
+        const toDownload = queue.slice(0, 3).filter(t => t.status === 'pending');
+        toDownload.forEach(t => downloadTrack(t));
+    }, 5000);
 }
 
 // ── Audio engine ─────────────────────────────────────────────────────────────
@@ -220,7 +224,20 @@ async function playNext() {
         let inputSource = currentTrack.localPath;
         if (!inputSource || !fs.existsSync(inputSource)) {
             console.log(`[PLAY] Local file missing for ${currentTrack.title}, fetching URL...`);
+            
+            // UI Feedback: Mark as downloading while fetching
+            const qIdx = queue.findIndex(t => t.id === currentTrack.id);
+            if (qIdx !== -1) { 
+                queue[qIdx].status = 'downloading'; 
+                broadcast(getStatus()); 
+            }
+            
             inputSource = await getYouTubeUrl(currentTrack.youtubeQuery || currentTrack.title);
+            
+            if (qIdx !== -1) { 
+                queue[qIdx].status = 'ready'; 
+                broadcast(getStatus()); 
+            }
         }
 
         if (currentProcess) {
