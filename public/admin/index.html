@@ -114,7 +114,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   margin-bottom: 25px;
 }
 
-.main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 30px; }
+.main-grid { display: grid; grid-template-columns: 1fr 60px 320px; gap: 20px; }
 
 .key-hint { font-size: 10px; color: var(--muted); background: var(--ledge); padding: 2px 5px; border-radius: 3px; font-weight: 900; border: 1px solid #111; margin-right: 5px; vertical-align: middle; }
 
@@ -127,7 +127,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .vu-meter { width: 100%; height: 12px; background: #000; border-radius: 6px; overflow: hidden; margin-top: 10px; position: relative; }
 .vu-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--green); transition: width 0.1s; }
 
-.queue-panel { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; max-height: 500px; overflow-y: auto; }
+.queue-panel { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; max-height: 600px; overflow-y: auto; }
 
 .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
 .nav-btn { background: var(--ledge); border: none; padding: 10px 20px; border-radius: 8px; color: var(--muted); cursor: pointer; font-weight: 700; transition: 0.2s; }
@@ -170,21 +170,21 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .master-monitor-bay {
   background: var(--ledge);
   border: 4px solid var(--chassis);
-  border-radius: 15px;
-  padding: 20px 10px;
+  border-radius: 12px;
+  padding: 15px 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   box-shadow: var(--shadow-inset);
-  height: 100%;
+  height: 400px;
   position: relative;
 }
 .peak-light {
-  width: 12px; height: 12px;
+  width: 10px; height: 10px;
   background: #330000;
   border-radius: 50%;
-  border: 2px solid #111;
+  border: 1px solid #111;
   transition: background 0.1s, box-shadow 0.1s;
 }
 .peak-light.active {
@@ -192,26 +192,26 @@ header { display: flex; justify-content: space-between; align-items: center; mar
   box-shadow: 0 0 15px #ff4757;
 }
 .vu-vertical-track {
-  width: 24px;
-  height: 300px;
+  width: 14px;
+  flex: 1;
   background: #000;
-  border-radius: 4px;
+  border-radius: 2px;
   display: flex;
   flex-direction: column-reverse;
-  padding: 2px;
-  gap: 2px;
-  border: 2px solid #222;
+  padding: 1px;
+  gap: 1.5px;
+  border: 1px solid #222;
 }
 .vu-segment {
   width: 100%;
-  height: 6px;
-  background: #1a1a1a;
+  height: 4px;
+  background: #151515;
   border-radius: 1px;
   transition: background 0.05s;
 }
-.vu-segment.green.on  { background: #2ed573; box-shadow: 0 0 5px #2ed573; }
-.vu-segment.yellow.on { background: #ffa502; box-shadow: 0 0 5px #ffa502; }
-.vu-segment.red.on    { background: #ff4757; box-shadow: 0 0 8px #ff4757; }
+.vu-segment.green.on  { background: #2ed573; box-shadow: 0 0 3px #2ed573; }
+.vu-segment.yellow.on { background: #ffa502; box-shadow: 0 0 3px #ffa502; }
+.vu-segment.red.on    { background: #ff4757; box-shadow: 0 0 5px #ff4757; }
 </style>
 </head>
 <body>
