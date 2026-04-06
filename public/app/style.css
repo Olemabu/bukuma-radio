@@ -4,8 +4,8 @@
     --bg-dark: #121212;
     --metallic-dark: #2c3035;
     --metallic-light: #4b525a;
-    --blue-neon: #00d2ff;
-    --blue-neon-glow: rgba(0, 210, 255, 0.4);
+    --blue-neon: #00ffff; /* Brighter, highly glowing Cyan */
+    --blue-neon-glow: rgba(0, 255, 255, 0.8);
     --glass: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
     
@@ -27,7 +27,7 @@
         0 0 0 10px var(--metallic-dark),
         0 0 0 12px #111;
         
-    --dial-gradient: radial-gradient(circle at 50% 10%, #4a759e 0%, #152f4a 60%, #030f1c 100%);
+    --dial-gradient: radial-gradient(circle at 50% 10%, #68a2d9 0%, #175494 40%, #032142 80%, #010c1a 100%);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -70,6 +70,17 @@ body, html {
     display: flex; flex-direction: column;
     justify-content: center; align-items: center;
     padding: 20px;
+    position: relative;
+}
+
+#waveformCanvas {
+    position: absolute;
+    top: 50%; left: 0;
+    width: 100%; height: 160px;
+    transform: translateY(-90%);
+    z-index: 0;
+    pointer-events: none;
+    filter: drop-shadow(0 0 15px var(--blue-neon));
 }
 
 /* ================= THE METALLIC DIAL ================= */
@@ -77,6 +88,7 @@ body, html {
     display: flex; align-items: center; justify-content: center; gap: 20px;
     margin-bottom: 50px;
     width: 100%;
+    z-index: 1;
 }
 
 .soundwave {

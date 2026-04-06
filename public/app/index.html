@@ -22,18 +22,16 @@
         </header>
 
         <main class="player-main">
+            <!-- Live Audio Visualizer -->
+            <canvas id="waveformCanvas"></canvas>
+
             <!-- Central Dial -->
             <div class="dial-container">
-                <div class="soundwave left" id="waveLeft"></div>
-                
                 <div class="center-dial" id="mainDial">
                     <div class="dial-inner">
                         <h2 id="dialTitle">Agum Bukuma<br>Radio</h2>
-                        <div class="dial-wave" id="dialWave"></div>
                     </div>
                 </div>
-
-                <div class="soundwave right" id="waveRight"></div>
             </div>
 
             <!-- Player Info & Scrubber -->

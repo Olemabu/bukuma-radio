@@ -19,9 +19,21 @@ const DOMElements = {
     
     // Animations
     dial: document.getElementById('mainDial'),
-    waveLeft: document.getElementById('waveLeft'),
-    waveRight: document.getElementById('waveRight')
+    canvas: document.getElementById('waveformCanvas')
 };
+
+// Canvas Setup
+const ctx = DOMElements.canvas.getContext('2d');
+function resizeCanvas() {
+    DOMElements.canvas.width = window.innerWidth;
+    DOMElements.canvas.height = 160;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Web Audio API Context
+let audioCtx, analyser, dataArray;
+let isVisualizerInit = false;
 
 // State
 let appMode = 'radio'; // 'radio' or 'local'
@@ -86,14 +98,46 @@ function updateUIFromState() {
         DOMElements.playIcon.name = 'pause';
         DOMElements.btnPlayPause.classList.add('playing');
         DOMElements.dial.classList.add('alive');
-        DOMElements.waveLeft.classList.add('active');
-        DOMElements.waveRight.classList.add('active');
     } else {
         DOMElements.playIcon.name = 'play';
         DOMElements.btnPlayPause.classList.remove('playing');
         DOMElements.dial.classList.remove('alive');
-        DOMElements.waveLeft.classList.remove('active');
-        DOMElements.waveRight.classList.remove('active');
+    }
+}
+
+// --- AUDIO VISUALIZER ---
+function initVisualizer() {
+    if (isVisualizerInit) return;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 128;
+        const source = audioCtx.createMediaElementSource(DOMElements.audio);
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        isVisualizerInit = true;
+        drawWaveform();
+    } catch(e) { console.error("Visualizer error:", e); }
+}
+
+function drawWaveform() {
+    requestAnimationFrame(drawWaveform);
+    
+    ctx.clearRect(0, 0, DOMElements.canvas.width, DOMElements.canvas.height);
+    if (!isPlaying || !isVisualizerInit) return;
+    
+    analyser.getByteFrequencyData(dataArray);
+    const barWidth = (DOMElements.canvas.width / dataArray.length) * 2;
+    let x = 0;
+
+    for (let i = 0; i < dataArray.length; i++) {
+        // Smooth scaling for visual aesthetics
+        const barHeight = (dataArray[i] / 255) * DOMElements.canvas.height * 0.8; 
+        
+        ctx.fillStyle = `rgb(0, ${180 + dataArray[i]/3}, 255)`; // Vibrant Cyan
+        ctx.fillRect(x, (DOMElements.canvas.height - barHeight) / 2, barWidth - 1, barHeight);
+        x += barWidth;
     }
 }
 
@@ -142,11 +186,12 @@ function skipLocal(direction) {
 // --- EVENT LISTENERS ---
 
 DOMElements.btnPlayPause.addEventListener('click', () => {
-    // Adding a tiny delay to ensure the depression CSS animation is felt
+    initVisualizer();
     setTimeout(togglePlayback, 50); 
 });
 
 DOMElements.btnNext.addEventListener('click', () => {
+    initVisualizer();
     if (appMode === 'local') setTimeout(() => skipLocal('next'), 50);
 });
 
