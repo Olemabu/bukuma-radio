@@ -118,6 +118,9 @@ const downloadsDir         = path.join(dataDir, 'downloads');
 const queueFile            = path.join(dataDir, 'queue.json');
 const stateFile            = path.join(dataDir, 'state.json');
 const playlistsFile        = path.join(dataDir, 'playlists.json');
+const newsFile             = path.join(dataDir, 'news.json');
+
+let news = [];
 
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 if (!fs.existsSync(downloadsDir)) fs.mkdirSync(downloadsDir, { recursive: true });
@@ -135,6 +138,16 @@ function loadState() {
         }
         if (fs.existsSync(playlistsFile)) {
             playlists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
+        }
+        if (fs.existsSync(newsFile)) {
+            news = JSON.parse(fs.readFileSync(newsFile, 'utf8'));
+        } else {
+            // Seed defaults
+            news = [
+                { id:'n1', date: new Date().toISOString(), status:'news', title:'BUKUMA RADIO TRANSITIONS TO GLOBAL STREAMING', summary:'The historic Agum Bukuma Radio station announces a brand new high-fidelity digital broadcast wing for the diaspora.', content:'Today we celebrate a milestone in our history. Agum Bukuma Radio is now officially broadcasting live to the world from our newly hardened central station. Integrity, Culture, and Community remain our pillars.' },
+                { id:'n2', date: new Date().toISOString(), status:'alert', title:'DELTA HIGHLIFE FESTIVAL ANNOUNCED', summary:'The annual Delta Highlife Cultural Festival will return to Bukuma Square this December.', content:'We are proud to announce the return of the Delta Highlife festival. Preparations are underway for the largest cultural gathering in the region. Stay tuned for the lineup!' }
+            ];
+            saveNews();
         }
 
         // --- MANDATORY REX LAWSON PURGE ---
@@ -169,6 +182,10 @@ function saveState() {
 
 function savePlaylists() {
     try { fs.writeFileSync(playlistsFile, JSON.stringify(playlists, null, 2)); } catch(e) {}
+}
+
+function saveNews() {
+    try { fs.writeFileSync(newsFile, JSON.stringify(news, null, 2)); } catch(e) {}
 }
 
 const upload = multer({ dest: path.join(__dirname, 'public/uploads') });
@@ -366,7 +383,16 @@ async function playNext() {
             bytesOut += chunk.length;
             lastDataTime = Date.now();
             streamClients.forEach(client => {
-                try { client.write(chunk); } catch(e) { streamClients.delete(client); }
+                try { 
+                    const bufferSize = client.writableLength || (client.socket && client.socket.writableLength) || 0;
+                    if (bufferSize > 1000000) { // ~1MB backpressure threshold
+                        console.warn('[STREAM] Disconnecting lagging client to prevent memory bloat. Buffer size:', bufferSize);
+                        client.end();
+                        streamClients.delete(client);
+                        return;
+                    }
+                    client.write(chunk); 
+                } catch(e) { streamClients.delete(client); }
             });
         });
 
@@ -561,18 +587,23 @@ app.get('/api/status', (req, res) => res.json(getStatus()));
 app.get('/api/queue',  (req, res) => res.json({ queue }));
 app.get('/api/playlists', (req, res) => res.json({ playlists }));
 
-app.post('/api/play',  (req, res) => { if (!isPlaying) startPlayback(); res.json({ success: true }); });
-app.post('/api/pause', (req, res) => { pausePlayback(); res.json({ success: true }); });
-app.post('/api/skip',  (req, res) => { skipTrack(); res.json({ success: true }); });
-app.post('/api/queue/skip', (req, res) => { skipTrack(); res.json({ success: true }); });
+const requireAuth = (req, res, next) => {
+    if (req.headers.authorization !== ADMIN_PASSWORD) return res.status(401).json({ error: 'Unauthorized' });
+    next();
+};
 
-app.post('/api/volume', (req, res) => {
+app.post('/api/play', requireAuth, (req, res) => { if (!isPlaying) startPlayback(); res.json({ success: true }); });
+app.post('/api/pause', requireAuth, (req, res) => { pausePlayback(); res.json({ success: true }); });
+app.post('/api/skip', requireAuth, (req, res) => { skipTrack(); res.json({ success: true }); });
+app.post('/api/queue/skip', requireAuth, (req, res) => { skipTrack(); res.json({ success: true }); });
+
+app.post('/api/volume', requireAuth, (req, res) => {
     volume = Math.min(100, Math.max(0, parseInt(req.body.value) || 80));
     saveState(); broadcast({ type: 'volume', value: volume });
     res.json({ success: true, volume });
 });
 
-app.post('/api/duck', (req, res) => {
+app.post('/api/duck', requireAuth, (req, res) => {
     const { state } = req.body;
     serverMicState = parseInt(state) || 0;
     res.json({ success: true, serverMicState });
@@ -591,7 +622,70 @@ app.post('/api/register', (req, res) => {
   res.json({ success: true, name, village });
 });
 
-app.post('/api/queue', (req, res) => {
+app.get('/api/herald', (req, res) => res.json({ news }));
+
+app.post('/api/herald', requireAuth, (req, res) => {
+    const item = { id: Date.now().toString(), date: new Date().toISOString(), ...req.body };
+    news.unshift(item); // Push to top
+    saveNews();
+    res.json({ success: true, item });
+});
+
+app.delete('/api/herald/:id', requireAuth, (req, res) => {
+    news = news.filter(n => n.id !== req.params.id);
+    saveNews();
+    res.json({ success: true });
+});
+
+app.post('/api/upload', requireAuth, upload.single('audio'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file' });
+    
+    const originalName = req.file.originalname;
+    const ext = path.extname(originalName);
+    const newName = `${req.file.filename}${ext}`;
+    const newPath = path.join(downloadsDir, newName);
+    
+    fs.renameSync(req.file.path, newPath);
+
+    let title = req.body.title || originalName.replace(ext, '');
+    let artist = req.body.artist || 'Local Upload';
+
+    // ID3 Metallurgy Injection
+    try {
+        const mm = await import('music-metadata');
+        const metadata = await mm.parseFile(newPath);
+        if (metadata.common.title) title = metadata.common.title;
+        if (metadata.common.artist) artist = metadata.common.artist;
+        console.log(`[ID3] Extracted: ${artist} - ${title}`);
+    } catch (e) {
+        console.warn(`[ID3] Metadata extraction failed for ${originalName}:`, e.message);
+    }
+
+    // Auto-detect Rex Lawson edge case specifically for uploads to prevent bypassing
+    if (artist.toLowerCase().includes('rex lawson') || title.toLowerCase().includes('jolly')) {
+        try { fs.unlinkSync(newPath); } catch(e) {}
+        return res.status(403).json({ error: "Cardinal Rex Lawson content is strictly prohibited." });
+    }
+
+    const track = {
+        id: Math.random().toString(36).slice(2),
+        status: 'ready',
+        title: title,
+        artist: artist,
+        youtubeQuery: `LOCAL: ${title}`,
+        duration: 'Unknown',
+        localPath: newPath
+    };
+
+    queue.push(track);
+    saveState();
+    broadcast(getStatus());
+    
+    if (!isPlaying) startPlayback();
+    res.json({ success: true, track });
+});
+
+app.post('/api/queue', requireAuth, (req, res) => {
     const { url, title, artist, youtubeQuery } = req.body;
     const entry = { id: Math.random().toString(36).slice(2), status: 'pending', title: title || url, artist: artist || 'Unknown', youtubeQuery: youtubeQuery || url || title };
     queue.push(entry); 
@@ -602,7 +696,7 @@ app.post('/api/queue', (req, res) => {
     res.json({ success: true, id: entry.id });
 });
 
-app.post('/api/queue/add', (req, res) => {
+app.post('/api/queue/add', requireAuth, (req, res) => {
     const { videoId, title, duration, url } = req.body;
     const vid = videoId || (url && url.match(/[?&]v=([^&]+)/)?.[1]);
     const entry = {
@@ -620,7 +714,7 @@ app.post('/api/queue/add', (req, res) => {
     res.json({ success: true, id: entry.id });
 });
 
-app.delete('/api/queue/:id', (req, res) => {
+app.delete('/api/queue/:id', requireAuth, (req, res) => {
     const before = queue.length;
     queue = queue.filter(t => t.id !== req.params.id);
     if (queue.length !== before) saveState();
@@ -628,7 +722,7 @@ app.delete('/api/queue/:id', (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/queue/:id/play-now', (req, res) => {
+app.post('/api/queue/:id/play-now', requireAuth, (req, res) => {
     const idx = queue.findIndex(t => t.id === req.params.id);
     if (idx === -1) return res.status(404).json({ success: false });
     
@@ -672,14 +766,14 @@ app.get('/api/youtube/search', (req, res) => {
     });
 });
 
-app.post('/api/playlists', (req, res) => {
+app.post('/api/playlists', requireAuth, (req, res) => {
     const { name } = req.body;
     const pl = { id: Date.now().toString(), name, tracks: [...queue] };
     playlists.push(pl); savePlaylists();
     res.json({ success: true, playlists });
 });
 
-app.post('/api/playlists/:id/load', (req, res) => {
+app.post('/api/playlists/:id/load', requireAuth, (req, res) => {
     const pl = playlists.find(p => p.id === req.params.id);
     if (!pl) return res.status(404).json({ success: false });
     queue = pl.tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2) }));

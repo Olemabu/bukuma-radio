@@ -569,17 +569,24 @@ function updateUI(d) {
     else document.getElementById('vuBar').style.width = '0%';
 }
 
-function playStation() { fetch('/api/play', {method:'POST'}).then(fetchStatus); }
-function pausePlayback() { fetch('/api/pause', {method:'POST'}).then(fetchStatus); }
-function skipTrack() { fetch('/api/skip', {method:'POST'}).then(fetchStatus); }
-function playNow(id) { fetch(`/api/queue/${id}/play-now`, {method:'POST'}).then(fetchStatus); }
-function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; fetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
-function removeFromQueue(id) { fetch(`/api/queue/${id}`, {method:'DELETE'}).then(fetchStatus); }
+function apiFetch(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['Authorization'] = S.token;
+    return fetch(url, options);
+}
+
+function playStation() { apiFetch('/api/play', {method:'POST'}).then(fetchStatus); }
+function pausePlayback() { apiFetch('/api/pause', {method:'POST'}).then(fetchStatus); }
+function skipTrack() { apiFetch('/api/skip', {method:'POST'}).then(fetchStatus); }
+function playNow(id) { apiFetch(`/api/queue/${id}/play-now`, {method:'POST'}).then(fetchStatus); }
+function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; apiFetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
+function removeFromQueue(id) { apiFetch(`/api/queue/${id}`, {method:'DELETE'}).then(fetchStatus); }
 function toggleAutoJingles() { if(S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(JSON.stringify({ action: 'toggleAutoJingles' })); }
 
 function doSearch() {
     const q = document.getElementById('searchInput').value; if (!q) return;
     document.getElementById('searchStatus').textContent = 'Scanning Airwaves...';
+    // Searching is GET so standard fetch is fine, but we can use apiFetch too
     fetch(`/api/youtube/search?q=${encodeURIComponent(q)}`).then(r => r.json()).then(d => {
         const res = d.results || [];
         document.getElementById('searchStatus').textContent = `${res.length} Matches Found`;
@@ -587,7 +594,7 @@ function doSearch() {
     });
 }
 
-function addToQueue(track) { fetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(track) }).then(() => { document.getElementById('searchInput').value = ''; fetchStatus(); }); }
+function addToQueue(track) { apiFetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(track) }).then(() => { document.getElementById('searchInput').value = ''; fetchStatus(); }); }
 
 function showTab(id, btn) {
     document.querySelectorAll('.tab-pane').forEach(p => p.style.display='none');
@@ -598,11 +605,13 @@ function showTab(id, btn) {
 
 function fetchNews() {
     fetch('/api/herald').then(r => r.json()).then(d => {
-        document.getElementById('newsList').innerHTML = d.news.map(n => `<div style="padding:15px; background:var(--ledge); border:1px solid #333; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between"><div><div style="font-weight:900">${n.title}</div><div style="font-size:10px; opacity:0.6">${n.content.substring(0, 100)}...</div></div><button onclick="deleteNews('${n.id}')" style="color:var(--accent); background:none; border:none; cursor:pointer">DELETE</button></div>`).join('');
+        document.getElementById('newsList').innerHTML = (d.news || []).map(n => `<div style="padding:15px; background:var(--ledge); border:1px solid #333; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between"><div><div style="font-weight:900">${n.title}</div><div style="font-size:10px; opacity:0.6">${n.content.substring(0, 100)}...</div></div><button onclick="deleteNews('${n.id}')" style="color:var(--accent); background:none; border:none; cursor:pointer">DELETE</button></div>`).join('');
+    }).catch(e => {
+        document.getElementById('newsList').innerHTML = `<p style="opacity:0.5; font-size:10px">Herald module pending backend deployment</p>`;
     });
 }
-function publishNews() { const title = document.getElementById('newsTitle').value; const content = document.getElementById('newsContent').value; fetch('/api/herald', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({title, content, status:'new'}) }).then(() => { document.getElementById('newsTitle').value=''; document.getElementById('newsContent').value=''; fetchNews(); }); }
-function deleteNews(id) { fetch(`/api/herald/${id}`, {method:'DELETE'}).then(fetchNews); }
+function publishNews() { const title = document.getElementById('newsTitle').value; const content = document.getElementById('newsContent').value; apiFetch('/api/herald', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({title, content, status:'new'}) }).then(() => { document.getElementById('newsTitle').value=''; document.getElementById('newsContent').value=''; fetchNews(); }); }
+function deleteNews(id) { apiFetch(`/api/herald/${id}`, {method:'DELETE'}).then(fetchNews); }
 document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter')doLogin(); });
 
 // Build VU Segments
