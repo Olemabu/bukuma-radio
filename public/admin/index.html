@@ -285,6 +285,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
                  <button class="btn-hardware btn-red" id="micBtnOff" style="flex:1" onclick="setMic(0)">OFF</button>
                </div>
                <div id="micStatus" style="font-size:10px; font-weight:900; margin-top:10px; color:var(--muted)">READY</div>
+               <div class="vu-meter" style="height:4px; margin-top:8px; background:#111;"><div id="localMicVU" class="vu-bar" style="background:#00ffff; box-shadow:0 0 8px #00ffff; transition: width 0.05s linear;"></div></div>
             </div>
             <div class="mic-unit">
                <div class="card-title">GAIN (<span class="key-hint">↑</span> / <span class="key-hint">↓</span>)</div>
@@ -463,12 +464,23 @@ async function startMicStream() {
         S.scriptNode = S.audioCtx.createScriptProcessor(4096, 1, 1);
         
         S.scriptNode.onaudioprocess = e => {
-            if (S.micState === 0) return;
+            if (S.micState === 0) {
+                document.getElementById('localMicVU').style.width = '0%';
+                return;
+            }
             const inputData = e.inputBuffer.getChannelData(0);
             const pcmData = new Int16Array(inputData.length);
+            let sum = 0;
+            
             for (let i = 0; i < inputData.length; i++) {
+                sum += inputData[i] * inputData[i];
                 pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
             }
+            
+            const rms = Math.sqrt(sum / inputData.length);
+            const level = Math.min(100, Math.floor(rms * 400));
+            document.getElementById('localMicVU').style.width = level + '%';
+            
             if (S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(pcmData.buffer);
         };
         source.connect(S.scriptNode);
