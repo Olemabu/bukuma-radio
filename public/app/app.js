@@ -105,7 +105,10 @@ function updateUIFromState() {
     }
 }
 
-// --- AUDIO VISUALIZER ---
+// --- AUDIO VISUALIZER & SYNTHETIC SOUNDS ---
+let audioCtx, analyser, dataArray;
+let isVisualizerInit = false;
+
 function initVisualizer() {
     if (isVisualizerInit) return;
     try {
@@ -120,6 +123,34 @@ function initVisualizer() {
         drawWaveform();
     } catch(e) { console.error("Visualizer error:", e); }
 }
+
+function playMechanicalClick() {
+    initVisualizer(); // Ensure context exists
+    if (!audioCtx || audioCtx.state === 'suspended') return;
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    // Simulate a heavy, dull plastic/metal click
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(300, audioCtx.currentTime); 
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.04); 
+    
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime); 
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04); 
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+}
+
+// Bind click sound to all interactive buttons
+document.querySelectorAll('button, .center-dial').forEach(btn => {
+    // Use pointerdown so the sound happens exactly when the finger hits the glass
+    btn.addEventListener('pointerdown', playMechanicalClick);
+});
 
 function drawWaveform() {
     requestAnimationFrame(drawWaveform);
