@@ -1,0 +1,22 @@
+{
+  "name": "Agum Bukuma Radio",
+  "short_name": "Bukuma",
+  "start_url": "/app/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#0d1b2a",
+  "icons": [
+    {
+      "src": "/app/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

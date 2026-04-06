@@ -1,296 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bukuma Radio — Listen Live</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Playfair+Display:wght@700;900&display=swap');
-:root{
-  --bg:#0D0805;--card:#1f140f;--border:#2b1b17;
-  --accent:#D4AF37;--green:#4ade80;--red:#ef4444;--text:#F5DEB3;--muted:#8B6A4A;
-  --wood:url('https://www.transparenttextures.com/patterns/dark-wood.png');
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--bg) var(--wood);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
-
-/* GATEWAY */
-#gateway{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-.gateway-card{width:100%;max-width:420px;background:rgba(0,0,0,.4);border:6px inset #1a1210;border-radius:16px;padding:40px 32px;text-align:center}
-.gateway-card h2{font-family:'Playfair Display',serif;color:var(--accent);font-size:1.8rem;margin-bottom:6px}
-.gateway-sub{font-size:.78rem;letter-spacing:3px;color:var(--muted);margin-bottom:32px;text-transform:uppercase}
-.hw-input{width:100%;padding:13px 14px;background:#0a0503;border:2px inset #2b1b17;color:var(--green);font-family:'Courier New',monospace;font-size:.95rem;margin-bottom:14px;border-radius:6px;outline:none}
-.hw-input::placeholder{color:#3a2a1a}
-.btn-launch{width:100%;padding:14px;background:var(--accent);color:#000;font-weight:900;font-size:1rem;border:none;border-radius:8px;cursor:pointer;letter-spacing:1px;margin-top:8px;transition:.2s}
-.btn-launch:hover{opacity:.85}
-.gate-err{color:var(--red);font-size:.82rem;margin-top:12px;font-weight:700}
-
-/* MAIN APP */
-#appScreen{display:none;flex-direction:column;min-height:100vh}
-
-/* TOP BAR */
-.topbar{background:rgba(0,0,0,.5);border-bottom:1px solid rgba(212,175,55,.15);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
-.topbar-logo{font-family:'Playfair Display',serif;color:var(--accent);font-size:1.1rem}
-.live-badge{display:flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;letter-spacing:1px;color:var(--red)}
-.live-dot{width:7px;height:7px;border-radius:50%;background:var(--red);animation:blink 1s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.listener-chip{font-size:.72rem;color:var(--muted);letter-spacing:1px}
-
-/* PLAYER CARD */
-.player-card{background:rgba(0,0,0,.4);border:1px solid rgba(212,175,55,.1);border-radius:20px;margin:16px;padding:24px}
-.now-playing-label{font-size:.68rem;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:16px}
-.track-row{display:flex;align-items:center;gap:16px;margin-bottom:24px}
-.track-art{width:80px;height:80px;border-radius:12px;background:#1a1210;flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.track-art img{width:80px;height:80px;object-fit:cover;border-radius:12px}
-.track-art svg{opacity:.3}
-.track-name{font-size:1.25rem;font-weight:700;line-height:1.2;margin-bottom:6px}
-.track-artist{font-size:.88rem;color:var(--muted)}
-
-/* BIG PLAY BUTTON */
-.play-btn{width:100%;padding:18px;background:var(--green);color:#000;font-weight:900;font-size:1.15rem;border:none;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s;letter-spacing:.5px}
-.play-btn:hover{opacity:.9}
-.play-btn.playing{background:var(--red);color:#fff}
-.play-hint{text-align:center;font-size:.75rem;color:var(--muted);margin-top:10px;letter-spacing:1px}
-
-/* VU METERS */
-.vu-section{margin-top:20px}
-.vu-label-row{display:flex;justify-content:space-between;font-size:.65rem;letter-spacing:2px;color:var(--muted);margin-bottom:6px}
-.vu-bar-wrap{display:flex;gap:3px;height:32px;align-items:flex-end}
-.vu-seg{flex:1;background:#1a1210;border-radius:2px;transition:height .08s}
-
-/* NEWS TICKER */
-.news-ticker{background:rgba(0,0,0,.4);border-top:1px solid rgba(212,175,55,.1);border-bottom:1px solid rgba(212,175,55,.1);height:40px;overflow:hidden;position:relative}
-.ticker-track{display:flex;white-space:nowrap;animation:ticker 35s linear infinite;height:100%;align-items:center}
-@keyframes ticker{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
-.ticker-item{padding:0 40px;color:var(--accent);font-size:.78rem;font-weight:700;letter-spacing:1px;text-transform:uppercase}
-
-/* REQUEST FORM */
-.request-card{background:rgba(0,0,0,.4);border:1px solid rgba(212,175,55,.1);border-radius:20px;margin:0 16px 16px;padding:24px}
-.req-label{font-size:.68rem;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
-.req-row{display:flex;gap:8px}
-.req-input{flex:1;padding:12px 14px;background:#0a0503;border:2px inset #2b1b17;color:var(--green);font-family:'Courier New',monospace;font-size:.9rem;border-radius:8px;outline:none}
-.req-input::placeholder{color:#3a2a1a}
-.btn-req{padding:12px 18px;background:rgba(212,175,55,.15);color:var(--accent);border:1px solid var(--accent);font-weight:700;font-size:.85rem;border-radius:8px;cursor:pointer;white-space:nowrap;transition:.2s}
-.btn-req:hover{background:var(--accent);color:#000}
-.req-status{font-size:.78rem;margin-top:10px;min-height:18px;font-weight:600}
-.req-status.ok{color:var(--green)}
-.req-status.err{color:var(--red)}
-
-/* EXIT */
-.footer-bar{padding:16px;text-align:center;margin-top:auto}
-.exit-link{color:var(--muted);font-size:.75rem;letter-spacing:2px;text-decoration:none;text-transform:uppercase;border-bottom:1px solid rgba(139,106,74,.3);padding-bottom:2px}
-
-@media(max-width:480px){
-  .gateway-card{padding:28px 20px}
-  .player-card,.request-card{margin:10px;padding:18px}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Bukuma Personal App</title>
+    <link rel="manifest" href="/app/manifest.json">
+    <link rel="stylesheet" href="/app/style.css">
+    <!-- Ionicons for bottom nav -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
 
-<!-- GATEWAY -->
-<div id="gateway">
-  <div class="gateway-card">
-    <h2>Bukuma Radio</h2>
-    <p class="gateway-sub">Community Uplink</p>
-    <input type="text" id="vName" class="hw-input" placeholder="Your name" autocomplete="name">
-    <input type="text" id="vVillage" class="hw-input" placeholder="Your village" autocomplete="address-level2" onkeydown="if(event.key==='Enter')launch()">
-    <button class="btn-launch" onclick="launch()">▶ Enter Radio Station</button>
-    <div class="gate-err" id="gateErr"></div>
-  </div>
-</div>
+    <!-- Dynamic PWA Background -->
+    <div class="app-bg"></div>
 
-<!-- APP -->
-<div id="appScreen">
-  <div class="topbar">
-    <div class="topbar-logo">BUKUMA RADIO</div>
-    <div class="live-badge"><span class="live-dot"></span>LIVE</div>
-    <div class="listener-chip" id="listenerChip">...</div>
-  </div>
+    <div class="app-container">
+        
+        <header class="app-header">
+            <h1 id="appTitle">Bukuma Community Radio</h1>
+        </header>
 
-  <div class="news-ticker"><div class="ticker-track" id="tickerTrack"><span class="ticker-item">Loading news...</span></div></div>
+        <main class="player-main">
+            <!-- Central Dial -->
+            <div class="dial-container">
+                <div class="soundwave left" id="waveLeft"></div>
+                
+                <div class="center-dial" id="mainDial">
+                    <div class="dial-inner">
+                        <h2 id="dialTitle">Agum Bukuma<br>Radio</h2>
+                        <div class="dial-wave" id="dialWave"></div>
+                    </div>
+                </div>
 
-  <div class="player-card">
-    <div class="now-playing-label">Now Broadcasting</div>
-    <div class="track-row">
-      <div class="track-art" id="trackArt">
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg>
-      </div>
-      <div>
-        <div class="track-name" id="trackName">Station Idle</div>
-        <div class="track-artist" id="trackArtist">Tune in to listen</div>
-      </div>
+                <div class="soundwave right" id="waveRight"></div>
+            </div>
+
+            <!-- Player Info & Scrubber -->
+            <div class="player-info">
+                <div class="scrubber">
+                    <span id="timeCurrent">00:00</span>
+                    <input type="range" id="seekSlider" value="0" min="0" max="100" class="slider" disabled>
+                    <span id="timeDuration">Live</span>
+                </div>
+                
+                <!-- Transport Controls -->
+                <div class="transport-controls">
+                    <button class="transport-btn side-btn" id="btnShuffle">
+                        <ion-icon name="shuffle-outline"></ion-icon>
+                    </button>
+                    <button class="transport-btn main-btn" id="btnPrev">
+                        <ion-icon name="play-back"></ion-icon>
+                    </button>
+                    <button class="transport-btn play-btn" id="btnPlayPause">
+                        <ion-icon name="play" id="playIcon"></ion-icon>
+                    </button>
+                    <button class="transport-btn main-btn" id="btnNext">
+                        <ion-icon name="play-forward"></ion-icon>
+                    </button>
+                    <button class="transport-btn side-btn" id="btnRepeat">
+                        <ion-icon name="repeat-outline"></ion-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dock / Now Playing Info -->
+            <div class="now-playing-dock">
+                <div class="thumb" id="currThumb"></div>
+                <div class="track-details">
+                    <h3 id="currTitle">Awaiting Signal...</h3>
+                    <p id="currArtist">Radio Mode</p>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" id="navRadio">
+                <ion-icon name="radio-outline"></ion-icon>
+                <span>Live</span>
+            </button>
+            <button class="nav-item" id="navLocal">
+                <ion-icon name="library-outline"></ion-icon>
+                <span>Local</span>
+            </button>
+            <button class="nav-item" id="navChat">
+                <ion-icon name="chatbubbles-outline"></ion-icon>
+                <span>Chat</span>
+            </button>
+            <button class="nav-item" id="navProfile">
+                <ion-icon name="person-outline"></ion-icon>
+                <span>Profile</span>
+            </button>
+        </nav>
     </div>
 
-    <button class="play-btn" id="playBtn" onclick="togglePlay()">
-      <svg id="playIcon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-      <span id="playLabel">LISTEN LIVE</span>
-    </button>
-    <div class="play-hint" id="playHint">Tap to start streaming</div>
+    <!-- Hidden Input for Local Music files -->
+    <input type="file" id="localFileInput" accept="audio/*" multiple style="display: none;">
+    <!-- Audio element for both Radio and Local playback -->
+    <audio id="audioPlayer" preload="none"></audio>
 
-    <div class="vu-section">
-      <div class="vu-label-row"><span>L</span><span>SIGNAL LEVEL</span><span>R</span></div>
-      <div class="vu-bar-wrap" id="vuBars"></div>
-    </div>
-  </div>
-
-  <div class="request-card">
-    <div class="req-label">Request a Song</div>
-    <div class="req-row">
-      <input type="text" class="req-input" id="reqInput" placeholder="Song name or artist..." onkeydown="if(event.key==='Enter')sendRequest()">
-      <button class="btn-req" onclick="sendRequest()">Request</button>
-    </div>
-    <div class="req-status" id="reqStatus"></div>
-  </div>
-
-  <div class="footer-bar">
-    <a href="/" class="exit-link">Exit to Herald</a>
-  </div>
-</div>
-
-<audio id="radioAudio" preload="none"></audio>
-
-<script>
-'use strict';
-let ws=null, playing=false, audioCtx=null, analyser=null, source=null, vuTimer=null;
-const N_SEGS=20;
-let userName='', userVillage='';
-
-// Build VU bars
-(function(){
-  const wrap=document.getElementById('vuBars');
-  for(let i=0;i<N_SEGS;i++){
-    const d=document.createElement('div');d.className='vu-seg';d.style.height='4px';
-    const pct=i/N_SEGS;
-    d.style.background=pct<0.6?'#4ade80':pct<0.85?'#f4d03f':'#ef4444';
-    wrap.appendChild(d);
-  }
-})();
-
-function checkAuth(){
-  const n=localStorage.getItem('bukuma_name');
-  const v=localStorage.getItem('bukuma_village');
-  if(n&&v){userName=n;userVillage=v;enterApp()}
-}
-
-async function launch(){
-  const name=document.getElementById('vName').value.trim();
-  const village=document.getElementById('vVillage').value.trim();
-  if(!name||!village){document.getElementById('gateErr').textContent='Please enter your name and village';return}
-  try{
-    const r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,village,phone:''})});
-    const d=await r.json();
-    if(d.success){
-      localStorage.setItem('bukuma_name',name);localStorage.setItem('bukuma_village',village);
-      userName=name;userVillage=village;enterApp();
-    } else {document.getElementById('gateErr').textContent=(d.error||'Error').toUpperCase()}
-  }catch(e){document.getElementById('gateErr').textContent='Connection error'}
-}
-
-function enterApp(){
-  document.getElementById('gateway').style.display='none';
-  document.getElementById('appScreen').style.display='flex';
-  connectWS();loadTicker();
-}
-
-function connectWS(){
-  const proto=location.protocol==='https:'?'wss':'ws';
-  ws=new WebSocket(proto+'://'+location.host);
-  ws.onopen=()=>ws.send(JSON.stringify({action:'getStatus'}));
-  ws.onmessage=e=>{try{handleMsg(JSON.parse(e.data))}catch(_){}};
-  ws.onclose=()=>setTimeout(connectWS,3000);
-}
-function handleMsg(d){
-  if(d.type==='status'||d.type==='nowPlaying'){
-    const t=d.currentTrack;
-    document.getElementById('trackName').textContent=t?t.title:'Station Idle';
-    document.getElementById('trackArtist').textContent=t?(t.artist||t.channel||''):'Tune in to listen';
-    document.getElementById('listenerChip').textContent=(d.listeners||0)+' listening';
-    const art=document.getElementById('trackArt');
-    const url=t&&(t.thumbnail||(t.videoId?'https://img.youtube.com/vi/'+t.videoId+'/mqdefault.jpg':null));
-    art.innerHTML=url
-      ?'<img src="'+url+'" onerror="this.innerHTML=\'<svg width=36 height=36 viewBox=\\"0 0 24 24\\" fill=none stroke=currentColor stroke-width=1.2><circle cx=12 cy=12 r=10/><path d=\\"M10 8l6 4-6 4V8z\\"/></svg>\'">'
-      :'<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z"/></svg>';
-  }
-}
-
-function togglePlay(){
-  const audio=document.getElementById('radioAudio');
-  const btn=document.getElementById('playBtn');
-  if(playing){
-    audio.pause();audio.src='';playing=false;
-    btn.classList.remove('playing');
-    document.getElementById('playIcon').innerHTML='<path d="M8 5v14l11-7z"/>';
-    document.getElementById('playLabel').textContent='LISTEN LIVE';
-    document.getElementById('playHint').textContent='Tap to start streaming';
-    stopVU();
-  } else {
-    audio.src='/stream?'+Date.now();
-    audio.play().then(()=>{startVU(audio)}).catch(()=>{});
-    playing=true;
-    btn.classList.add('playing');
-    document.getElementById('playIcon').innerHTML='<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
-    document.getElementById('playLabel').textContent='STOP';
-    document.getElementById('playHint').textContent='Now streaming — '+userName;
-  }
-}
-
-function startVU(audio){
-  try{
-    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
-    if(source)try{source.disconnect()}catch(_){}
-    source=audioCtx.createMediaElementSource(audio);
-    analyser=audioCtx.createAnalyser();analyser.fftSize=256;
-    source.connect(analyser);analyser.connect(audioCtx.destination);
-    const buf=new Uint8Array(analyser.frequencyBinCount);
-    const segs=document.querySelectorAll('.vu-seg');
-    vuTimer=setInterval(()=>{
-      analyser.getByteFrequencyData(buf);
-      const avg=buf.slice(0,64).reduce((a,b)=>a+b,0)/64;
-      const level=avg/255;
-      segs.forEach((s,i)=>{
-        const thresh=i/N_SEGS;
-        s.style.height=(level>thresh?(4+28*(1-(i/N_SEGS)))+'px':'4px');
-        s.style.opacity=level>thresh?'1':'0.15';
-      });
-    },80);
-  }catch(e){startFakeVU()}
-}
-function startFakeVU(){
-  const segs=document.querySelectorAll('.vu-seg');
-  vuTimer=setInterval(()=>{
-    const level=0.3+Math.random()*0.7;
-    segs.forEach((s,i)=>{const t=i/N_SEGS;s.style.height=(level>t?(4+28*(1-i/N_SEGS))+'px':'4px');s.style.opacity=level>t?'1':'0.15'});
-  },120);
-}
-function stopVU(){
-  clearInterval(vuTimer);
-  document.querySelectorAll('.vu-seg').forEach(s=>{s.style.height='4px';s.style.opacity='0.15'});
-}
-
-async function sendRequest(){
-  const song=document.getElementById('reqInput').value.trim();
-  if(!song)return;
-  const status=document.getElementById('reqStatus');
-  status.textContent='Sending...';status.className='req-status';
-  try{
-    const r=await fetch('/api/requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({song,listener:userName||'Anonymous'})});
-    const d=await r.json();
-    if(d.success){status.textContent='✓ Request sent! The DJ will review it.';status.className='req-status ok';document.getElementById('reqInput').value=''}
-    else{status.textContent='Error: '+(d.error||'failed');status.className='req-status err'}
-  }catch(e){status.textContent='Connection error';status.className='req-status err'}
-}
-
-async function loadTicker(){
-  try{
-    const d=await(await fetch('/data/herald.json')).json();
-    const track=document.getElementById('tickerTrack');
-    const items=(d.news||[]).map(n=>'<span class="ticker-item">📜 '+n.title+': '+n.summary+'</span>').join('');
-    track.innerHTML=items+items;
-  }catch(_){}
-}
-
-checkAuth();
-</script>
+    <script src="/app/app.js"></script>
 </body>
 </html>
