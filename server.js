@@ -925,11 +925,10 @@ app.delete('/api/queue/:id', requireAuth, (req, res) => {
     res.json({ success: true });
 });
 
-// --- Professional Manual Play Logic ('Signature Intro Deployment') ---
+// --- Professional Manual Play Logic ('Signature Intro Pipelining') ---
 function playWithIntro(track) {
     // 1. HARD OVERRIDE: Destroy old world
     engineEpoch++;
-    const myEpoch = engineEpoch;
     isTransitioning = true;
     
     // 2. Clear old timers immediately
@@ -948,13 +947,25 @@ function playWithIntro(track) {
         queue.shift(); 
     }
 
-    // 5. Signature Intro deployment
-    dropJingle('ident.mp3');
+    // 5. Build the Deployment Segment (Intro + Track)
+    const intro = {
+        id: 'ident-' + Date.now().toString(36),
+        status: 'ready',
+        title: 'STATION IDENT', artist: 'BUKUMA RADIO',
+        localPath: path.join(__dirname, 'public/app', 'ident.mp3')
+    };
+    if (!fs.existsSync(intro.localPath)) {
+        intro.localPath = path.join(dataDir, 'jingles', 'ident.mp3');
+    }
     
-    // 6. Move new track to top
+    // 6. Deploy the sequence
     queue.unshift(track);
-    saveState();
+    if (fs.existsSync(intro.localPath)) {
+        console.log('[ENGINE] Pipelining Branded Intro...');
+        queue.unshift(intro);
+    }
     
+    saveState();
     isOnAir   = true; 
     isPlaying = true;
     isTransitioning = false;
