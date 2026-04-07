@@ -220,6 +220,12 @@ function startMonitor() {
         // 2. Downloader: Prepare next tracks
         const toDownload = queue.slice(0, 3).filter(t => t.status === 'pending');
         toDownload.forEach(t => downloadTrack(t));
+
+        // 3. Persistence Watchdog: Keep Station On-Air
+        if (isOnAir && !currentProcess && !isTransitioning) {
+            console.log('[WATCHDOG] Station is ON-AIR but engine is IDLE. Restoring broadcast...');
+            playNext();
+        }
     }, 5000);
 }
 
@@ -732,24 +738,41 @@ app.post('/api/register', (req, res) => {
   communityUsers.push({ name, village, phone, registeredAt: new Date().toISOString() });
   res.json({ success: true, name, village });
 });
-
 app.get('/api/admin/drive', requireAuth, (req, res) => {
     const drivePaths = [
         { name: 'Downloads (Permanent)', path: path.join(dataDir, 'downloads') },
-        { name: 'Jingles', path: path.join(dataDir, 'jingles') },
-        { name: 'App Data', path: path.join(__dirname, 'public/app') }
+        { name: 'Jingles', path: path.join(dataDir, 'jingles') }
     ];
     let files = [];
+    const validExts = ['.mp3', '.wav', '.ogg', '.m4a'];
     drivePaths.forEach(dp => {
         if (fs.existsSync(dp.path)) {
             const list = fs.readdirSync(dp.path);
             list.forEach(f => {
+                const ext = path.extname(f).toLowerCase();
+                if (!validExts.includes(ext)) return;
                 const stat = fs.statSync(path.join(dp.path, f));
-                if (stat.isFile()) files.push({ name: f, size: stat.size, category: dp.name, path: f });
+                if (stat.isFile()) files.push({ name: f, size: stat.size, category: dp.name, path: f, fullPath: path.join(dp.path, f) });
             });
         }
     });
     res.json({ files });
+});
+
+app.post('/api/admin/drive/play', requireAuth, (req, res) => {
+    const { filePath, fileName } = req.body;
+    if (!filePath || !fs.existsSync(filePath)) return res.status(404).json({ success: false });
+    
+    const track = {
+        id: 'drive-' + Date.now().toString(36),
+        status: 'ready',
+        title: fileName || path.basename(filePath),
+        artist: 'STATION DRIVE',
+        localPath: filePath
+    };
+    
+    playWithIntro(track);
+    res.json({ success: true });
 });
 
 app.get('/api/herald', (req, res) => res.json({ news }));
@@ -898,38 +921,37 @@ app.delete('/api/queue/:id', requireAuth, (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/queue/:id/play-now', requireAuth, (req, res) => {
-    const idx = queue.findIndex(t => t.id === req.params.id);
-    if (idx === -1) return res.status(404).json({ success: false });
+// --- Professional Manual Play Logic ('Signature Intro Deployment') ---
+function playWithIntro(track) {
+    // 0. Signature Intro deployment
+    dropJingle('ident.mp3');
     
-    // Safety: Only allow manual override for READY tracks (on-disk)
-    if (queue[idx].status !== 'ready') {
-        return res.status(400).json({ success: false, error: 'Track not on disk yet. Wait for download.' });
-    }
-    
-    // 1. HARD OVERRIDE: Destroy current epoch to instantly stop any internal playNext logic or awaiting URLs!
+    // 1. Move track to top
+    queue.unshift(track);
     engineEpoch++;
-    isTransitioning = true; 
+    isTransitioning = true;
     
-    // 2. Clear old timeouts so they don't fire midway
+    // 2. Clear old timeouts and kill current process
     if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
-    
-    // 3. Move track to top
-    const track = queue.splice(idx, 1)[0];
-    queue.unshift(track); 
-    saveState();
-    
-    // 4. Brutally kill current background process and listeners
     if (currentProcess) {
-        currentProcess.removeAllListeners(); 
+        currentProcess.removeAllListeners();
         try { currentProcess.kill('SIGKILL'); } catch(e) {}
         currentProcess = null;
     }
     
-    isPlaying = true; 
-    isTransitioning = false; // Reset lock for the new track
-    playNext(); // Safely start the new track with a new epoch
+    isOnAir = true; // Directive: Station power must be active
+    isPlaying = true; // Start playback immediately
+    isTransitioning = false;
+    playNext();
+}
+
+app.post('/api/queue/:id/play-now', requireAuth, (req, res) => {
+    const idx = queue.findIndex(t => t.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ success: false });
+    if (queue[idx].status !== 'ready') return res.status(400).json({ success: false, error: 'Track not on disk yet. Wait for download.' });
     
+    const track = queue.splice(idx, 1)[0];
+    playWithIntro(track);
     res.json({ success: true });
 });
 

@@ -268,7 +268,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
     <header>
       <div style="display:flex;align-items:center;gap:20px">
         <div class="logo" style="font-size:24px; font-weight:900;">AGUM <span style="color:var(--accent2)">BUKUMA</span></div>
-        <button class="on-air-badge" id="onAirBadge" onclick="toggleOnAir()">OFF AIR</button>
+        <button class="on-air-badge" id="onAirBadge" onclick="toggleOnAir()" style="min-width:120px; font-family:'Courier New', monospace; font-size:14px">OFF AIR</button>
       </div>
       <div style="display:flex;align-items:center;gap:20px">
         <span id="listenerCount" style="font-size:11px; font-weight:900; letter-spacing:1px; opacity:0.8;">0 UPLINKS ACTIVE</span>
@@ -643,11 +643,16 @@ function updateUI(d) {
     if (typeof d.isPlaying !== 'undefined') S.isPlaying = d.isPlaying;
     if (typeof d.volume !== 'undefined') S.volume = d.volume;
 
+    // Master status mapping for Professional Persistence
     const badge = document.getElementById('onAirBadge');
-    badge.textContent = S.isOnAir ? 'ON AIR' : 'OFF AIR';
-    badge.classList.toggle('active', !!S.isOnAir);
+    if (badge) {
+        badge.textContent = S.isOnAir ? 'LIVE / ON AIR' : 'STATION OFF-AIR';
+        badge.classList.toggle('active', !!S.isOnAir);
+        badge.style.background = S.isOnAir ? '#ff4757' : '#111';
+        badge.style.color = S.isOnAir ? '#fff' : '#444';
+    }
     
-    // Play/Pause buttons - reflect MUSIC state
+    // Play/Pause buttons reflect MUSIC state specifically
     const btnPlay = document.getElementById('btnPlay');
     const btnStop = document.getElementById('btnStop');
     if (btnPlay && btnStop) {
@@ -810,8 +815,11 @@ function fetchDrive() {
         list.innerHTML = d.files.map(f => `
            <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
               <td style="padding:10px; color:var(--green); font-weight:900; font-family:monospace">${f.name}</td>
-              <td style="padding:10px; opacity:0.7">${f.category}</td>
-              <td style="padding:10px; opacity:0.5">${(f.size / 1024 / 1024).toFixed(2)} MB</td>
+              <td style="padding:10px; opacity:0.7; font-size:10px">${f.category}</td>
+              <td style="padding:10px; opacity:0.5; font-size:10px">${(f.size / 1024 / 1024).toFixed(2)} MB</td>
+              <td style="padding:10px; text-align:right">
+                 <button class="btn-hardware btn-green" style="padding:4px 8px; font-size:9px" onclick='playFromDrive(${JSON.stringify({ filePath: f.fullPath, fileName: f.name })})'>PLAY ⚡</button>
+              </td>
            </tr>
         `).join('');
     });
@@ -906,6 +914,17 @@ function saveToSet(setId) {
             alert(`Track archived to curated set! (Current count: ${d.count})`);
             closeSetModal();
         }
+    });
+}
+
+function playFromDrive(data) {
+    if (!confirm(`Deploy music file with Signature Intro? \n${data.fileName}`)) return;
+    apiFetch('/api/admin/drive/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(d => {
+        if (d.success) showTab('play', document.querySelector('[onclick*="showTab(\'play\'"]'));
     });
 }
 
