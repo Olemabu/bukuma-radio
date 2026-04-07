@@ -498,7 +498,6 @@ function skipTrack() {
         try { currentProcess.kill('SIGKILL'); } catch(e) {}
         currentProcess = null;
     }
-    }
     advanceQueue();
     isTransitioning = false;
     if (isPlaying) playNext();
