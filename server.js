@@ -556,6 +556,15 @@ wss.on('connection', ws => {
                         lastMicTime = recvTime;
                         
                         let sum = 0;
+                        const samples = data.length / 2;
+                        for (let i = 0; i < data.length; i += 2) {
+                            const s = data.readInt16LE(i) / 32768; // 16-bit PCM to float
+                            sum += s * s;
+                        }
+                        const rms = Math.sqrt(sum / samples);
+                        const level = Math.min(100, Math.floor(rms * 400));
+                        ws.send(JSON.stringify({ type: 'server_mic_vu', level }));
+                    }
                 } catch(e) {}
             }
             return;
