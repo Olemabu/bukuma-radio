@@ -313,10 +313,13 @@ function startPlayback() {
 }
 
 async function playNext() {
-    const myEpoch = engineEpoch; // CRITICAL FIX: The lock ID for this playback segment
+    const myEpoch = engineEpoch; // Capture the current station lock ID
     if (!isOnAir) return;
-    if (isTransitioning) {
-        console.log('[PLAY] Aborting - Engine already transitioning');
+    if (isTransitioning && myEpoch === engineEpoch) return;
+    
+    // Safety check: is an active process already running for this exact epoch?
+    if (currentProcess && !isTransitioning) {
+        console.log('[PLAY] Aborting - Engine already active for this epoch.');
         return;
     }
     
@@ -924,25 +927,39 @@ app.delete('/api/queue/:id', requireAuth, (req, res) => {
 
 // --- Professional Manual Play Logic ('Signature Intro Deployment') ---
 function playWithIntro(track) {
-    // 0. Signature Intro deployment
-    dropJingle('ident.mp3');
-    
-    // 1. Move track to top
-    queue.unshift(track);
+    // 1. HARD OVERRIDE: Destroy old world
     engineEpoch++;
+    const myEpoch = engineEpoch;
     isTransitioning = true;
     
-    // 2. Clear old timeouts and kill current process
+    // 2. Clear old timers immediately
     if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
+    
+    // 3. Kill current process and REMOVE listeners to prevent any shifts
     if (currentProcess) {
         currentProcess.removeAllListeners();
         try { currentProcess.kill('SIGKILL'); } catch(e) {}
         currentProcess = null;
     }
+
+    // 4. Retire the track that was just ended to prevent it shifting to index 1
+    if (queue.length > 0) {
+        console.log(`[ENGINE] Retiring aborted track: ${queue[0].title}`);
+        queue.shift(); 
+    }
+
+    // 5. Signature Intro deployment
+    dropJingle('ident.mp3');
     
-    isOnAir = true; // Directive: Station power must be active
-    isPlaying = true; // Start playback immediately
+    // 6. Move new track to top
+    queue.unshift(track);
+    saveState();
+    
+    isOnAir   = true; 
+    isPlaying = true;
     isTransitioning = false;
+    
+    // Invoke playback in the new epoch world
     playNext();
 }
 
