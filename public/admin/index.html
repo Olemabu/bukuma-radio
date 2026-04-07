@@ -279,27 +279,31 @@ header { display: flex; justify-content: space-between; align-items: center; mar
             <button class="btn-hardware" onclick="skipTrack()" title="Shortcut: S">
                <span class="key-hint">S</span> SKIP
             </button>
-            <button class="btn-hardware btn-red" onclick="panicReset()" style="padding:10px 15px; font-size:10px; opacity:0.6; border-bottom-width:2px; margin-left:10px" title="Reset Engine">
-               PANIC RESET
+            <button class="btn-hardware btn-blue" id="jingleToggleBtn" onclick="toggleJingleDrawer(event)" style="margin-left:auto">
+               HOT JINGLES 🎹
             </button>
-            <button class="btn-hardware" id="btnAutoJingles" onclick="toggleAutoJingles()" style="margin-left:auto">
-               JINGLES: <span style="color:var(--dark)">OFF</span>
+            <button class="btn-hardware btn-red" onclick="panicReset()" style="padding:10px 15px; font-size:10px; opacity:0.6; border-bottom-width:2px;" title="Reset Engine">
+               PANIC
             </button>
           </div>
 
-          <div style="margin-bottom:30px">
+          <div id="jingleDrawer" class="jingle-drawer">
              <div class="card-title">JINGLE BANK (HOT BUTTONS)</div>
-             <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;">
-                <button class="btn-hardware" onclick="triggerJingle('01')" style="flex:1; justify-content:center; color:var(--green)">01 <span style="font-size:8px; display:block; opacity:0.5">ID</span></button>
-                <button class="btn-hardware" onclick="triggerJingle('02')" style="flex:1; justify-content:center">02</button>
-                <button class="btn-hardware" onclick="triggerJingle('03')" style="flex:1; justify-content:center">03</button>
-                <button class="btn-hardware" onclick="triggerJingle('04')" style="flex:1; justify-content:center">04</button>
-                <button class="btn-hardware" onclick="triggerJingle('05')" style="flex:1; justify-content:center">05</button>
-                <button class="btn-hardware" onclick="triggerJingle('06')" style="flex:1; justify-content:center">06</button>
-                <button class="btn-hardware" onclick="triggerJingle('07')" style="flex:1; justify-content:center">07</button>
-                <button class="btn-hardware" onclick="triggerJingle('08')" style="flex:1; justify-content:center">08</button>
-                <button class="btn-hardware" onclick="triggerJingle('09')" style="flex:1; justify-content:center">09</button>
-                <button class="btn-hardware" onclick="triggerJingle('10')" style="flex:1; justify-content:center">10</button>
+             <div class="jingle-grid">
+                <button class="btn-hardware" onclick="triggerJingle('01')" style="color:var(--green)">01</button>
+                <button class="btn-hardware" onclick="triggerJingle('02')">02</button>
+                <button class="btn-hardware" onclick="triggerJingle('03')">03</button>
+                <button class="btn-hardware" onclick="triggerJingle('04')">04</button>
+                <button class="btn-hardware" onclick="triggerJingle('05')">05</button>
+                <button class="btn-hardware" onclick="triggerJingle('06')">06</button>
+                <button class="btn-hardware" onclick="triggerJingle('07')">07</button>
+                <button class="btn-hardware" onclick="triggerJingle('08')">08</button>
+                <button class="btn-hardware" onclick="triggerJingle('09')">09</button>
+                <button class="btn-hardware" onclick="triggerJingle('10')">10</button>
+             </div>
+             <div style="margin-top:15px; border-top:1px solid var(--chassis); padding-top:10px; display:flex; justify-content:space-between; align-items:center">
+                <span style="font-size:10px; opacity:0.5">AUTO JINGLES</span>
+                <button class="btn-hardware" id="btnAutoJingles" onclick="toggleAutoJingles()" style="padding:5px 10px; font-size:9px">OFF</button>
              </div>
           </div>
 
@@ -798,6 +802,21 @@ function removeFromProgram(idx) {
 function resetProgram() {
     if (confirm("Reset current program loop to start?")) apiFetch('/api/admin/programs/reset', {method:'POST'}).then(() => alert("Program loop will restart after current song."));
 }
+
+function toggleJingleDrawer(e) {
+    if (e) e.stopPropagation();
+    const d = document.getElementById('jingleDrawer');
+    const isShowing = d.style.display === 'block';
+    d.style.display = isShowing ? 'none' : 'block';
+    document.getElementById('jingleToggleBtn').classList.toggle('active', !isShowing);
+}
+
+document.addEventListener('click', (e) => {
+    const drawer = document.getElementById('jingleDrawer');
+    if (drawer && drawer.style.display === 'block' && !drawer.contains(e.target)) {
+        toggleJingleDrawer();
+    }
+});
 
 function loadPlaylist(id) { apiFetch(`/api/admin/playlists/${id}/load`, {method:'POST'}).then(fetchStatus); }
 
