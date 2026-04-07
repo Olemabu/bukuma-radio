@@ -14,5 +14,15 @@
       { "id": "1014", "title": "Miss You", "artist": "Wizard Chan", "youtubeQuery": "Wizard Chan Miss You Thousand Voice", "duration": "Unknown" },
       { "id": "1015", "title": "Miekemedonmo", "artist": "Alfred J King", "youtubeQuery": "Alfred J King Miekemedonmo", "duration": "Unknown" }
     ]
+  },
+  {
+    "id": "permanent-drive",
+    "name": "STATION PERMANENT DRIVE",
+    "tracks": [
+      { "id": "p001", "status": "ready", "title": "Love Mu Adure", "artist": "Cardinal Rex Jim Lawson", "localPath": "data/downloads/rex_lawson_adure.mp3" },
+      { "id": "p002", "status": "ready", "title": "Earth Song", "artist": "Wizard Chan", "localPath": "data/downloads/wizard_chan_earthsong.mp3" },
+      { "id": "p003", "status": "ready", "title": "Moses", "artist": "Wizard Chan", "localPath": "data/downloads/wizard_chan_moses.mp3" },
+      { "id": "p004", "status": "ready", "title": "Ozigizaga", "artist": "Alfred J King", "localPath": "data/downloads/alfred_jking_ozigizaga.mp3" }
+    ]
   }
 ]

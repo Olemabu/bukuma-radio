@@ -147,7 +147,9 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; display: inline-block; margin-left: 10px; vertical-align: middle; transition: all 0.3s; }
 .sync-dot.connected { background: #2ed573; box-shadow: 0 0 10px #2ed573; animation: pulse-green 3s infinite; }
 
-.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; }
+.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; outline: none; }
+.on-air-badge:hover { background: #222; border-color: #444; color: #666; }
+.on-air-badge:active { transform: scale(0.95); }
 .on-air-badge.active { background: #ff4757; color: white; border-color: #ff4757; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); animation: pulse-red 2s infinite; }
 
 ::selection { background: var(--accent); color: white; }
@@ -263,7 +265,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
     <header>
       <div style="display:flex;align-items:center;gap:20px">
         <div class="logo" style="font-size:24px; font-weight:900;">AGUM <span style="color:var(--accent2)">BUKUMA</span></div>
-        <div class="on-air-badge" id="onAirBadge">OFF AIR</div>
+        <button class="on-air-badge" id="onAirBadge" onclick="toggleOnAir()">OFF AIR</button>
       </div>
       <div style="display:flex;align-items:center;gap:20px">
         <span id="listenerCount" style="font-size:11px; font-weight:900; letter-spacing:1px; opacity:0.8;">0 UPLINKS ACTIVE</span>
@@ -742,6 +744,13 @@ function playStation() { apiFetch('/api/play', {method:'POST'}).then(fetchStatus
 function pausePlayback() { apiFetch('/api/pause', {method:'POST'}).then(fetchStatus); }
 function skipTrack() { apiFetch('/api/skip', {method:'POST'}).then(fetchStatus); }
 function playNow(id) { apiFetch(`/api/queue/${id}/play-now`, {method:'POST'}).then(fetchStatus); }
+function toggleOnAir() {
+    if (S.isPlaying) {
+        if (confirm("Deactivate Global Stream and Go OFF AIR?")) pausePlayback();
+    } else {
+        playStation();
+    }
+}
 function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; apiFetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
 function setMicGain(val) { S.micGain = parseInt(val); document.getElementById('micGainVal').textContent = val + '%'; apiFetch('/api/volume/mic', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
 function triggerJingle(id) { apiFetch(`/api/jingle/${id}`, {method:'POST'}).then(() => { /* flash effect? */ }); }

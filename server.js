@@ -158,13 +158,8 @@ function loadState() {
             saveNews();
         }
 
-        // --- MANDATORY REX LAWSON PURGE ---
-        // Ensuring no 'Cardinal Rex Lawson' tracks persist in the production data
-        const filterFn = t => !t.artist?.toLowerCase().includes('rex lawson') && 
-                              !t.title?.toLowerCase().includes('jolly') && 
-                              !t.title?.toLowerCase().includes('warri');
-        queue = queue.filter(filterFn);
-        playlists.forEach(pl => { if (pl.tracks) pl.tracks = pl.tracks.filter(filterFn); });
+        // --- HIGH-FIDELITY ARCHIVE ENABLED ---
+        // Historical Rex Lawson purge policy removed. 
         // ----------------------------------
 
         // --- SELF-HEAL MISSING FILES ---
