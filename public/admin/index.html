@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Bukuma Radio — Station Master</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -243,17 +246,18 @@ header { display: flex; justify-content: space-between; align-items: center; mar
       <button class="nav-btn active" onclick="showTab('play',this)">CONSOLE</button>
       <button class="nav-btn" onclick="showTab('requests',this)">REQS</button>
       <button class="nav-btn" onclick="showTab('news',this)">HERALD</button>
+      <button class="nav-btn" onclick="showTab('drive',this)">DRIVE 💿</button>
       <button class="nav-btn" onclick="showTab('community',this)">PEOPLE</button>
     </nav>
 
     <div id="tab-play" class="tab-pane">
       <div class="main-grid">
         <div>
-          <div class="matrix-display">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px">
-              <span style="font-size:10px">TRANSMISSION FEED</span>
-              <span id="currentTime" style="font-size:10px">00:00:00</span>
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px">
+              <span style="font-size:10px; letter-spacing:2px; font-weight:900; opacity:0.6">STATION TIME</span>
+              <div id="currentTime" style="font-size:48px; font-family:'Courier New', monospace; font-weight:900; color:var(--green); text-shadow:0 0 15px rgba(39,174,96,0.3)">00:00:00</div>
             </div>
+            <div style="font-size:9px; margin-bottom:15px; opacity:0.5; letter-spacing:1px">TRANSMISSION FEED</div>
             <div style="display:flex; gap:15px; align-items:center">
                <div id="trackThumb" style="width:60px;height:60px;background:#111;border:1px solid #333;border-radius:6px;overflow:hidden"></div>
                <div style="min-width:0">
@@ -268,15 +272,34 @@ header { display: flex; justify-content: space-between; align-items: center; mar
             <button class="btn-hardware btn-green" id="btnPlay" onclick="playStation()" title="Shortcut: P">
                <span class="key-hint">P</span> PLAY
             </button>
-            <button class="btn-hardware btn-red" onclick="pausePlayback()" title="Shortcut: P">
+            <button class="btn-hardware btn-red" id="btnStop" onclick="pausePlayback()" title="Shortcut: P">
                STOP
             </button>
             <button class="btn-hardware" onclick="skipTrack()" title="Shortcut: S">
                <span class="key-hint">S</span> SKIP
             </button>
+            <button class="btn-hardware btn-red" onclick="panicReset()" style="padding:10px 15px; font-size:10px; opacity:0.6; border-bottom-width:2px; margin-left:10px" title="Reset Engine">
+               PANIC RESET
+            </button>
             <button class="btn-hardware" id="btnAutoJingles" onclick="toggleAutoJingles()" style="margin-left:auto">
                JINGLES: <span style="color:var(--dark)">OFF</span>
             </button>
+          </div>
+
+          <div style="margin-bottom:30px">
+             <div class="card-title">JINGLE BANK (HOT BUTTONS)</div>
+             <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:10px;">
+                <button class="btn-hardware" onclick="triggerJingle('01')" style="flex:1; justify-content:center; color:var(--green)">01 <span style="font-size:8px; display:block; opacity:0.5">ID</span></button>
+                <button class="btn-hardware" onclick="triggerJingle('02')" style="flex:1; justify-content:center">02</button>
+                <button class="btn-hardware" onclick="triggerJingle('03')" style="flex:1; justify-content:center">03</button>
+                <button class="btn-hardware" onclick="triggerJingle('04')" style="flex:1; justify-content:center">04</button>
+                <button class="btn-hardware" onclick="triggerJingle('05')" style="flex:1; justify-content:center">05</button>
+                <button class="btn-hardware" onclick="triggerJingle('06')" style="flex:1; justify-content:center">06</button>
+                <button class="btn-hardware" onclick="triggerJingle('07')" style="flex:1; justify-content:center">07</button>
+                <button class="btn-hardware" onclick="triggerJingle('08')" style="flex:1; justify-content:center">08</button>
+                <button class="btn-hardware" onclick="triggerJingle('09')" style="flex:1; justify-content:center">09</button>
+                <button class="btn-hardware" onclick="triggerJingle('10')" style="flex:1; justify-content:center">10</button>
+             </div>
           </div>
 
           <div class="mic-panel">
@@ -297,6 +320,15 @@ header { display: flex; justify-content: space-between; align-items: center; mar
                  <span>0%</span>
                  <span id="volumeVal">80%</span>
                  <span>100%</span>
+               </div>
+            </div>
+            <div class="mic-unit">
+               <div class="card-title">MIC BOOST</div>
+               <input type="range" id="micGainSlider" min="0" max="300" style="width:100%; margin-top:10px" oninput="setMicGain(this.value)">
+               <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:900; margin-top:5px">
+                 <span>MUTE</span>
+                 <span id="micGainVal">150%</span>
+                 <span>300%</span>
                </div>
             </div>
           </div>
@@ -325,9 +357,17 @@ header { display: flex; justify-content: space-between; align-items: center; mar
         </div>
 
         <div>
-          <div class="card-title">PLAYBACK QUEUE</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+             <div class="card-title" style="margin-bottom:0">PLAYBACK QUEUE</div>
+             <button class="btn-hardware btn-blue" onclick="saveAsPlaylist()" style="padding:5px 10px; font-size:10px">SAVE AS...</button>
+          </div>
           <div class="queue-panel" id="queueList">
             <p style="text-align:center; opacity:0.5; padding:20px">Queue empty</p>
+          </div>
+          
+          <div class="card-title" style="margin-top:20px">CURATED SETS</div>
+          <div id="playlistLibrary" style="display:grid; grid-template-columns:1fr; gap:10px">
+             <!-- Loaded from API -->
           </div>
         </div>
       </div>
@@ -336,6 +376,23 @@ header { display: flex; justify-content: space-between; align-items: center; mar
     <div id="tab-requests" class="tab-pane" style="display:none">
        <div class="card-title">LISTENER REQUESTS</div>
        <div id="requestsList"></div>
+    </div>
+    <div id="tab-drive" class="tab-pane" style="display:none">
+       <div class="card-title">STATION PERMANENT DRIVE (RAILWAY VOLUME)</div>
+       <div class="matrix-display" style="padding:0; overflow:hidden">
+          <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left">
+             <thead style="background:rgba(255,255,255,0.05)">
+                <tr>
+                   <th style="padding:10px">FILENAME</th>
+                   <th style="padding:10px">CATEGORY</th>
+                   <th style="padding:10px">SIZE</th>
+                </tr>
+             </thead>
+             <tbody id="driveList">
+                <!-- Loaded from API -->
+             </tbody>
+          </table>
+       </div>
     </div>
     <div id="tab-news" class="tab-pane" style="display:none">
        <div class="card-title">HERALD PUBLISHER</div>
@@ -543,21 +600,51 @@ function updateUI(d) {
         }
     }
     
-    document.getElementById('volumeSlider').value = d.volume;
-    document.getElementById('volumeVal').textContent = d.volume + '%';
+    const vol = (typeof d.volume === 'number') ? d.volume : 80;
+    document.getElementById('volumeSlider').value = vol;
+    document.getElementById('volumeVal').textContent = vol + '%';
+    
+    // Mic Gain / Boost
+    const mGain = (typeof d.micGain === 'number') ? d.micGain : 150;
+    if (document.getElementById('micGainSlider')) document.getElementById('micGainSlider').value = mGain;
+    if (document.getElementById('micGainVal')) document.getElementById('micGainVal').textContent = mGain + '%';
+    
+    const btnPlay = document.getElementById('btnPlay');
+    const btnStop = document.getElementById('btnStop');
+    
+    // --- Anti-Flicker Logic: If the engine claims it's playing but the queue is momentarily empty, keep the light on
+    const actuallyOnAir = (d.isPlaying || (d.currentTrack && d.currentTrack.id)) ? 'ON AIR' : 'OFF AIR';
+    const statusEl = document.getElementById('statusIndicator');
+    if (statusEl) {
+        statusEl.textContent = actuallyOnAir;
+        statusEl.className = 'status-tag ' + (actuallyOnAir === 'ON AIR' ? 'status-playing' : '');
+    }
+    
+    if (btnPlay) btnPlay.classList.toggle('active', d.isPlaying);
+    if (btnStop) btnStop.classList.toggle('active', !d.isPlaying);
     
     const qEl = document.getElementById('queueList');
     if (d.queue?.length) {
         qEl.innerHTML = d.queue.map((t, i) => {
-            const statusClass = t.status ? `status-${t.status}` : 'status-pending';
-            const statusLabel = t.status ? t.status.toUpperCase() : 'PENDING';
-            // Only show 'Play Now' if it's not already the first item
-            const playBtn = i > 0 ? `<button onclick="playNow('${t.id}')" style="background:none; border:1px solid var(--green); color:var(--green); border-radius:4px; padding:2px 6px; cursor:pointer; margin-left:10px; font-size:9px; font-weight:900">PLAY NOW</button>` : '';
+            const isNowPlaying = (d.currentTrack && t.id === d.currentTrack.id) && d.isPlaying;
+            const isReady = t.status === 'ready';
             
+            // --- Logic Update: Only allow PLAY NOW if track is physically on the Railway disk (Permanent Drive)
+            const playBtn = (i > 0 && isReady) 
+                ? `<button onclick="playNow('${t.id}')" style="background:none; border:1px solid var(--green); color:var(--green); border-radius:4px; padding:2px 6px; cursor:pointer; margin-left:10px; font-size:9px; font-weight:900">PLAY NOW</button>` 
+                : '';
+            
+            const statusLabel = isReady ? '💿 ON-DISK' : (t.status ? t.status.toUpperCase() : 'PENDING');
+            const statusClass = isReady ? 'status-ready' : (t.status ? `status-${t.status}` : 'status-pending');
+            
+            const activeStyle = isNowPlaying ? 'border: 1px solid var(--green); background: rgba(39, 174, 96, 0.2);' : 'border: 1px solid #333; background: rgba(0,0,0,0.3);';
+            const opacityStyle = (!isReady && !isNowPlaying) ? 'opacity: 0.5;' : '';
+            const nowPlayingTag = isNowPlaying ? '<span style="color:var(--green); font-size:9px; font-weight:900; margin-right:10px;">NOW PLAYING</span>' : '';
+
             return `
-            <div style="display:flex; align-items:center; padding:12px; background:rgba(0,0,0,0.3); margin-bottom:5px; border-radius:8px; font-size:12px; border:1px solid #333">
+            <div style="display:flex; align-items:center; padding:12px; margin-bottom:5px; border-radius:8px; font-size:12px; ${activeStyle} ${opacityStyle}">
                 <span style="font-weight:900; opacity:0.5; width:20px">${i+1}</span>
-                <span style="flex:1; margin:0 10px; font-weight:700">${t.title}</span>
+                <span style="flex:1; margin:0 10px; font-weight:700">${nowPlayingTag}${t.title}</span>
                 <span class="status-badge ${statusClass}">${statusLabel}</span>
                 ${playBtn}
                 <button onclick="removeFromQueue('${t.id}')" style="background:none; border:none; color:var(--accent); cursor:pointer; margin-left:10px; font-size:16px">×</button>
@@ -567,6 +654,13 @@ function updateUI(d) {
 
     if (d.isPlaying) document.getElementById('vuBar').style.width = (30 + Math.random() * 60) + '%';
     else document.getElementById('vuBar').style.width = '0%';
+    
+    // Refresh Playlists and Drive occasionally
+    if (Date.now() - (S.lastExtRef || 0) > 30000) {
+        loadDrive();
+        loadPlaylistLibrary();
+        S.lastExtRef = Date.now();
+    }
 }
 
 function apiFetch(url, options = {}) {
@@ -580,7 +674,10 @@ function pausePlayback() { apiFetch('/api/pause', {method:'POST'}).then(fetchSta
 function skipTrack() { apiFetch('/api/skip', {method:'POST'}).then(fetchStatus); }
 function playNow(id) { apiFetch(`/api/queue/${id}/play-now`, {method:'POST'}).then(fetchStatus); }
 function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; apiFetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
+function setMicGain(val) { S.micGain = parseInt(val); document.getElementById('micGainVal').textContent = val + '%'; apiFetch('/api/volume/mic', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
+function triggerJingle(id) { apiFetch(`/api/jingle/${id}`, {method:'POST'}).then(() => { /* flash effect? */ }); }
 function removeFromQueue(id) { apiFetch(`/api/queue/${id}`, {method:'DELETE'}).then(fetchStatus); }
+function panicReset() { if (confirm("DANGER: This will instantly purge your current queue and refill from the seed library. Proceed?")) apiFetch('/api/admin/panic', {method:'POST'}).then(fetchStatus); }
 function toggleAutoJingles() { if(S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(JSON.stringify({ action: 'toggleAutoJingles' })); }
 
 function doSearch() {
@@ -600,8 +697,48 @@ function showTab(id, btn) {
     document.querySelectorAll('.tab-pane').forEach(p => p.style.display='none');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('tab-'+id).style.display='block';
-    btn.classList.add('active'); if (id === 'news') fetchNews();
+    if (btn) btn.classList.add('active'); 
+    if (id === 'news') fetchNews();
+    if (id === 'drive') fetchDrive();
 }
+
+function fetchDrive() {
+    apiFetch('/api/admin/drive').then(r => r.json()).then(d => {
+        const list = document.getElementById('driveList');
+        if (!list) return;
+        list.innerHTML = d.files.map(f => `
+           <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+              <td style="padding:10px; color:var(--green); font-weight:900; font-family:monospace">${f.name}</td>
+              <td style="padding:10px; opacity:0.7">${f.category}</td>
+              <td style="padding:10px; opacity:0.5">${(f.size / 1024 / 1024).toFixed(2)} MB</td>
+           </tr>
+        `).join('');
+    });
+}
+
+function saveAsPlaylist() {
+    const name = prompt("Enter Name for this Curated Set:");
+    if (!name) return;
+    apiFetch('/api/admin/playlists', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) }).then(loadPlaylistLibrary);
+}
+
+function loadPlaylistLibrary() {
+    apiFetch('/api/admin/playlists').then(r => r.json()).then(d => {
+        const lib = document.getElementById('playlistLibrary');
+        if (!lib) return;
+        lib.innerHTML = (d.playlists || []).map(p => `
+            <div style="background:var(--ledge); border:1px solid #333; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center">
+                <div>
+                   <div style="font-weight:900; font-size:12px">${p.name}</div>
+                   <div style="font-size:10px; opacity:0.5">${p.tracks.length} Tracks • ${new Date(p.createdAt).toLocaleDateString()}</div>
+                </div>
+                <button class="btn-hardware btn-green" style="padding:8px 12px; font-size:10px" onclick="loadPlaylist('${p.id}')">LOAD</button>
+            </div>
+        `).join('');
+    });
+}
+
+function loadPlaylist(id) { apiFetch(`/api/admin/playlists/${id}/load`, {method:'POST'}).then(fetchStatus); }
 
 function fetchNews() {
     fetch('/api/herald').then(r => r.json()).then(d => {
