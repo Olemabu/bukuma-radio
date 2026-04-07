@@ -698,8 +698,6 @@ function updateUI(d) {
         latEl.style.color = (lat < 500) ? 'var(--green)' : 'var(--yellow)';
     }
 
-    const btnPlay = document.getElementById('btnPlay');
-    const btnStop = document.getElementById('btnStop');
     
     // --- Anti-Flicker Logic: If the engine claims it's playing but the queue is momentarily empty, keep the light on
     const actuallyOnAir = (d.isPlaying || (d.currentTrack && d.currentTrack.id)) ? 'ON AIR' : 'OFF AIR';
