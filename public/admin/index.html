@@ -717,7 +717,7 @@ function updateUI(d) {
             const isReady = t.status === 'ready';
             
             // --- Logic Update: Only allow PLAY NOW if track is physically on the Railway disk (Permanent Drive)
-            const playBtn = (i > 0 && isReady) 
+            const playBtn = (isReady && !isNowPlaying) 
                 ? `<button onclick="playNow('${t.id}')" style="background:none; border:1px solid var(--green); color:var(--green); border-radius:4px; padding:2px 6px; cursor:pointer; margin-left:10px; font-size:9px; font-weight:900">PLAY NOW</button>` 
                 : '';
             
