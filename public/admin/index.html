@@ -282,6 +282,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 
     <div id="tab-play" class="tab-pane">
       <div class="main-grid">
+        <!-- COLUMN 1: CONSOLE CONTROLS -->
         <div>
             <div style="display:flex; justify-content:space-between; margin-bottom:5px">
               <span style="font-size:10px; letter-spacing:2px; font-weight:900; opacity:0.6">STATION TIME</span>
@@ -300,7 +301,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
             </div>
             <div class="vu-meter"><div id="vuBar" class="vu-bar"></div></div>
           
-          <div style="display:flex; gap:15px; margin-bottom:30px">
+          <div style="display:flex; gap:15px; margin-top:20px; margin-bottom:30px">
             <button class="btn-hardware btn-green" id="btnPlay" onclick="playStation()" title="Shortcut: P">
                <span class="key-hint">P</span> PLAY
             </button>
@@ -335,7 +336,6 @@ header { display: flex; justify-content: space-between; align-items: center; mar
              <div style="margin-top:15px; border-top:1px solid var(--chassis); padding-top:10px; display:flex; justify-content:space-between; align-items:center">
                 <span style="font-size:10px; opacity:0.5">AUTO JINGLES</span>
                 <button class="btn-hardware" id="btnAutoJingles" onclick="toggleAutoJingles()" style="padding:5px 10px; font-size:9px">OFF</button>
-             </div>
              </div>
           </div>
 
@@ -381,6 +381,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
           </div>
         </div>
 
+        <!-- COLUMN 2: MASTER MONITOR -->
         <div>
           <div class="card-title">MASTER BROADCAST FEED</div>
           <div class="master-monitor-bay">
@@ -393,6 +394,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
           </div>
         </div>
 
+        <!-- COLUMN 3: QUEUE & LIBRARY -->
         <div>
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
              <div class="card-title" style="margin-bottom:0">PLAYBACK QUEUE</div>
@@ -407,8 +409,8 @@ header { display: flex; justify-content: space-between; align-items: center; mar
              <!-- Loaded from API -->
           </div>
         </div>
-      </div>
-    </div>
+      </div> <!-- End main-grid -->
+    </div> <!-- End tab-play -->
 
     <div id="tab-program" class="tab-pane" style="display:none">
        <div class="card-title">STATION PRIORITY PROGRAM (MULTI-DAY LOOP)</div>
@@ -465,8 +467,8 @@ header { display: flex; justify-content: space-between; align-items: center; mar
        <div class="card-title">VILLAGE REGISTRY</div>
        <div id="listenersList"></div>
     </div>
-  </div>
-</div>
+  </div> <!-- Chassis End -->
+</div> <!-- mainScreen End -->
 
 <script>
 'use strict';
