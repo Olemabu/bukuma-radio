@@ -61,6 +61,7 @@ let autoJingles      = { start: false, random: false };
 const SAFE_FALLBACK_URL = 'https://archive.org/download/bukuma-radio-ident/ident.mp3'; 
 let consecutiveFailures = 0;
 let serverMicState      = 0; // 0=Off, 1=Talk/Duck, 2=Solo
+let lastLatencyMs       = 0; 
 
 // Confidence Monitor (Watchdog) & Atomic Locking
 let engineEpoch = 0;
@@ -203,7 +204,7 @@ function broadcast(msg) {
 }
 
 function getStatus() {
-    return { type: 'status', currentTrack, queue, isPlaying, volume, micGain, listeners, autoJingles, timestamp: Date.now(), serverMicState };
+    return { type: 'status', currentTrack, queue, isPlaying, volume, micGain, listeners, autoJingles, timestamp: Date.now(), serverMicState, latencyMs: lastLatencyMs };
 }
 
 // ── Watchdog & Downloader ────────────────────────────────────────────────────
@@ -547,16 +548,14 @@ wss.on('connection', ws => {
                     
                     // Server-side Mic VU calculation to prove to the front-end that it is being received
                     if (data.length > 0) {
+                        const recvTime = Date.now();
+                        // Heartbeat/Latency calculation based on latest chunk arrival
+                        lastLatencyMs = (recvTime - lastMicTime);
+                        if (lastLatencyMs > 2000) lastLatencyMs = 120; // reset on long silence
+                        
+                        lastMicTime = recvTime;
+                        
                         let sum = 0;
-                        const samples = data.length / 2;
-                        for (let i = 0; i < data.length; i += 2) {
-                            const s = data.readInt16LE(i) / 32768; // 16-bit PCM to float
-                            sum += s * s;
-                        }
-                        const rms = Math.sqrt(sum / samples);
-                        const level = Math.min(100, Math.floor(rms * 400));
-                        ws.send(JSON.stringify({ type: 'server_mic_vu', level }));
-                    }
                 } catch(e) {}
             }
             return;

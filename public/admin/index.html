@@ -215,6 +215,35 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .vu-segment.green.on  { background: #2ed573; box-shadow: 0 0 3px #2ed573; }
 .vu-segment.yellow.on { background: #ffa502; box-shadow: 0 0 3px #ffa502; }
 .vu-segment.red.on    { background: #ff4757; box-shadow: 0 0 5px #ff4757; }
+
+/* Jingle Drawer Fix */
+.jingle-drawer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(45, 49, 58, 0.95);
+  backdrop-filter: blur(10px);
+  border: 4px solid var(--chassis);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  display: none;
+  z-index: 1000;
+  width: 320px;
+  animation: slide-up 0.3s ease-out;
+}
+@keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.jingle-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.jingle-grid .btn-hardware {
+  padding: 10px;
+  font-size: 10px;
+  justify-content: center;
+}
 </style>
 </head>
 <body>
@@ -258,7 +287,10 @@ header { display: flex; justify-content: space-between; align-items: center; mar
               <span style="font-size:10px; letter-spacing:2px; font-weight:900; opacity:0.6">STATION TIME</span>
               <div id="currentTime" style="font-size:48px; font-family:'Courier New', monospace; font-weight:900; color:var(--green); text-shadow:0 0 15px rgba(39,174,96,0.3)">00:00:00</div>
             </div>
-            <div style="font-size:9px; margin-bottom:15px; opacity:0.5; letter-spacing:1px">TRANSMISSION FEED</div>
+            <div style="display:flex; justify-content:space-between; font-size:9px; margin-bottom:15px; opacity:0.5; letter-spacing:1px">
+               <span>TRANSMISSION FEED</span>
+               <span>SIGNAL DELAY: <span id="localLatency" style="color:var(--green)">0ms</span></span>
+            </div>
             <div style="display:flex; gap:15px; align-items:center">
                <div id="trackThumb" style="width:60px;height:60px;background:#111;border:1px solid #333;border-radius:6px;overflow:hidden"></div>
                <div style="min-width:0">
@@ -290,16 +322,16 @@ header { display: flex; justify-content: space-between; align-items: center; mar
           <div id="jingleDrawer" class="jingle-drawer">
              <div class="card-title">JINGLE BANK (HOT BUTTONS)</div>
              <div class="jingle-grid">
-                <button class="btn-hardware" onclick="triggerJingle('01')" style="color:var(--green)">01</button>
-                <button class="btn-hardware" onclick="triggerJingle('02')">02</button>
-                <button class="btn-hardware" onclick="triggerJingle('03')">03</button>
-                <button class="btn-hardware" onclick="triggerJingle('04')">04</button>
-                <button class="btn-hardware" onclick="triggerJingle('05')">05</button>
-                <button class="btn-hardware" onclick="triggerJingle('06')">06</button>
-                <button class="btn-hardware" onclick="triggerJingle('07')">07</button>
-                <button class="btn-hardware" onclick="triggerJingle('08')">08</button>
-                <button class="btn-hardware" onclick="triggerJingle('09')">09</button>
-                <button class="btn-hardware" onclick="triggerJingle('10')">10</button>
+                <button class="btn-hardware" onclick="triggerJingle('01')" style="color:var(--green)"><span class="key-hint">1</span> 01</button>
+                <button class="btn-hardware" onclick="triggerJingle('02')"><span class="key-hint">2</span> 02</button>
+                <button class="btn-hardware" onclick="triggerJingle('03')"><span class="key-hint">3</span> 03</button>
+                <button class="btn-hardware" onclick="triggerJingle('04')"><span class="key-hint">4</span> 04</button>
+                <button class="btn-hardware" onclick="triggerJingle('05')"><span class="key-hint">5</span> 05</button>
+                <button class="btn-hardware" onclick="triggerJingle('06')"><span class="key-hint">6</span> 06</button>
+                <button class="btn-hardware" onclick="triggerJingle('07')"><span class="key-hint">7</span> 07</button>
+                <button class="btn-hardware" onclick="triggerJingle('08')"><span class="key-hint">8</span> 08</button>
+                <button class="btn-hardware" onclick="triggerJingle('09')"><span class="key-hint">9</span> 09</button>
+                <button class="btn-hardware" onclick="triggerJingle('10')"><span class="key-hint">0</span> 10</button>
              </div>
              <div style="margin-top:15px; border-top:1px solid var(--chassis); padding-top:10px; display:flex; justify-content:space-between; align-items:center">
                 <span style="font-size:10px; opacity:0.5">AUTO JINGLES</span>
@@ -635,6 +667,14 @@ function updateUI(d) {
     if (document.getElementById('micGainSlider')) document.getElementById('micGainSlider').value = mGain;
     if (document.getElementById('micGainVal')) document.getElementById('micGainVal').textContent = mGain + '%';
     
+    // Latency Update
+    const lat = d.latencyMs || 0;
+    const latEl = document.getElementById('localLatency');
+    if (latEl) {
+        latEl.textContent = lat + 'ms';
+        latEl.style.color = (lat < 500) ? 'var(--green)' : 'var(--yellow)';
+    }
+
     const btnPlay = document.getElementById('btnPlay');
     const btnStop = document.getElementById('btnStop');
     
@@ -811,10 +851,15 @@ function toggleJingleDrawer(e) {
     document.getElementById('jingleToggleBtn').classList.toggle('active', !isShowing);
 }
 
-document.addEventListener('click', (e) => {
-    const drawer = document.getElementById('jingleDrawer');
-    if (drawer && drawer.style.display === 'block' && !drawer.contains(e.target)) {
-        toggleJingleDrawer();
+document.addEventListener('keydown', (e) => {
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+    
+    // Shortcuts 1-9 and 0
+    if (e.key >= '1' && e.key <= '9') {
+        const id = e.key.padStart(2, '0');
+        triggerJingle(id);
+    } else if (e.key === '0') {
+        triggerJingle('10');
     }
 });
 
