@@ -244,6 +244,7 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 
     <nav class="nav-tabs">
       <button class="nav-btn active" onclick="showTab('play',this)">CONSOLE</button>
+      <button class="nav-btn" onclick="showTab('program',this)">PROGRAM 📅</button>
       <button class="nav-btn" onclick="showTab('requests',this)">REQS</button>
       <button class="nav-btn" onclick="showTab('news',this)">HERALD</button>
       <button class="nav-btn" onclick="showTab('drive',this)">DRIVE 💿</button>
@@ -373,6 +374,27 @@ header { display: flex; justify-content: space-between; align-items: center; mar
       </div>
     </div>
 
+    <div id="tab-program" class="tab-pane" style="display:none">
+       <div class="card-title">STATION PRIORITY PROGRAM (MULTI-DAY LOOP)</div>
+       <div style="display:grid; grid-template-columns: 1fr 300px; gap:20px">
+          <div class="matrix-display" style="padding:20px">
+             <div style="margin-bottom:15px; display:flex; justify-content:space-between">
+                <span style="font-weight:900; opacity:0.6">PRIORITY QUEUE</span>
+                <button class="btn-hardware btn-red" style="padding:5px 10px; font-size:10px" onclick="resetProgram()">RESET LOOP</button>
+             </div>
+             <div id="programList">
+                <p style="text-align:center; opacity:0.3; padding:20px">No program scheduled. Fallonback to seed library.</p>
+             </div>
+          </div>
+          <div>
+             <div class="card-title">ADD TO PROGRAM</div>
+             <div id="programSetPicker" style="display:grid; gap:10px">
+                <!-- Curated sets list here -->
+             </div>
+          </div>
+       </div>
+    </div>
+    
     <div id="tab-requests" class="tab-pane" style="display:none">
        <div class="card-title">LISTENER REQUESTS</div>
        <div id="requestsList"></div>
@@ -659,6 +681,7 @@ function updateUI(d) {
     if (Date.now() - (S.lastExtRef || 0) > 30000) {
         loadDrive();
         loadPlaylistLibrary();
+        loadProgramUI();
         S.lastExtRef = Date.now();
     }
 }
@@ -724,18 +747,56 @@ function saveAsPlaylist() {
 
 function loadPlaylistLibrary() {
     apiFetch('/api/admin/playlists').then(r => r.json()).then(d => {
-        const lib = document.getElementById('playlistLibrary');
-        if (!lib) return;
-        lib.innerHTML = (d.playlists || []).map(p => `
+        const libs = [document.getElementById('playlistLibrary'), document.getElementById('programSetPicker')];
+        const html = (d.playlists || []).map(p => `
             <div style="background:var(--ledge); border:1px solid #333; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center">
-                <div>
+                <div style="flex:1">
                    <div style="font-weight:900; font-size:12px">${p.name}</div>
-                   <div style="font-size:10px; opacity:0.5">${p.tracks.length} Tracks • ${new Date(p.createdAt).toLocaleDateString()}</div>
+                   <div style="font-size:10px; opacity:0.5">${p.tracks.length} Tracks</div>
                 </div>
-                <button class="btn-hardware btn-green" style="padding:8px 12px; font-size:10px" onclick="loadPlaylist('${p.id}')">LOAD</button>
+                ${document.body.contains(libs[0]) ? `<button class="btn-hardware btn-green" style="padding:8px 12px; font-size:10px" onclick="loadPlaylist('${p.id}')">LOAD</button>` : ''}
+                ${document.body.contains(libs[1]) ? `<button class="btn-hardware btn-blue" style="margin-left:5px; padding:8px 12px; font-size:10px" onclick="addToProgram('${p.id}','${p.name}')">+ PRG</button>` : ''}
+            </div>
+        `).join('');
+        if (libs[0]) libs[0].innerHTML = html;
+        if (libs[1]) libs[1].innerHTML = html;
+    });
+}
+
+function loadProgramUI() {
+    apiFetch('/api/admin/programs').then(r => r.json()).then(d => {
+        const list = document.getElementById('programList');
+        if (!list) return;
+        S.programs = d.programs || [];
+        if (S.programs.length === 0) {
+            list.innerHTML = '<p style="text-align:center; opacity:0.3; padding:20px">No program scheduled. Fallonback to random seed library.</p>';
+            return;
+        }
+        list.innerHTML = S.programs.map((p, i) => `
+            <div style="background:rgba(255,255,255,0.03); border:1px solid #444; border-radius:8px; padding:15px; margin-bottom:10px; display:flex; align-items:center">
+                <span style="font-weight:900; opacity:0.3; width:30px">#${i+1}</span>
+                <div style="flex:1">
+                   <div style="font-weight:900; color:var(--green)">${p.name.toUpperCase()}</div>
+                   <div style="font-size:10px; opacity:0.5">TYPE: CURATED SET</div>
+                </div>
+                <button onclick="removeFromProgram(${i})" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:20px">&times;</button>
             </div>
         `).join('');
     });
+}
+
+function addToProgram(id, name) {
+    const programs = [...(S.programs || []), { type: 'set', playlistId: id, name }];
+    apiFetch('/api/admin/programs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ programs }) }).then(loadProgramUI);
+}
+
+function removeFromProgram(idx) {
+    const programs = (S.programs || []).filter((_, i) => i !== idx);
+    apiFetch('/api/admin/programs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ programs }) }).then(loadProgramUI);
+}
+
+function resetProgram() {
+    if (confirm("Reset current program loop to start?")) apiFetch('/api/admin/programs/reset', {method:'POST'}).then(() => alert("Program loop will restart after current song."));
 }
 
 function loadPlaylist(id) { apiFetch(`/api/admin/playlists/${id}/load`, {method:'POST'}).then(fetchStatus); }

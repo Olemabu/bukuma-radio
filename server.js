@@ -49,6 +49,8 @@ let isPlaying    = false;
 let volume       = 80;
 let micGain      = 150; // default 1.5x (150%)
 let playlists    = [];
+let programs     = []; // Priority List for Programming
+let currentProgramIdx = -1;
 let currentProcess   = null;
 let isTransitioning  = false;
 let playNextTimeout  = null;
@@ -140,6 +142,9 @@ function loadState() {
         }
         if (fs.existsSync(playlistsFile)) {
             playlists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
+        }
+        if (fs.existsSync(path.join(dataDir, 'programs.json'))) {
+            programs = JSON.parse(fs.readFileSync(path.join(dataDir, 'programs.json'), 'utf8'));
         }
         if (fs.existsSync(newsFile)) {
             news = JSON.parse(fs.readFileSync(newsFile, 'utf8'));
@@ -264,6 +269,22 @@ function downloadTrack(track) {
 function advanceQueue() {
     console.log('[ENGINE] Advancing Queue...');
     if (queue.length > 0) queue.shift();
+    
+    // --- Program Priority Check ---
+    if (queue.length === 0 && programs.length > 0) {
+        currentProgramIdx++;
+        if (currentProgramIdx >= programs.length) {
+            console.log('[ENGINE] Program Finished. Looping back to start.');
+            currentProgramIdx = 0;
+        }
+        const block = programs[currentProgramIdx];
+        if (block && block.type === 'set') {
+            console.log(`[ENGINE] Transitioning to Program Block: ${block.name}`);
+            const pl = playlists.find(p => p.id === block.playlistId);
+            if (pl) queue = pl.tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2), status: 'pending' }));
+        }
+    }
+    
     if (queue.length === 0) {
         console.log('[ENGINE] Refilling from seeds...');
         queue = seedQueue();
@@ -717,8 +738,23 @@ app.post('/api/admin/playlists/:id/load', requireAuth, (req, res) => {
     
     // "The curated playlist should now be the queue"
     queue = pl.tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2), status: 'pending' }));
+    currentProgramIdx = -1; // Manual override stops program loop
     saveState();
     broadcast(getStatus());
+    res.json({ success: true });
+});
+
+app.get('/api/admin/programs', requireAuth, (req, res) => res.json({ programs }));
+
+app.post('/api/admin/programs', requireAuth, (req, res) => {
+    programs = req.body.programs || [];
+    fs.writeFileSync(path.join(dataDir, 'programs.json'), JSON.stringify(programs, null, 2));
+    broadcast(getStatus());
+    res.json({ success: true });
+});
+
+app.post('/api/admin/programs/reset', requireAuth, (req, res) => {
+    currentProgramIdx = -1;
     res.json({ success: true });
 });
 
