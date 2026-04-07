@@ -642,6 +642,17 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
+app.post('/api/admin/login', (req, res) => {
+    const { password } = req.body;
+    if (password === ADMIN_PASSWORD) {
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ success: false });
+    }
+});
+
+app.get('/api/admin/verify', requireAuth, (req, res) => res.json({ success: true }));
+
 app.post('/api/play', requireAuth, (req, res) => { 
     isOnAir = true;
     isPlaying = true; 
