@@ -781,6 +781,13 @@ app.post('/api/admin/drive/play', requireAuth, (req, res) => {
 
 app.get('/api/herald', (req, res) => res.json({ news }));
 
+// --- Public Library / Music Player Vault ---
+app.get('/api/vault', (req, res) => {
+    // Return the first curated set as the public "Vault"
+    const pl = playlists[0] || { tracks: [] };
+    res.json({ tracks: pl.tracks.map(t => ({ id: t.id, title: t.title, artist: t.artist, duration: t.duration, thumbnail: t.thumbnail, status:'ready' })) });
+});
+
 app.post('/api/admin/panic', requireAuth, (req, res) => {
     console.log('[PANIC] Manual override - nuking state and refilling.');
     stopPlayback();

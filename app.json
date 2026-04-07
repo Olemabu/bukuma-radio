@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Bukuma Radio",
+    "slug": "bukuma-radio",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./public/images/icon-512.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./public/images/icon-512.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#050505"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bukuma.radio",
+      "infoPlist": {
+        "UIBackgroundModes": ["audio"]
+      }
+    },
+    "android": {
+      "package": "com.bukuma.radio",
+      "permissions": ["FOREGROUND_SERVICE", "WAKE_LOCK"]
+    },
+    "web": {
+      "favicon": "./public/images/icon-512.png"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Bukuma Radio",
+  "short_name": "Bukuma",
+  "description": "The Voice of the Niger Delta - 24/7 Digital Broadcast & Community Vault.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#f4a300",
+  "icons": [
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "social"],
+  "orientation": "portrait"
+}

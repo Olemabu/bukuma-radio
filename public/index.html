@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bukuma Radio — The Voice of the Niger Delta</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#f4a300">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bukuma Radio">
+<link rel="apple-touch-icon" href="/images/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
@@ -21,6 +27,19 @@
 --green:#00d26a;
 --glow:rgba(244,163,0,0.3);
 }
+/* VAULT / PLAYER */
+#vault{padding:100px 40px; background:var(--darker)}
+.vault-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:20px; margin-top:40px}
+.vault-track{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px; display:flex; align-items:center; gap:15px; cursor:pointer; transition:.2s}
+.vault-track:hover{border-color:var(--gold); transform:translateY(-2px); background:rgba(244,163,0,0.05)}
+.vault-thumb{width:50px; height:50px; border-radius:6px; background:#222; object-fit:cover; flex-shrink:0}
+.vault-info{flex:1; min-width:0}
+.vault-name{font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.vault-artist{font-size:11px; color:var(--muted)}
+.vault-play-btn{width:32px; height:32px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; flex-shrink:0}
+.vault-play-btn::after{content:''; border-style:solid; border-width:4px 0 4px 7px; border-color:transparent transparent transparent var(--darker)}
+.vault-active{border-color:var(--gold); background:rgba(244,163,0,0.1)}
+
 html{scroll-behavior:smooth}
 body{background:var(--darker);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden}
 
@@ -647,6 +666,20 @@ section{padding:60px 20px}
   </div>
 </section>
 
+<!-- COMMUNITY VAULT -->
+<section id="vault">
+  <div class="section-inner">
+    <div class="section-header fade-in">
+      <div class="section-eyebrow">DIGITAL LIBRARY</div>
+      <h2 class="section-title">THE COMMUNITY VAULT</h2>
+      <p class="section-desc">On-demand access to our permanent collection. Browse and play any track from our curated archives.</p>
+    </div>
+    <div class="vault-grid fade-in" id="vaultContainer">
+      <p style="opacity:0.5">Fetching archives...</p>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-inner">
@@ -870,10 +903,111 @@ setInterval(() => {
 // Animate VU initially paused
 document.querySelectorAll('.vu-hero-bar').forEach(b => b.style.animationPlayState = 'paused');
 
+// --- PWA & Service Worker ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      console.log('[PWA] Service Worker Active', reg.scope);
+    }).catch(err => console.log('[PWA] Registration failed', err));
+  });
+}
+
+// --- Player State & Media Session ---
+S.isLive = true;
+
+function updateMediaSession(title, artist, thumb) {
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: title || 'Agum Bukuma Radio',
+      artist: artist || 'The Voice of the Niger Delta',
+      album: 'Bukuma Broadcast Network',
+      artwork: [
+        { src: thumb || '/images/icon-512.png', sizes: '512x512', type: 'image/png' }
+      ]
+    });
+    navigator.mediaSession.setActionHandler('play', () => { 
+        const audio = document.getElementById('radioStream');
+        audio.play(); 
+        updatePlayState(true);
+    });
+    navigator.mediaSession.setActionHandler('pause', () => { 
+        const audio = document.getElementById('radioStream');
+        audio.pause(); 
+        updatePlayState(false);
+    });
+  }
+}
+
+// Override fetchStatus to update Media Session
+const originalFetchStatus = fetchStatus;
+fetchStatus = async function() {
+    await originalFetchStatus();
+    fetch('/api/status').then(r => r.json()).then(d => {
+        if (S.isLive && d.currentTrack) {
+            updateMediaSession(d.currentTrack.title, d.currentTrack.artist, d.currentTrack.thumbnail);
+        }
+    });
+};
+
+// --- Community Vault Logic ---
+async function loadVault() {
+  try {
+    const r = await fetch('/api/vault');
+    const d = await r.json();
+    const container = document.getElementById('vaultContainer');
+    if (!container) return;
+    container.innerHTML = d.tracks.map(t => `
+      <div class="vault-track" onclick="playVaultTrack('${t.id}', '${t.title}', '${t.artist}', '${t.thumbnail}')">
+        <img src="${t.thumbnail || 'https://via.placeholder.com/50'}" class="vault-thumb">
+        <div class="vault-info">
+          <div class="vault-name">${t.title}</div>
+          <div class="vault-artist">${t.artist}</div>
+        </div>
+        <div class="vault-play-btn"></div>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+function playVaultTrack(id, title, artist, thumb) {
+  S.isLive = false;
+  const audio = document.getElementById('radioStream');
+  audio.src = `/api/downloads/${id}.mp3`; 
+  audio.play();
+  S.playing = true;
+  updatePlayState(true);
+  
+  // Transition UI
+  document.querySelector('.live-label').textContent = 'VAULT MODE';
+  document.querySelector('.live-dot').style.background = 'var(--gold)';
+  document.querySelector('.live-dot').style.boxShadow = '0 0 8px var(--gold)';
+  
+  document.getElementById('playerTrackName').textContent = title;
+  document.getElementById('playerTrackArtist').textContent = artist;
+  if(thumb) {
+    document.getElementById('albumArea').innerHTML = `<img class="album-thumbnail" src="${thumb}">`;
+  }
+  document.getElementById('streamStatusText').textContent = 'COLLECTION — ' + title.toUpperCase();
+  document.getElementById('streamStatusText').style.color = 'var(--gold)';
+
+  updateMediaSession(title, artist, thumb);
+}
+
+// Override tuneIn to reset Live state
+const originalTuneIn = tuneIn;
+tuneIn = function() {
+    S.isLive = true;
+    document.querySelector('.live-label').textContent = 'LIVE NOW';
+    document.querySelector('.live-dot').style.background = 'var(--red)';
+    document.querySelector('.live-dot').style.boxShadow = '0 0 8px var(--red)';
+    originalTuneIn();
+};
+
 // Init
 fetchStatus();
 fetchHerald();
+loadVault();
 setInterval(fetchStatus, 8000);
 </script>
 </body>
-</html>
+</html>
