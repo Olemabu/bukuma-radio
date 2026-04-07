@@ -313,6 +313,7 @@ function startPlayback() {
 }
 
 async function playNext() {
+    const myEpoch = engineEpoch; // CRITICAL FIX: The lock ID for this playback segment
     if (!isOnAir) return;
     if (isTransitioning) {
         console.log('[PLAY] Aborting - Engine already transitioning');
