@@ -147,10 +147,13 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; display: inline-block; margin-left: 10px; vertical-align: middle; transition: all 0.3s; }
 .sync-dot.connected { background: #2ed573; box-shadow: 0 0 10px #2ed573; animation: pulse-green 3s infinite; }
 
-.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; outline: none; }
+.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
 .on-air-badge:hover { background: #222; border-color: #444; color: #666; }
-.on-air-badge:active { transform: scale(0.95); }
-.on-air-badge.active { background: #ff4757; color: white; border-color: #ff4757; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); animation: pulse-red 2s infinite; }
+.on-air-badge:active { transform: translateY(2px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.8); }
+.on-air-badge.active { background: #ff4757; color: white; border-color: #ff4757; box-shadow: 0 0 20px rgba(255, 71, 87, 0.4), inset 0 1px 3px rgba(255,255,255,0.3); animation: pulse-red 2s infinite; }
+
+.btn-mini { padding: 4px 8px; font-size: 9px; border-radius: 4px; font-weight: 900; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; transition: all 0.2s; }
+.btn-mini:hover { background: rgba(255,255,255,0.2); border-color: var(--accent2); }
 
 ::selection { background: var(--accent); color: white; }
 
@@ -406,6 +409,12 @@ header { display: flex; justify-content: space-between; align-items: center; mar
             <p style="text-align:center; opacity:0.5; padding:20px">Queue empty</p>
           </div>
           
+          <div id="setSelectionModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--chassis); border:4px solid var(--accent2); border-radius:15px; padding:20px; z-index:2000; width:300px; box-shadow:0 0 100px rgba(0,0,0,0.8)">
+             <div class="card-title">SELECT TARGET ARCHIVE</div>
+             <div id="setOptions" style="display:grid; gap:8px; margin-top:15px"></div>
+             <button class="btn-hardware btn-red" style="width:100%; margin-top:20px" onclick="closeSetModal()">CANCEL</button>
+          </div>
+          
           <div class="card-title" style="margin-top:20px">CURATED SETS</div>
           <div id="playlistLibrary" style="display:grid; grid-template-columns:1fr; gap:10px">
              <!-- Loaded from API -->
@@ -475,9 +484,10 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 <script>
 'use strict';
 const S = { 
-    token: null, isPlaying: false, currentTrack: null, 
+    token: null, isPlaying: false, isOnAir: false, currentTrack: null, 
     ws: null, micState: 0, volume: 80,
-    audioCtx: null, scriptNode: null, micStream: null
+    audioCtx: null, scriptNode: null, micStream: null,
+    playlists: []
 };
 
 function doLogin() {
@@ -535,6 +545,7 @@ function handleMsg(d) {
     if (d.type === 'status' || d.type === 'nowPlaying') updateUI(d);
     if (d.type === 'listeners') document.getElementById('listenerCount').textContent = d.count + ' UPLINKS ACTIVE';
     if (d.type === 'vu') updateMasterVU(d.level);
+    if (d.type === 'playlists') { S.playlists = d.playlists; loadPlaylistLibrary(); }
     
     if (d.type === 'server_mic_vu') {
         document.getElementById('localMicVU').style.width = d.level + '%';
@@ -628,16 +639,24 @@ function stopMicStream() {
 function fetchStatus() { fetch('/api/status').then(r => r.json()).then(updateUI); }
 
 function updateUI(d) {
-    const track = d.currentTrack || d.track;
-    S.isPlaying = d.isPlaying; S.volume = d.volume;
-    
+    if (typeof d.isOnAir !== 'undefined') S.isOnAir = d.isOnAir;
+    if (typeof d.isPlaying !== 'undefined') S.isPlaying = d.isPlaying;
+    if (typeof d.volume !== 'undefined') S.volume = d.volume;
+
     const badge = document.getElementById('onAirBadge');
-    badge.textContent = d.isPlaying ? 'ON AIR' : 'OFF AIR';
-    badge.classList.toggle('active', d.isPlaying);
+    badge.textContent = S.isOnAir ? 'ON AIR' : 'OFF AIR';
+    badge.classList.toggle('active', !!S.isOnAir);
     
+    // Play/Pause buttons - reflect MUSIC state
+    const btnPlay = document.getElementById('btnPlay');
+    const btnStop = document.getElementById('btnStop');
+    if (btnPlay && btnStop) {
+        if (S.isPlaying) { btnPlay.style.display = 'none'; btnStop.style.display = 'flex'; }
+        else { btnPlay.style.display = 'flex'; btnStop.style.display = 'none'; }
+    }
     if (d.currentTrack) {
-        document.getElementById('trackTitle').textContent = (d.currentTrack && d.currentTrack.title ? d.currentTrack.title.toUpperCase() : 'STATION IDLE');
-        document.getElementById('trackArtist').textContent = (d.currentTrack && d.currentTrack.artist ? d.currentTrack.artist.toUpperCase() : 'AWAITING SIGNAL');
+        document.getElementById('trackTitle').textContent = (d.currentTrack.title ? d.currentTrack.title.toUpperCase() : 'STATION IDLE');
+        document.getElementById('trackArtist').textContent = (d.currentTrack.artist ? d.currentTrack.artist.toUpperCase() : 'AWAITING SIGNAL');
         if (d.currentTrack.thumbnail) document.getElementById('trackThumb').innerHTML = `<img src="${d.currentTrack.thumbnail}" style="width:100%;height:100%;object-fit:cover">`;
     } else {
         document.getElementById('trackTitle').textContent = "STATION IDLE";
@@ -745,11 +764,9 @@ function pausePlayback() { apiFetch('/api/pause', {method:'POST'}).then(fetchSta
 function skipTrack() { apiFetch('/api/skip', {method:'POST'}).then(fetchStatus); }
 function playNow(id) { apiFetch(`/api/queue/${id}/play-now`, {method:'POST'}).then(fetchStatus); }
 function toggleOnAir() {
-    if (S.isPlaying) {
-        if (confirm("Deactivate Global Stream and Go OFF AIR?")) pausePlayback();
-    } else {
-        playStation();
-    }
+    const newState = !S.isOnAir;
+    if (!newState && !confirm("KILL GLOBAL BROADCAST STATE? (Going Off-Air will disconnect all active listeners)")) return;
+    apiFetch('/api/admin/onair', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:newState}) }).then(fetchStatus);
 }
 function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; apiFetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
 function setMicGain(val) { S.micGain = parseInt(val); document.getElementById('micGainVal').textContent = val + '%'; apiFetch('/api/volume/mic', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
@@ -765,7 +782,15 @@ function doSearch() {
     fetch(`/api/youtube/search?q=${encodeURIComponent(q)}`).then(r => r.json()).then(d => {
         const res = d.results || [];
         document.getElementById('searchStatus').textContent = `${res.length} Matches Found`;
-        document.getElementById('resultsList').innerHTML = res.map(r => `<div class="result-item"><img src="${r.thumbnail}" width="40" height="40" style="border-radius:4px"><div style="flex:1; font-size:12px; font-weight:700">${r.title}</div><button class="btn-hardware btn-blue" style="padding:5px 10px; font-size:10px" onclick='addToQueue(${JSON.stringify(r)})'>+ QUEUE</button></div>`).join('');
+        document.getElementById('resultsList').innerHTML = res.map(r => `
+            <div class="result-item">
+                <img src="${r.thumbnail}" width="40" height="40" style="border-radius:4px">
+                <div style="flex:1; font-size:12px; font-weight:700">${r.title}</div>
+                <div style="display:flex; gap:5px">
+                    <button class="btn-hardware btn-blue" style="padding:5px 10px; font-size:10px" onclick='addToQueue(${JSON.stringify(r)})'>+ QUEUE</button>
+                    <button class="btn-mini" onclick='openSetModal(null, ${JSON.stringify(r)})' title="Archive Directly">💾</button>
+                </div>
+            </div>`).join('');
     });
 }
 
@@ -802,8 +827,9 @@ function saveAsPlaylist() {
 
 function loadPlaylistLibrary() {
     apiFetch('/api/admin/playlists').then(r => r.json()).then(d => {
+        S.playlists = d.playlists || [];
         const libs = [document.getElementById('playlistLibrary'), document.getElementById('programSetPicker')];
-        const html = (d.playlists || []).map(p => `
+        const html = S.playlists.map(p => `
             <div style="background:var(--ledge); border:1px solid #333; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center">
                 <div style="flex:1">
                    <div style="font-weight:900; font-size:12px">${p.name}</div>
@@ -852,6 +878,37 @@ function removeFromProgram(idx) {
 
 function resetProgram() {
     if (confirm("Reset current program loop to start?")) apiFetch('/api/admin/programs/reset', {method:'POST'}).then(() => alert("Program loop will restart after current song."));
+}
+
+let pendingTrack = null;
+function openSetModal(queueId, directTrack) {
+    pendingTrack = queueId ? S.queue?.find(t => t.id === queueId) : directTrack;
+    if (!pendingTrack) return;
+    
+    const container = document.getElementById('setOptions');
+    container.innerHTML = S.playlists.map(p => `
+        <button class="btn-hardware" style="text-align:left; font-size:10px" onclick="saveToSet('${p.id}')">${p.name}</button>
+    `).join('');
+    document.getElementById('setSelectionModal').style.display = 'block';
+}
+
+function closeSetModal() {
+    document.getElementById('setSelectionModal').style.display = 'none';
+    pendingTrack = null;
+}
+
+function saveToSet(setId) {
+    if (!pendingTrack) return;
+    apiFetch(`/api/admin/playlists/${setId}/add-track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ track: pendingTrack })
+    }).then(r => r.json()).then(d => {
+        if (d.success) {
+            alert(`Track archived to curated set! (Current count: ${d.count})`);
+            closeSetModal();
+        }
+    });
 }
 
 function toggleJingleDrawer(e) {

@@ -45,7 +45,8 @@ function seedQueue() {
 // ── State ────────────────────────────────────────────────────────────────────
 let queue        = seedQueue();
 let currentTrack = null;
-let isPlaying    = false;
+let isPlaying    = false; // Music playback state
+let isOnAir      = false; // Global Broadcast state (STATION POWER)
 let volume       = 80;
 let micGain      = 150; // default 1.5x (150%)
 let playlists    = [];
@@ -86,7 +87,7 @@ function startAutoJingleLoop() {
 }
 
 function dropJingle(jingleFile = 'ident.mp3') {
-    if (!isPlaying || !currentProcess || !currentProcess.stdin || !currentProcess.stdin.writable) return;
+    if (!isOnAir || !currentProcess || !currentProcess.stdin || !currentProcess.stdin.writable) return;
     if (activeJingleProcess) return; 
     
     // Check in app folder first, then data/jingles
@@ -199,7 +200,7 @@ function broadcast(msg) {
 }
 
 function getStatus() {
-    return { type: 'status', currentTrack, queue, isPlaying, volume, micGain, listeners, autoJingles, timestamp: Date.now(), serverMicState, latencyMs: lastLatencyMs };
+    return { type: 'status', currentTrack, queue, isPlaying, isOnAir, volume, micGain, listeners, autoJingles, timestamp: Date.now(), serverMicState, latencyMs: lastLatencyMs };
 }
 
 // ── Watchdog & Downloader ────────────────────────────────────────────────────
@@ -207,12 +208,12 @@ function startMonitor() {
     if (monitorTimer) clearInterval(monitorTimer);
     monitorTimer = setInterval(() => {
         // 1. Watchdog: Fix Dead Air
-        if (isPlaying && !isTransitioning) {
+        if (isOnAir && !isTransitioning) {
             const idleMs = Date.now() - lastDataTime;
             if (idleMs > 20000) {
                 console.log(`[WATCHDOG] Dead air ${idleMs}ms — resyncing`);
                 lastDataTime = Date.now();
-                if (queue.length === 0) queue = seedQueue();
+                // Only refill if totally empty and NO programs/silence logic
                 playNext();
             }
         }
@@ -290,7 +291,11 @@ function advanceQueue() {
 }
 
 function startPlayback() {
-    if (isPlaying && currentProcess) return;
+    if (isOnAir && currentProcess) {
+        console.log('[ENGINE] Already On-Air.');
+        return;
+    }
+    isOnAir = true;
     isPlaying = true;
     if (queue.length === 0) {
         const pl = playlists[0];
@@ -302,21 +307,25 @@ function startPlayback() {
 }
 
 async function playNext() {
-    if (!isPlaying) return;
+    if (!isOnAir) return;
     if (isTransitioning) {
         console.log('[PLAY] Aborting - Engine already transitioning');
         return;
     }
     
-    if (queue.length === 0) advanceQueue();
+    let isSilenceMode = false;
+    if (queue.length === 0) {
+        if (isOnAir) {
+            isSilenceMode = true;
+            currentTrack = { id: 'silence', title: 'STATION CONSOLE', artist: 'MASTER MODE (ON-AIR)', status: 'ready', isSilence: true };
+        } else {
+            advanceQueue();
+        }
+    } else {
+        currentTrack = { ...queue[0] };
+    }
     
-    isTransitioning = true;
-    const myEpoch = ++engineEpoch; // Acquire atomic lock for this specific playback sequence
-    
-    if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
-    if (silenceInterval) { clearInterval(silenceInterval); silenceInterval = null; }
-
-    currentTrack = { ...queue[0] };
+    if (!currentTrack) return;
     
     // If still downloading, wait a bit
     if (currentTrack.status === 'downloading') {
@@ -333,10 +342,13 @@ async function playNext() {
 
     try {
         let inputSource = currentTrack.localPath;
-        if (!inputSource || !fs.existsSync(inputSource)) {
+        let ffmpegInputs = [];
+
+        if (currentTrack.isSilence) {
+            ffmpegInputs = ['-f', 'lavfi', '-i', 'anullsrc=r=22050:cl=mono', '-t', '3600']; // 1hr silence segments
+        } else if (!inputSource || !fs.existsSync(inputSource)) {
             console.log(`[PLAY] Local file missing for ${currentTrack.title}, fetching live URL...`);
             
-            // UI Feedback: Mark as downloading while fetching
             const qIdx = queue.findIndex(t => t.id === currentTrack.id);
             if (qIdx !== -1) { 
                 queue[qIdx].status = 'downloading'; 
@@ -345,7 +357,6 @@ async function playNext() {
             
             inputSource = await getYouTubeUrl(currentTrack.youtubeQuery || currentTrack.title);
             
-            // Abort if the queue or playback was overridden while we were fetching the URL!
             if (myEpoch !== engineEpoch) {
                 console.log('[PLAY] Transition overridden during URL fetch. Aborting.');
                 isTransitioning = false;
@@ -356,6 +367,9 @@ async function playNext() {
                 queue[qIdx].status = 'ready'; 
                 broadcast(getStatus()); 
             }
+            ffmpegInputs = ['-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '10', '-i', inputSource];
+        } else {
+            ffmpegInputs = ['-i', inputSource];
         }
 
         if (currentProcess) {
@@ -365,14 +379,13 @@ async function playNext() {
         }
 
         const userAgent = 'Mozilla/5.0 (Android 12; Mobile; rv:102.0) Gecko/102.0 Firefox/102.0'; 
-        const musicVolume = (serverMicState === 2) ? 0 : (volume / 100);
+        const musicVolume = (serverMicState === 2 || currentTrack.isSilence) ? 0 : (volume / 100);
         const mGain = micGain / 100; // default 1.5
         const args = [
             '-hide_banner', '-loglevel', 'error',
-            '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '10',
             '-user_agent', userAgent,
             '-headers', `Referer: https://www.youtube.com/\r\nOrigin: https://www.youtube.com\r\n`,
-            '-i', inputSource,
+            ...ffmpegInputs,
             '-f', 's16le', '-ar', '22050', '-ac', '1', '-i', '-', // Input 1: Mic from Stdin
             '-vn',
             '-filter_complex', `[0:a]volume=${musicVolume}[music];[1:a]volume=${mGain},asplit[mic][sc];[music][sc]sidechaincompress=threshold=0.01:ratio=20:attack=10:release=1000[ducked];[ducked][mic]amix=inputs=2:duration=first,asplit=2[out][vu]`,
@@ -442,11 +455,11 @@ async function playNext() {
             
             console.log(`[FFMPEG] Track closed (code: ${code}, delivery: ${bytesOut} bytes)`);
             clearInterval(silenceTimer);
-            if (bytesOut < 1000 && isPlaying) consecutiveFailures++;
+            if (bytesOut < 1000 && isOnAir && !currentTrack.isSilence) consecutiveFailures++;
             else consecutiveFailures = 0;
             if (silenceInterval) { clearInterval(silenceInterval); silenceInterval = null; }
-            if (isPlaying) {
-                advanceQueue();
+            if (isOnAir) {
+                if (!currentTrack.isSilence) advanceQueue();
                 isTransitioning = false;
                 playNextTimeout = setTimeout(playNext, 1500);
             }
@@ -456,7 +469,7 @@ async function playNext() {
             if (myEpoch !== engineEpoch) return;
             console.error('[FFMPEG] Spawn error:', err.message);
             isTransitioning = false;
-            if (isPlaying) playNextTimeout = setTimeout(playNext, 3000);
+            if (isOnAir) playNextTimeout = setTimeout(playNext, 3000);
         });
 
         isTransitioning = false;
@@ -629,8 +642,36 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-app.post('/api/play', requireAuth, (req, res) => { if (!isPlaying) startPlayback(); res.json({ success: true }); });
-app.post('/api/pause', requireAuth, (req, res) => { pausePlayback(); res.json({ success: true }); });
+app.post('/api/play', requireAuth, (req, res) => { 
+    isOnAir = true;
+    isPlaying = true; 
+    startPlayback(); 
+    res.json({ success: true, isOnAir }); 
+});
+app.post('/api/pause', requireAuth, (req, res) => { 
+    isPlaying = false; // Stop music
+    // Note: If isOnAir is still true, playNext will handle silence!
+    broadcast(getStatus());
+    res.json({ success: true, isPlaying }); 
+});
+app.post('/api/admin/onair', requireAuth, (req, res) => {
+    const { state } = req.body;
+    isOnAir = !!state;
+    if (isOnAir) {
+        isPlaying = true; // Auto-start music if turning on air? Or let user choose? 
+        // Let's assume OnAir means "Active Station"
+        startPlayback();
+    } else {
+        isPlaying = false;
+        if (currentProcess) {
+            currentProcess.removeAllListeners();
+            try { currentProcess.kill('SIGKILL'); } catch(e) {}
+            currentProcess = null;
+        }
+    }
+    broadcast(getStatus());
+    res.json({ success: true, isOnAir });
+});
 app.post('/api/skip', requireAuth, (req, res) => { skipTrack(); res.json({ success: true }); });
 app.post('/api/queue/skip', requireAuth, (req, res) => { skipTrack(); res.json({ success: true }); });
 
@@ -909,6 +950,19 @@ app.post('/api/playlists/:id/load', requireAuth, (req, res) => {
     saveState(); broadcast(getStatus());
     if (!isPlaying) startPlayback();
     res.json({ success: true });
+});
+
+app.post('/api/admin/playlists/:id/add-track', requireAuth, (req, res) => {
+    const { track } = req.body;
+    const pl = playlists.find(p => p.id === req.params.id);
+    if (!pl || !track) return res.status(404).json({ success: false });
+    
+    // Safety check for duplicates (optional but good)
+    if (!pl.tracks.find(t => t.id === track.id)) {
+        pl.tracks.push(track);
+        savePlaylists();
+    }
+    res.json({ success: true, count: pl.tracks.length });
 });
 
 app.get('/health', (req, res) => res.json({
