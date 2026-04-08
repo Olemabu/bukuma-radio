@@ -208,34 +208,45 @@ function startMonitor() {
     if (monitorTimer) clearInterval(monitorTimer);
     monitorTimer = setInterval(() => {
         // 1. Watchdog: Fix Dead Air
-        if (isOnAir && !isTransitioning) {
+        if (isOnAir) {
             const idleMs = Date.now() - lastDataTime;
-            if (idleMs > 20000) {
-                console.log(`[WATCHDOG] Dead air ${idleMs}ms — resyncing`);
+            
+            // Check if process is actually alive
+            let isZombie = false;
+            if (currentProcess) {
+                try { 
+                    process.kill(currentProcess.pid, 0); 
+                } catch(e) { 
+                    isZombie = true; 
+                    console.log('[WATCHDOG] Zombie process detected!');
+                }
+            }
+
+            if (idleMs > 25000 || (isOnAir && !currentProcess && !isTransitioning) || isZombie) {
+                console.log(`[WATCHDOG] Recovery triggered (Idle: ${idleMs}ms, Transit: ${isTransitioning}, Zombie: ${isZombie})`);
                 lastDataTime = Date.now();
-                // Only refill if totally empty and NO programs/silence logic
+                isTransitioning = false; // Forced reset
                 playNext();
             }
         }
         // 2. Downloader: Prepare next tracks
         const toDownload = queue.slice(0, 3).filter(t => t.status === 'pending');
         toDownload.forEach(t => downloadTrack(t));
-
-        // 3. Persistence Watchdog: Keep Station On-Air
-        if (isOnAir && !currentProcess && !isTransitioning) {
-            console.log('[WATCHDOG] Station is ON-AIR but engine is IDLE. Restoring broadcast...');
-            playNext();
-        }
     }, 5000);
 }
 
 // ── Audio engine ─────────────────────────────────────────────────────────────
 async function getYouTubeUrl(query) {
     return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(new Error('YT-DLP Timeout after 20s'));
+        }, 20000);
+
         const extractorArgs = 'youtube:player_client=default,android_sdkless';
         const cmd = `"${YTDLP_PATH}" --get-url --format "bestaudio/best" --no-playlist --ignore-errors --geo-bypass --no-check-certificates --extractor-args "${extractorArgs}" "ytsearch1:${query}"`;
         
-        exec(cmd, { timeout: 20000 }, (err, stdout) => {
+        exec(cmd, { timeout: 25000 }, (err, stdout) => {
+            clearTimeout(timeout);
             if (err) return reject(err);
             const url = stdout.trim().split('\n').filter(l => l.startsWith('http'))[0];
             if (!url) return reject(new Error('No URL from yt-dlp'));
@@ -320,6 +331,7 @@ async function playNext() {
     // Safety check: is an active process already running for this exact epoch?
     if (currentProcess && !isTransitioning) {
         console.log('[PLAY] Aborting - Engine already active for this epoch.');
+        isTransitioning = false; // Maintenance: ensure state is clean
         return;
     }
     
