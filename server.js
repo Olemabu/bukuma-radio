@@ -16,10 +16,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ── Config ───────────────────────────────────────────────────────────────────
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'bukuma2024';
 const PORT           = process.env.PORT            || 3000;
+const FFMPEG_PATH     = process.env.FFMPEG_PATH     || 'ffmpeg';
+const YTDLP_PATH      = process.env.YTDLP_PATH      || 'yt-dlp';
+const SAFE_fallback   = 'https://ais-sa2.cdnstream1.com/2619_128.mp3'; // Backup stream
 
-// Binary paths
-const FFMPEG_PATH = process.env.FFMPEG_PATH || 'ffmpeg'; // Default to PATH
-const YTDLP_PATH  = process.env.YTDLP_PATH  || 'yt-dlp'; // Default to PATH
+let libraryIndex       = 0; // The persistent MP3 Player pointer
+let queue              = [];
+let playlists          = [];
+let programs           = [];
+let currentProgramIdx  = -1;
 
 function verifyBinaries() {
     console.log(`[BINARY] FFmpeg Path: ${FFMPEG_PATH}`);
@@ -43,15 +48,12 @@ function seedQueue() {
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
-let queue        = seedQueue();
+queue        = seedQueue();
 let currentTrack = null;
 let isPlaying    = false; // Music playback state
 let isOnAir      = false; // Global Broadcast state (STATION POWER)
 let volume       = 80;
 let micGain      = 150; // default 1.5x (150%)
-let playlists    = [];
-let programs     = []; // Priority List for Programming
-let currentProgramIdx = -1;
 let currentProcess   = null;
 let isTransitioning  = false;
 let playNextTimeout  = null;
@@ -136,11 +138,13 @@ function loadState() {
             if (Array.isArray(saved) && saved.length > 0) queue = saved;
         }
         if (fs.existsSync(stateFile)) {
-            const s = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
-            volume      = Number(s.volume || 80);
+            const data = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+            volume      = Number(data.volume || 80);
             if (isNaN(volume)) volume = 80;
-            micGain     = Number(s.micGain || 150);
-            autoJingles = s.autoJingles || { start: false, random: false };
+            if (data.autoJingles) autoJingles = data.autoJingles;
+            if (data.libraryIndex !== undefined) libraryIndex = data.libraryIndex;
+            if (data.isOnAir) isOnAir = data.isOnAir;
+            if (data.isPlaying) isPlaying = data.isPlaying;
         }
         if (fs.existsSync(playlistsFile)) {
             playlists = JSON.parse(fs.readFileSync(playlistsFile, 'utf8'));
@@ -163,9 +167,14 @@ function loadState() {
         // Historical Rex Lawson purge policy removed. 
         // ----------------------------------
 
-        // --- SELF-HEAL MISSING FILES ---
-        // If a file is marked 'ready' but the physical file is gone, revert to 'pending'
+        // --- SELF-HEAL MISSING/STUCK ENTRIES ---
         queue.forEach(t => {
+            // Restore 'downloading' to 'pending' to prevent being stuck forever
+            if (t.status === 'downloading') {
+                console.log(`[HEAL] Resetting stuck download for ${t.title}`);
+                t.status = 'pending';
+            }
+            // If physically missing, revert to pending
             if (t.status === 'ready' && t.localPath && !fs.existsSync(t.localPath)) {
                 console.log(`[HEAL] File missing for ${t.title}. Reverting to pending.`);
                 t.status = 'pending';
@@ -178,8 +187,15 @@ function loadState() {
 }
 
 function saveState() {
+    const data = { 
+        volume, 
+        autoJingles, 
+        isOnAir, 
+        isPlaying,
+        libraryIndex
+    };
     try {
-        fs.writeFileSync(stateFile, JSON.stringify({ volume, autoJingles }, null, 2));
+        fs.writeFileSync(stateFile, JSON.stringify(data, null, 2));
         fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2));
     } catch(e) {}
 }
@@ -200,7 +216,16 @@ function broadcast(msg) {
 }
 
 function getStatus() {
-    return { type: 'status', currentTrack, queue, isPlaying, isOnAir, volume, micGain, listeners, autoJingles, timestamp: Date.now(), serverMicState, latencyMs: lastLatencyMs };
+    return {
+        isOnAir, isPlaying, volume, micGain, serverMicState,
+        queue: queue.map((t, idx) => ({ 
+            ...t, 
+            isNowPlaying: idx === libraryIndex && isPlaying && !currentTrack?.isSilence 
+        })),
+        libraryIndex,
+        currentTrack, autoJingles,
+        timestamp: Date.now(), latencyMs: lastLatencyMs
+    };
 }
 
 // ── Watchdog & Downloader ────────────────────────────────────────────────────
@@ -229,10 +254,17 @@ function startMonitor() {
                 playNext();
             }
         }
-        // 2. Downloader: Prepare next tracks
-        const toDownload = queue.slice(0, 3).filter(t => t.status === 'pending');
-        toDownload.forEach(t => downloadTrack(t));
-    }, 5000);
+    // 2. Downloader: Prepare next tracks
+    // IMPROVED: If we are playing silence but have stuff in queue, TRIGGER A SKIP automatically to start music
+    if (isOnAir && currentTrack?.isSilence && queue.length > 0) {
+        console.log('[WATCHDOG] Music detected in queue during silence. Waking up station...');
+        skipTrack();
+        return;
+    }
+
+    const toDownload = queue.slice(0, 3).filter(t => t.status === 'pending');
+    toDownload.forEach(t => downloadTrack(t));
+}, 5000);
 }
 
 // ── Audio engine ─────────────────────────────────────────────────────────────
@@ -261,7 +293,17 @@ function downloadTrack(track) {
     track.status = 'downloading';
     broadcast(getStatus());
 
-    const localPath = path.join(downloadsDir, `${track.id}.mp3`);
+    const cleanTitle = (track.artist + ' - ' + track.title).replace(/[^a-z0-9 _-]/gi, '_').replace(/\s+/g, '_');
+    const localPath = path.join(downloadsDir, `${cleanTitle}.mp3`);
+    
+    // Check if we already have it under a clean name
+    if (fs.existsSync(localPath)) {
+        track.status = 'ready';
+        track.localPath = localPath;
+        saveState();
+        return;
+    }
+
     const extractorArgs = 'youtube:player_client=default,android_sdkless';
     const cmd = `"${YTDLP_PATH}" -x --audio-format mp3 --no-playlist --ignore-errors --geo-bypass --no-check-certificates --extractor-args "${extractorArgs}" -o "${localPath}" "ytsearch1:${track.youtubeQuery || (track.artist + ' ' + track.title)}"`;
 
@@ -280,29 +322,15 @@ function downloadTrack(track) {
     });
 }
 
-function advanceQueue() {
-    console.log('[ENGINE] Advancing Queue...');
-    if (queue.length > 0) queue.shift();
+function advanceQueue(finishedTrackId = null) {
+    console.log('[ENGINE] Advancing Library Index...');
     
-    // --- Program Priority Check ---
-    if (queue.length === 0 && programs.length > 0) {
-        currentProgramIdx++;
-        if (currentProgramIdx >= programs.length) {
-            console.log('[ENGINE] Program Finished. Looping back to start.');
-            currentProgramIdx = 0;
-        }
-        const block = programs[currentProgramIdx];
-        if (block && block.type === 'set') {
-            console.log(`[ENGINE] Transitioning to Program Block: ${block.name}`);
-            const pl = playlists.find(p => p.id === block.playlistId);
-            if (pl) queue = pl.tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2), status: 'pending' }));
-        }
+    libraryIndex++;
+    if (libraryIndex >= queue.length) {
+        console.log('[ENGINE] End of Library. Looping to start.');
+        libraryIndex = 0;
     }
     
-    if (queue.length === 0) {
-        console.log('[ENGINE] Refilling from seeds...');
-        queue = seedQueue();
-    }
     saveState();
     broadcast(getStatus());
 }
@@ -325,15 +353,16 @@ function startPlayback() {
 
 async function playNext() {
     const myEpoch = engineEpoch; // Capture the current station lock ID
-    if (!isOnAir) return;
-    if (isTransitioning && myEpoch === engineEpoch) return;
+    // Transition safety: immediately clear any overlapping timers
+    if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
     
     // Safety check: is an active process already running for this exact epoch?
     if (currentProcess && !isTransitioning) {
         console.log('[PLAY] Aborting - Engine already active for this epoch.');
-        isTransitioning = false; // Maintenance: ensure state is clean
         return;
     }
+    
+    isTransitioning = true; // Lockdown sequence starts now
     
     let isSilenceMode = false;
     if (queue.length === 0) {
@@ -341,24 +370,30 @@ async function playNext() {
             isSilenceMode = true;
             currentTrack = { id: 'silence', title: 'STATION CONSOLE', artist: 'MASTER MODE (ON-AIR)', status: 'ready', isSilence: true };
         } else {
-            advanceQueue();
+            isTransitioning = false;
+            return;
         }
     } else {
-        currentTrack = { ...queue[0] };
+        if (libraryIndex >= queue.length) libraryIndex = 0;
+        currentTrack = { ...queue[libraryIndex] };
     }
     
     if (!currentTrack) return;
     
     // If still downloading, wait a bit
-    if (currentTrack.status === 'downloading') {
-        console.log(`[PLAY] Waiting for download: ${currentTrack.title}`);
+    if (currentTrack.status === 'downloading' || currentTrack.status === 'pending') {
+        const statusVerb = currentTrack.status === 'downloading' ? 'waiting' : 'initiating';
+        console.log(`[PLAY] ${statusVerb} for download: ${currentTrack.title}`);
+        
+        if (currentTrack.status === 'pending') downloadTrack(currentTrack);
+        
         broadcast({ type: 'nowPlaying', track: { ...currentTrack, status: 'downloading' } });
         isTransitioning = false;
         playNextTimeout = setTimeout(playNext, 2000);
         return;
     }
 
-    console.log('[PLAY] Loading:', currentTrack.title);
+    console.log('[PLAY] Loading From Disk:', currentTrack.title);
     broadcast({ type: 'nowPlaying', track: currentTrack });
     broadcast(getStatus());
 
@@ -394,13 +429,14 @@ async function playNext() {
             ffmpegInputs = ['-i', inputSource];
         }
 
+        // --- ATOMIC REPLACEMENT ---
         if (currentProcess) {
             currentProcess.removeAllListeners();
             try { currentProcess.kill('SIGKILL'); } catch(e) {}
             currentProcess = null;
         }
 
-        const userAgent = 'Mozilla/5.0 (Android 12; Mobile; rv:102.0) Gecko/102.0 Firefox/102.0'; 
+        const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'; 
         const musicVolume = (serverMicState === 2 || currentTrack.isSilence) ? 0 : (volume / 100);
         const mGain = micGain / 100; // default 1.5
         const args = [
@@ -473,15 +509,20 @@ async function playNext() {
         });
 
         currentProcess.on('close', code => {
-            if (myEpoch !== engineEpoch) return; // Completely ignore close events from aborted processes
+            if (myEpoch !== engineEpoch) {
+                console.log(`[FFMPEG] Ignoring stale close event for epoch ${myEpoch}`);
+                return;
+            }
             
             console.log(`[FFMPEG] Track closed (code: ${code}, delivery: ${bytesOut} bytes)`);
             clearInterval(silenceTimer);
+            currentProcess = null; // CRITICAL: Release handle so next track can spawn
+            
             if (bytesOut < 1000 && isOnAir && !currentTrack.isSilence) consecutiveFailures++;
             else consecutiveFailures = 0;
             if (silenceInterval) { clearInterval(silenceInterval); silenceInterval = null; }
             if (isOnAir) {
-                if (!currentTrack.isSilence) advanceQueue();
+                if (!currentTrack.isSilence) advanceQueue(currentTrack.id);
                 isTransitioning = false;
                 playNextTimeout = setTimeout(playNext, 1500);
             }
@@ -490,6 +531,7 @@ async function playNext() {
         currentProcess.on('error', err => {
             if (myEpoch !== engineEpoch) return;
             console.error('[FFMPEG] Spawn error:', err.message);
+            currentProcess = null; // Release handle
             isTransitioning = false;
             if (isOnAir) playNextTimeout = setTimeout(playNext, 3000);
         });
@@ -511,13 +553,19 @@ async function playNext() {
         }
         const retryDelay = Math.min(30000, 5000 * consecutiveFailures);
         
-        queue[0].status = 'error';
-        const failedTrack = queue.shift(); 
-        queue.push(failedTrack); // Move to the bottom of the playlist instead of deleting it
+        // Find specifically the failing track and mark it as error so it doesn't block
+        const failingIdx = queue.findIndex(t => t.id === currentTrack.id);
+        if (failingIdx !== -1) {
+            console.log(`[ENGINE] Marking track as ERROR: ${queue[failingIdx].title}`);
+            queue[failingIdx].status = 'error';
+            // We shift it to allow rotation, but we don't push it back if it's dead
+            queue.shift(); 
+        }
+        
         if (queue.length === 0) queue = seedQueue();
         
         saveState();
-        broadcast(getStatus()); // Update UI immediately so they see the red error status
+        broadcast(getStatus()); 
         
         if (isPlaying) playNextTimeout = setTimeout(playNext, retryDelay);
     }
@@ -545,12 +593,15 @@ function stopPlayback() {
 }
 
 function skipTrack() {
+    console.log('[ENGINE] Manual Skip Triggered');
+    engineEpoch++; // New world order
     if (currentProcess) {
         currentProcess.removeAllListeners();
         try { currentProcess.kill('SIGKILL'); } catch(e) {}
         currentProcess = null;
     }
-    advanceQueue();
+    const lastId = currentTrack ? currentTrack.id : (queue.length > 0 ? queue[libraryIndex]?.id : null);
+    advanceQueue(lastId);
     isTransitioning = false;
     if (isPlaying) playNext();
     else  broadcast(getStatus());
@@ -631,6 +682,7 @@ wss.on('connection', ws => {
                         broadcast(getStatus());
                         downloadTrack(track);
                         if (!isPlaying) startPlayback();
+                        else if (currentTrack?.isSilence) skipTrack();
                     }
                     break;
             }
@@ -904,6 +956,7 @@ app.post('/api/upload', requireAuth, upload.single('audio'), async (req, res) =>
     broadcast(getStatus());
     
     if (!isPlaying) startPlayback();
+    else if (currentTrack?.isSilence) skipTrack();
     res.json({ success: true, track });
 });
 
@@ -915,6 +968,7 @@ app.post('/api/queue', requireAuth, (req, res) => {
     broadcast(getStatus());
     downloadTrack(entry);
     if (!isPlaying) startPlayback();
+    else if (currentTrack?.isSilence) skipTrack();
     res.json({ success: true, id: entry.id });
 });
 
@@ -933,14 +987,27 @@ app.post('/api/queue/add', requireAuth, (req, res) => {
     broadcast(getStatus());
     downloadTrack(entry);
     if (!isPlaying) startPlayback();
+    else if (currentTrack?.isSilence) skipTrack();
     res.json({ success: true, id: entry.id });
 });
 
 app.delete('/api/queue/:id', requireAuth, (req, res) => {
+    const trackId = req.params.id;
+    const isCurrentlyAtHead = queue.length > 0 && queue[0].id === trackId;
+    
     const before = queue.length;
-    queue = queue.filter(t => t.id !== req.params.id);
+    queue = queue.filter(t => t.id !== trackId);
+    
     if (queue.length !== before) saveState();
-    broadcast(getStatus());
+    
+    // If the track being deleted is the one currently playing at the head,
+    // we should trigger a skip to stop it and move to the next "real" track in the queue.
+    if (isCurrentlyAtHead && isPlaying) {
+        console.log(`[ENGINE] User deleted active track ${trackId}. Forcing skip.`);
+        skipTrack();
+    } else {
+        broadcast(getStatus());
+    }
     res.json({ success: true });
 });
 
@@ -961,9 +1028,11 @@ function playWithIntro(track) {
     }
 
     // 4. Retire the track that was just ended to prevent it shifting to index 1
-    if (queue.length > 0) {
-        console.log(`[ENGINE] Retiring aborted track: ${queue[0].title}`);
-        queue.shift(); 
+    // CRITICAL FIX: Only shift if the station was actually playing. 
+    // If it was stopped, queue[0] is a valid track that shouldn't be deleted.
+    // NOTE: In Library mode, we no longer shift. We just clear the current process.
+    if (isPlaying && currentProcess) {
+        console.log(`[ENGINE] Overriding current playback for: ${track.title}`);
     }
 
     // 5. Build the Deployment Segment (Intro + Track)
@@ -998,7 +1067,8 @@ app.post('/api/queue/:id/play-now', requireAuth, (req, res) => {
     if (idx === -1) return res.status(404).json({ success: false });
     if (queue[idx].status !== 'ready') return res.status(400).json({ success: false, error: 'Track not on disk yet. Wait for download.' });
     
-    const track = queue.splice(idx, 1)[0];
+    libraryIndex = idx; // Set the pointer to the selected track
+    const track = queue[libraryIndex];
     playWithIntro(track);
     res.json({ success: true });
 });
