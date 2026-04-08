@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "id": "alfred-jking-ozigizaga",
+    "status": "ready",
+    "title": "Ozigizaga",
+    "artist": "Alfred J-King",
+    "youtubeQuery": "Alfred J-King Ozigizaga",
+    "duration": "10:38",
+    "localPath": "data/downloads/Alfred_J-King_-_Ozigizaga.mp3"
+  },
+  {
+    "id": "wizard-chan-moses",
+    "status": "ready",
+    "title": "Moses",
+    "artist": "Wizard Chan",
+    "youtubeQuery": "Wizard Chan Moses",
+    "duration": "3:42",
+    "localPath": "data/downloads/Wizard_Chan_-_Moses.mp3"
+  },
+  {
+    "id": "wizard-chan-earthsong",
+    "status": "ready",
+    "title": "Earth Song",
+    "artist": "Wizard Chan",
+    "youtubeQuery": "Wizard Chan Earth Song",
+    "duration": "3:25",
+    "localPath": "data/downloads/Wizard_Chan_-_Earth_Song.mp3"
+  }
+]

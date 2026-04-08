@@ -405,8 +405,11 @@ header { display: flex; justify-content: space-between; align-items: center; mar
              <div class="card-title" style="margin-bottom:0">PLAYBACK QUEUE</div>
              <button class="btn-hardware btn-blue" onclick="saveAsPlaylist()" style="padding:5px 10px; font-size:10px">SAVE AS...</button>
           </div>
-          <div class="queue-panel" id="queueList">
-            <p style="text-align:center; opacity:0.5; padding:20px">Queue empty</p>
+          <div class="tab-content active" id="console">
+            <h2 class="section-title">PERMANENT DISK LIBRARY</h2>
+            <div id="queueList" class="track-list">
+                <p style="text-align:center; opacity:0.5; padding:20px">Scanning Library...</p>
+            </div>
           </div>
           
           <div id="setSelectionModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--chassis); border:4px solid var(--accent2); border-radius:15px; padding:20px; z-index:2000; width:300px; box-shadow:0 0 100px rgba(0,0,0,0.8)">
@@ -718,10 +721,10 @@ function updateUI(d) {
     const qEl = document.getElementById('queueList');
     if (d.queue?.length) {
         qEl.innerHTML = d.queue.map((t, i) => {
-            const isNowPlaying = (d.currentTrack && t.id === d.currentTrack.id) && d.isPlaying;
+            const isNowPlaying = (t.isNowPlaying) && d.isPlaying;
             const isReady = t.status === 'ready';
             
-            // --- Logic Update: Only allow PLAY NOW if track is physically on the Railway disk (Permanent Drive)
+            // --- Logic Update: Only allow PLAY NOW if track is physically on the disk
             const playBtn = (isReady && !isNowPlaying) 
                 ? `<button onclick="playNow('${t.id}')" style="background:none; border:1px solid var(--green); color:var(--green); border-radius:4px; padding:2px 6px; cursor:pointer; margin-left:10px; font-size:9px; font-weight:900">PLAY NOW</button>` 
                 : '';
@@ -742,7 +745,7 @@ function updateUI(d) {
                 <button onclick="removeFromQueue('${t.id}')" style="background:none; border:none; color:var(--accent); cursor:pointer; margin-left:10px; font-size:16px">×</button>
             </div>
         `}).join('');
-    } else qEl.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px">Queue empty</p>';
+    } else qEl.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px">Permanent Disk Empty</p>';
 
     if (d.isPlaying) document.getElementById('vuBar').style.width = (30 + Math.random() * 60) + '%';
     else document.getElementById('vuBar').style.width = '0%';

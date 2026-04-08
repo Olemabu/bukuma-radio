@@ -59,6 +59,7 @@ let isTransitioning  = false;
 let playNextTimeout  = null;
 let silenceInterval  = null;
 let autoJingles      = { start: false, random: false };
+let pendingIntro     = false; // Stateless Intro Flag
 
 // Neutral fallback (Station Ident) 
 const SAFE_FALLBACK_URL = 'https://archive.org/download/bukuma-radio-ident/ident.mp3'; 
@@ -378,6 +379,29 @@ async function playNext() {
         currentTrack = { ...queue[libraryIndex] };
     }
     
+    // --- Phase 2 Refinement: Stateless Intro ---
+    if (pendingIntro) {
+        pendingIntro = false;
+        console.log('[ENGINE] Deploying Ident/Intro sequence...');
+        const introPath = path.join(__dirname, 'public/app/ident.mp3');
+        const intro = { id: 'intro-' + Date.now(), status: 'ready', title: 'Station Identification', artist: 'BUKUMA RADIO', localPath: introPath, isIntro: true };
+        broadcast({ type: 'nowPlaying', track: intro });
+        
+        const args = ['-hide_banner', '-loglevel', 'error', '-i', introPath, '-f', 's16le', '-ar', '22050', '-ac', '1', '-'];
+        const introProc = spawn(FFMPEG_PATH, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+        
+        introProc.stdout.on('data', chunk => {
+            if (currentProcess?.stdin?.writable) currentProcess.stdin.write(chunk);
+        });
+        
+        introProc.on('close', () => {
+            console.log('[ENGINE] Ident Finished. Cueing actual track...');
+            playNext(); // Now play the actual track
+        });
+        return;
+    }
+    // ------------------------------------------
+
     if (!currentTrack) return;
     
     // If still downloading, wait a bit
@@ -1013,52 +1037,21 @@ app.delete('/api/queue/:id', requireAuth, (req, res) => {
 
 // --- Professional Manual Play Logic ('Signature Intro Pipelining') ---
 function playWithIntro(track) {
-    // 1. HARD OVERRIDE: Destroy old world
-    engineEpoch++;
-    isTransitioning = true;
+    if (!track) return;
+    pendingIntro = true;
+    console.log(`[ENGINE] Preparing Play-Now: ${track.title}`);
     
-    // 2. Clear old timers immediately
-    if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
-    
-    // 3. Kill current process and REMOVE listeners to prevent any shifts
-    if (currentProcess) {
-        currentProcess.removeAllListeners();
-        try { currentProcess.kill('SIGKILL'); } catch(e) {}
-        currentProcess = null;
-    }
-
-    // 4. Retire the track that was just ended to prevent it shifting to index 1
-    // CRITICAL FIX: Only shift if the station was actually playing. 
-    // If it was stopped, queue[0] is a valid track that shouldn't be deleted.
-    // NOTE: In Library mode, we no longer shift. We just clear the current process.
-    if (isPlaying && currentProcess) {
-        console.log(`[ENGINE] Overriding current playback for: ${track.title}`);
-    }
-
-    // 5. Build the Deployment Segment (Intro + Track)
-    const intro = {
-        id: 'ident-' + Date.now().toString(36),
-        status: 'ready',
-        title: 'STATION IDENT', artist: 'BUKUMA RADIO',
-        localPath: path.join(__dirname, 'public/app', 'ident.mp3')
-    };
-    if (!fs.existsSync(intro.localPath)) {
-        intro.localPath = path.join(dataDir, 'jingles', 'ident.mp3');
+    if (isPlaying) {
+        engineEpoch++;
+        if (currentProcess) {
+            currentProcess.removeAllListeners();
+            try { currentProcess.kill('SIGKILL'); } catch(e) {}
+            currentProcess = null;
+        }
     }
     
-    // 6. Deploy the sequence
-    queue.unshift(track);
-    if (fs.existsSync(intro.localPath)) {
-        console.log('[ENGINE] Pipelining Branded Intro...');
-        queue.unshift(intro);
-    }
-    
-    saveState();
-    isOnAir   = true; 
     isPlaying = true;
-    isTransitioning = false;
-    
-    // Invoke playback in the new epoch world
+    isOnAir = true;
     playNext();
 }
 
@@ -1076,12 +1069,27 @@ app.post('/api/queue/:id/play-now', requireAuth, (req, res) => {
 app.get('/api/youtube/search', (req, res) => {
     const q = req.query.q?.replace(/['"\\]/g, '');
     if (!q) return res.json({ results: [] });
-    const cmd = `"${YTDLP_PATH}" "ytsearch5:${q}" --flat-playlist --print "%(id)s|||%(title)s|||%(duration_string)s" --no-warnings`;
+    
+    console.log(`[SCOUT] Searching: ${q}`);
+    const extractorArgs = 'youtube:player_client=default,android_sdkless';
+    // Robust search command using --print and --quiet to ensure clean parsing
+    const cmd = `"${YTDLP_PATH}" --quiet --no-warnings --flat-playlist --print "%(id)s|||%(title)s|||%(duration_string)s" --extractor-args "${extractorArgs}" "ytsearch5:${q}"`;
+    
     exec(cmd, { timeout: 30000 }, (err, stdout) => {
-        if (err || !stdout?.trim()) return res.json({ results: [] });
-        const results = stdout.trim().split('\n').map(line => {
+        if (err || !stdout?.trim()) {
+            console.error('[SCOUT] Search Fail or Timeout', err?.message);
+            return res.json({ results: [] });
+        }
+        
+        const results = stdout.trim().split('\n').filter(l => l.includes('|||')).map(line => {
             const [vid, title, dur] = line.split('|||').map(s => s?.trim());
-            return { videoId: vid, title, url: 'https://www.youtube.com/watch?v=' + vid, thumbnail: 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg', duration: dur };
+            return { 
+                videoId: vid, 
+                title, 
+                url: 'https://www.youtube.com/watch?v=' + vid, 
+                thumbnail: 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg', 
+                duration: dur 
+            };
         });
         res.json({ results });
     });
