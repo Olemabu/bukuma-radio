@@ -1,104 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bukuma Personal App</title>
-    <link rel="manifest" href="/app/manifest.json">
-    <link rel="stylesheet" href="/app/style.css">
-    <!-- Ionicons for bottom nav -->
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Bukuma Personal App</title>
+  <link rel="manifest" href="/app/manifest.json">
+  <link rel="stylesheet" href="/app/style.css">
+  <!-- Ionicons for bottom nav -->
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 <body>
+  <!-- Dynamic PWA Background -->
+  <div class="app-bg"></div>
 
-    <!-- Dynamic PWA Background -->
-    <div class="app-bg"></div>
+  <div class="app-container">
+    <header class="app-header">
+      <h1 id="appTitle">Bukuma Community Radio</h1>
+    </header>
 
-    <div class="app-container">
-        
-        <header class="app-header">
-            <h1 id="appTitle">Bukuma Community Radio</h1>
-        </header>
+    <main class="player-main">
+      <!-- Live Audio Visualizer -->
+      <canvas id="waveformCanvas"></canvas>
 
-        <main class="player-main">
-            <!-- Live Audio Visualizer -->
-            <canvas id="waveformCanvas"></canvas>
+      <!-- Central Dial -->
+      <div class="dial-container">
+        <div class="soundwave" id="leftWave"></div>
+        <div class="center-dial" id="mainDial">
+          <div class="dial-inner">
+            <h2 id="dialTitle">Agum Bukuma<br>Radio</h2>
+            <div class="dial-wave"></div>
+          </div>
+        </div>
+        <div class="soundwave" id="rightWave"></div>
+      </div>
 
-            <!-- Central Dial -->
-            <div class="dial-container">
-                <div class="center-dial" id="mainDial">
-                    <div class="dial-inner">
-                        <h2 id="dialTitle">Agum Bukuma<br>Radio</h2>
-                    </div>
-                </div>
-            </div>
+      <!-- Player Info & Scrubber -->
+      <div class="player-info">
+        <div class="scrubber">
+          <span id="timeCurrent">00:00</span>
+          <input type="range" id="seekSlider" value="0" min="0" max="100" class="slider" disabled>
+          <span id="timeDuration">Live</span>
+        </div>
 
-            <!-- Player Info & Scrubber -->
-            <div class="player-info">
-                <div class="scrubber">
-                    <span id="timeCurrent">00:00</span>
-                    <input type="range" id="seekSlider" value="0" min="0" max="100" class="slider" disabled>
-                    <span id="timeDuration">Live</span>
-                </div>
-                
-                <!-- Transport Controls -->
-                <div class="transport-controls">
-                    <button class="transport-btn side-btn" id="btnShuffle">
-                        <ion-icon name="shuffle-outline"></ion-icon>
-                    </button>
-                    <button class="transport-btn main-btn" id="btnPrev">
-                        <ion-icon name="play-back"></ion-icon>
-                    </button>
-                    <button class="transport-btn play-btn" id="btnPlayPause">
-                        <ion-icon name="play" id="playIcon"></ion-icon>
-                    </button>
-                    <button class="transport-btn main-btn" id="btnNext">
-                        <ion-icon name="play-forward"></ion-icon>
-                    </button>
-                    <button class="transport-btn side-btn" id="btnRepeat">
-                        <ion-icon name="repeat-outline"></ion-icon>
-                    </button>
-                </div>
-            </div>
+        <!-- Transport Controls -->
+        <div class="transport-controls">
+          <button class="transport-btn side-btn" id="btnShuffle">
+            <ion-icon name="shuffle-outline"></ion-icon>
+          </button>
+          <button class="transport-btn main-btn" id="btnPrev">
+            <ion-icon name="play-back"></ion-icon>
+          </button>
+          <button class="transport-btn play-btn" id="btnPlayPause">
+            <ion-icon name="play" id="playIcon"></ion-icon>
+          </button>
+          <button class="transport-btn main-btn" id="btnNext">
+            <ion-icon name="play-forward"></ion-icon>
+          </button>
+          <button class="transport-btn side-btn" id="btnRepeat">
+            <ion-icon name="repeat-outline"></ion-icon>
+          </button>
+        </div>
+      </div>
 
-            <!-- Dock / Now Playing Info -->
-            <div class="now-playing-dock">
-                <div class="thumb" id="currThumb"></div>
-                <div class="track-details">
-                    <h3 id="currTitle">Awaiting Signal...</h3>
-                    <p id="currArtist">Radio Mode</p>
-                </div>
-            </div>
+      <!-- Dock / Now Playing Info -->
+      <div class="now-playing-dock">
+        <div class="thumb" id="currThumb"></div>
+        <div class="track-details">
+          <h3 id="currTitle">Awaiting Signal...</h3>
+          <p id="currArtist">Radio Mode</p>
+        </div>
+      </div>
+    </main>
 
-        </main>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" id="navRadio">
+        <ion-icon name="radio-outline"></ion-icon>
+        <span>Live</span>
+      </button>
+      <button class="nav-item" id="navLocal">
+        <ion-icon name="library-outline"></ion-icon>
+        <span>Local</span>
+      </button>
+      <button class="nav-item" id="navChat">
+        <ion-icon name="chatbubbles-outline"></ion-icon>
+        <span>Chat</span>
+      </button>
+      <button class="nav-item" id="navProfile">
+        <ion-icon name="person-outline"></ion-icon>
+        <span>Profile</span>
+      </button>
+    </nav>
+  </div>
 
-        <!-- Bottom Navigation -->
-        <nav class="bottom-nav">
-            <button class="nav-item active" id="navRadio">
-                <ion-icon name="radio-outline"></ion-icon>
-                <span>Live</span>
-            </button>
-            <button class="nav-item" id="navLocal">
-                <ion-icon name="library-outline"></ion-icon>
-                <span>Local</span>
-            </button>
-            <button class="nav-item" id="navChat">
-                <ion-icon name="chatbubbles-outline"></ion-icon>
-                <span>Chat</span>
-            </button>
-            <button class="nav-item" id="navProfile">
-                <ion-icon name="person-outline"></ion-icon>
-                <span>Profile</span>
-            </button>
-        </nav>
-    </div>
+  <!-- Hidden Input for Local Music files -->
+  <input type="file" id="localFileInput" accept="audio/*" multiple style="display: none;">
 
-    <!-- Hidden Input for Local Music files -->
-    <input type="file" id="localFileInput" accept="audio/*" multiple style="display: none;">
-    <!-- Audio element for both Radio and Local playback -->
-    <audio id="audioPlayer" preload="none"></audio>
+  <!-- FIX: crossorigin="anonymous" required for Web Audio API createMediaElementSource() -->
+  <audio id="audioPlayer" preload="none" crossorigin="anonymous"></audio>
 
-    <script src="/app/app.js"></script>
+  <script src="/app/app.js"></script>
 </body>
-</html>
+    </html>
