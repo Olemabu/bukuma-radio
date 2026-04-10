@@ -14,27 +14,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
   <style>
-    :root { --cream:#FFF5E1;--leaf:#1B4D3E;--orange:#FF5733;--green:#2ECC71;--teal:#1ABC9C;--white:#FFFFFF;--shadow:rgba(46,204,113,0.1); }
+    :root{--cream:#FFF5E1;--leaf:#1B4D3E;--orange:#FF5733;--green:#2ECC71;--teal:#1ABC9C;--white:#FFFFFF;--shadow:rgba(46,204,113,0.1);}
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-    body{background-color:var(--cream);color:var(--leaf);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:20px;overflow-x:hidden;}
-    .header-section{align-items:center;text-align:center;margin-bottom:20px;}
+    body{background:var(--cream);color:var(--leaf);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:20px;overflow-x:hidden;}
+    .header-section{text-align:center;margin-bottom:20px;}
     .brand-title{font-size:28px;font-weight:900;color:var(--leaf);letter-spacing:-1px;text-transform:uppercase;}
-    .tagline-box{background-color:var(--orange);padding:4px 12px;border-radius:4px;display:inline-block;margin-top:5px;}
-    .tagline-text{color:var(--white);font-weight:bold;font-size:12px;}
-    .player-card{width:100%;max-width:380px;background-color:var(--white);border-radius:30px;padding:30px;box-shadow:0 10px 30px var(--shadow);margin:20px 0;}
+    .tagline-box{background:var(--orange);padding:4px 12px;border-radius:4px;display:inline-block;margin-top:5px;}
+    .tagline-text{color:#fff;font-weight:bold;font-size:12px;}
+    .player-card{width:100%;max-width:380px;background:#fff;border-radius:30px;padding:30px;box-shadow:0 10px 30px var(--shadow);margin:20px 0;}
     .status-row{display:flex;align-items:center;margin-bottom:15px;}
-    .live-indicator{width:8px;height:8px;border-radius:50%;background-color:var(--orange);margin-right:6px;box-shadow:0 0 8px var(--orange);animation:blink 1.5s infinite;}
+    .live-indicator{width:8px;height:8px;border-radius:50%;background:var(--orange);margin-right:6px;box-shadow:0 0 8px var(--orange);animation:blink 1.5s infinite;}
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
     .live-text{color:var(--orange);font-weight:800;font-size:12px;letter-spacing:1px;}
     .show-title{font-size:24px;font-weight:bold;color:var(--leaf);margin-bottom:4px;}
     .community-text{font-size:16px;color:var(--teal);margin-bottom:25px;}
-    .progress-track{height:6px;background-color:#F0F0F0;border-radius:3px;overflow:hidden;}
-    .progress-active{width:0%;height:100%;background-color:var(--green);transition:width 0.5s ease;}
-    .action-center{align-items:center;text-align:center;margin:20px 0;}
-    .play-button{width:100px;height:100px;border-radius:50%;background-color:var(--green);border:6px solid rgba(46,204,113,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);box-shadow:0 10px 20px rgba(46,204,113,0.2);}
-    .play-button.playing{background-color:var(--orange);border-color:rgba(255,87,51,0.2);box-shadow:0 10px 20px rgba(255,87,51,0.2);}
+    .progress-track{height:6px;background:#F0F0F0;border-radius:3px;overflow:hidden;}
+    .progress-active{width:0%;height:100%;background:var(--green);transition:width 0.5s ease;}
+    .action-center{text-align:center;margin:20px 0;}
+    .play-button{width:100px;height:100px;border-radius:50%;background:var(--green);border:6px solid rgba(46,204,113,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s;box-shadow:0 10px 20px rgba(46,204,113,0.2);margin:0 auto;}
+    .play-button.playing{background:var(--orange);border-color:rgba(255,87,51,0.2);box-shadow:0 10px 20px rgba(255,87,51,0.2);}
     .play-button:active{transform:scale(0.9);}
-    .play-icon{font-size:32px;color:var(--white);}
+    .play-icon{font-size:32px;color:#fff;line-height:1;}
     .play-label{margin-top:15px;color:var(--leaf);font-weight:bold;letter-spacing:1px;font-size:13px;}
     .nav-row{display:flex;width:100%;max-width:400px;justify-content:space-around;margin-top:20px;}
     .nav-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;text-decoration:none;color:inherit;}
@@ -43,11 +43,11 @@
     .vault-section{width:100%;max-width:380px;margin-top:30px;}
     .vault-header{font-weight:900;font-size:18px;color:var(--leaf);margin-bottom:10px;opacity:0.8;}
     .vault-list{display:flex;flex-direction:column;gap:10px;}
-    .vault-track{background:var(--white);padding:15px;border-radius:15px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 10px rgba(0,0,0,0.03);cursor:pointer;}
+    .vault-track{background:#fff;padding:15px;border-radius:15px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 10px rgba(0,0,0,0.03);cursor:pointer;}
     .vault-track:hover{border:1px solid var(--green);}
-    .vault-thumb{width:40px;height:40px;border-radius:8px;background:#eee;}
+    .vault-thumb{width:40px;height:40px;border-radius:8px;background:#eee;object-fit:cover;}
     .vault-info{flex:1;min-width:0;}
-    .vault-name{font-weight:700;font-size:13px;color:var(--leaf);}
+    .vault-name{font-weight:700;font-size:13px;color:var(--leaf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .vault-artist{font-size:11px;color:var(--teal);}
   </style>
 </head>
@@ -76,73 +76,56 @@
     <div class="nav-item"><span class="nav-emoji">&#128172;</span><span class="nav-text">Talk</span></div>
     <div class="nav-item"><span class="nav-emoji">&#127807;</span><span class="nav-text">Growth</span></div>
   </div>
-  <div class="vault-section" id="vault">
+  <div class="vault-section">
     <h3 class="vault-header">COMMUNITY VAULT</h3>
     <div class="vault-list" id="vaultContainer"><p style="opacity:0.5;font-size:12px">Syncing...</p></div>
   </div>
   <audio id="radioStream" preload="none" crossorigin="anonymous"></audio>
   <script>
     'use strict';
-    const S = { playing: false, vol: 80, retryDelay: 2000, stallTimer: null };
+    const S = { playing: false, retryDelay: 2000, stallTimer: null };
 
-    if ('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator)
       window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-    }
 
     function updateMediaSession(title, artist) {
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: title || 'Agum Bukuma Radio',
-          artist: artist || 'The Voice of the Niger Delta',
-          album: 'The Bukuma Herald',
-          artwork: [{ src: '/images/icon-512.png', sizes: '512x512', type: 'image/png' }]
-        });
-        navigator.mediaSession.setActionHandler('play',  () => { if (!S.playing) tuneIn(); });
-        navigator.mediaSession.setActionHandler('pause', () => { if (S.playing)  tuneIn(); });
-      }
+      if (!('mediaSession' in navigator)) return;
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: title || 'Agum Bukuma Radio',
+        artist: artist || 'The Voice of the Niger Delta',
+        album: 'The Bukuma Herald',
+        artwork: [{ src: '/images/icon-512.png', sizes: '512x512', type: 'image/png' }]
+      });
+      navigator.mediaSession.setActionHandler('play',  () => { if (!S.playing) tuneIn(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if  (S.playing) tuneIn(); });
     }
 
-    // FIX: fetch status for track title display only — never drives play/stop
     async function fetchStatus() {
       try {
-        const r = await fetch('/api/status');
-        const d = await r.json();
+        const d = await fetch('/api/status').then(r => r.json());
         if (d.currentTrack) {
           document.getElementById('displayTrackTitle').textContent  = d.currentTrack.title  || 'Agum Bukuma Radio';
           document.getElementById('displayTrackArtist').textContent = d.currentTrack.artist || 'Live Broadcast';
           updateMediaSession(d.currentTrack.title, d.currentTrack.artist);
         }
-        if (d.isPlaying) {
-          document.getElementById('statusLabel').textContent = 'ON AIR';
-        } else {
-          document.getElementById('statusLabel').textContent = 'OFFLINE';
-        }
+        document.getElementById('statusLabel').textContent = d.isPlaying ? 'ON AIR' : 'OFFLINE';
       } catch(e) {}
     }
 
     const audio = document.getElementById('radioStream');
 
-    // FIX: audio error handler — auto-reconnect without full page logic reset
     audio.addEventListener('error', () => {
       if (!S.playing) return;
       setTimeout(() => {
-        if (S.playing) {
-          audio.src = '/api/stream?' + Date.now();
-          audio.play().catch(() => {});
-        }
+        if (S.playing) { audio.src = '/api/stream?' + Date.now(); audio.play().catch(() => {}); }
       }, S.retryDelay);
       S.retryDelay = Math.min(S.retryDelay * 1.5, 15000);
     });
-
-    // FIX: stall detection
     audio.addEventListener('waiting', () => {
       if (!S.playing) return;
       if (S.stallTimer) clearTimeout(S.stallTimer);
       S.stallTimer = setTimeout(() => {
-        if (S.playing && audio.readyState < 3) {
-          audio.src = '/api/stream?' + Date.now();
-          audio.play().catch(() => {});
-        }
+        if (S.playing && audio.readyState < 3) { audio.src = '/api/stream?' + Date.now(); audio.play().catch(() => {}); }
       }, 10000);
     });
     audio.addEventListener('playing', () => {
@@ -154,63 +137,49 @@
     function tuneIn() {
       if (!S.playing) {
         audio.src = '/api/stream?' + Date.now();
-        audio.play().then(() => {
-          S.playing = true;
-          updatePlayUI(true);
-        }).catch(() => {});
+        audio.play().then(() => { S.playing = true; updatePlayUI(true); }).catch(() => {});
       } else {
-        audio.pause();
-        audio.src = '';
-        S.playing = false;
-        updatePlayUI(false);
+        audio.pause(); audio.src = '';
+        S.playing = false; updatePlayUI(false);
       }
     }
 
+    // FIX: use innerHTML so HTML entities render as actual symbols (not literal text)
     function updatePlayUI(playing) {
-      const btn   = document.getElementById('playBtnMain');
-      const icon  = document.getElementById('playIcon');
-      const label = document.getElementById('playStatusText');
-      if (playing) {
-        btn.classList.add('playing');
-        icon.textContent  = '&#9646;&#9646;';
-        label.textContent = 'LISTENING LIVE';
-      } else {
-        btn.classList.remove('playing');
-        icon.innerHTML    = '&#9654;';
-        label.textContent = 'TAP TO LISTEN';
-      }
+      document.getElementById('playBtnMain').classList.toggle('playing', playing);
+      document.getElementById('playIcon').innerHTML    = playing ? '&#9646;&#9646;' : '&#9654;';
+      document.getElementById('playStatusText').textContent = playing ? 'LISTENING LIVE' : 'TAP TO LISTEN';
     }
 
     async function loadVault() {
       try {
-        const r = await fetch('/api/vault');
-        const d = await r.json();
-        const container = document.getElementById('vaultContainer');
-        if (!container || !d.tracks.length) return;
-        container.innerHTML = d.tracks.map(t =>
-          '<div class="vault-track" onclick="playVaultTrack(\''+t.id+'\',\''+encodeURIComponent(t.title)+'\',\''+encodeURIComponent(t.artist||'')+'\')">'+
-          '<img src="'+(t.thumbnail||'https://via.placeholder.com/50')+'" class="vault-thumb">'+
-          '<div class="vault-info"><div class="vault-name">'+t.title+'</div><div class="vault-artist">'+(t.artist||'')+'</div></div></div>'
+        const d = await fetch('/api/vault').then(r => r.json());
+        const c = document.getElementById('vaultContainer');
+        if (!c || !d.tracks || !d.tracks.length) return;
+        c.innerHTML = d.tracks.map(t =>
+          '<div class="vault-track" onclick="playVaultTrack(\'' + t.id + '\',\'' +
+          encodeURIComponent(t.title) + '\',\'' + encodeURIComponent(t.artist || '') + '\')">' +
+          '<img src="' + (t.thumbnail || '/images/icon-512.png') + '" class="vault-thumb" onerror="this.src='/images/icon-512.png'">' +
+          '<div class="vault-info"><div class="vault-name">' + t.title + '</div>' +
+          '<div class="vault-artist">' + (t.artist || '') + '</div></div></div>'
         ).join('');
       } catch(e) {}
     }
 
     function playVaultTrack(id, title, artist) {
-      audio.src = '/api/downloads/'+id+'.mp3';
+      audio.src = '/api/downloads/' + id + '.mp3';
       audio.play().catch(() => {});
-      S.playing = true;
-      updatePlayUI(true);
-      document.getElementById('displayTrackTitle').textContent  = decodeURIComponent(title);
-      document.getElementById('displayTrackArtist').textContent = decodeURIComponent(artist);
-      updateMediaSession(decodeURIComponent(title), decodeURIComponent(artist));
+      S.playing = true; updatePlayUI(true);
+      const t = decodeURIComponent(title), a = decodeURIComponent(artist);
+      document.getElementById('displayTrackTitle').textContent  = t;
+      document.getElementById('displayTrackArtist').textContent = a;
+      updateMediaSession(t, a);
     }
 
-    // Init
     fetchStatus();
     loadVault();
     setInterval(fetchStatus, 10000);
 
-    // Animated progress bar (UI only)
     let prog = 0;
     setInterval(() => {
       if (S.playing) {
@@ -220,4 +189,4 @@
     }, 1000);
   </script>
 </body>
-  </html>
+</html>
