@@ -1,331 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>The Bukuma Herald — Agum Bukuma Radio</title>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1B4D3E">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
-<meta name="apple-mobile-web-app-title" content="Bukuma Herald">
-<link rel="apple-touch-icon" href="/images/icon-512.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-<style>
-:root {
-  --cream: #FFF5E1;
-  --leaf: #1B4D3E;
-  --orange: #FF5733;
-  --green: #2ECC71;
-  --teal: #1ABC9C;
-  --white: #FFFFFF;
-  --shadow: rgba(46, 204, 113, 0.1);
-}
-
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-body { 
-  background-color: var(--cream); 
-  color: var(--leaf); 
-  font-family: 'Inter', sans-serif; 
-  min-height: 100vh; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: space-around; 
-  padding: 20px;
-  overflow-x: hidden;
-}
-
-/* HEADER */
-.header-section { align-items: center; text-align: center; margin-bottom: 20px; }
-.brand-title { 
-  font-size: 28px; 
-  font-weight: 900; 
-  color: var(--leaf); 
-  letter-spacing: -1px; 
-  text-transform: uppercase;
-}
-.tagline-box { 
-  background-color: var(--orange); 
-  padding: 4px 12px; 
-  border-radius: 4px; 
-  display: inline-block; 
-  margin-top: 5px; 
-}
-.tagline-text { color: var(--white); font-weight: bold; font-size: 12px; }
-
-/* PLAYER CARD */
-.player-card { 
-  width: 100%; 
-  max-width: 380px; 
-  background-color: var(--white); 
-  border-radius: 30px; 
-  padding: 30px; 
-  box-shadow: 0 10px 30px var(--shadow); 
-  margin: 20px 0;
-}
-.status-row { display: flex; align-items: center; margin-bottom: 15px; }
-.live-indicator { 
-  width: 8px; 
-  height: 8px; 
-  border-radius: 50%; 
-  background-color: var(--orange); 
-  margin-right: 6px; 
-  box-shadow: 0 0 8px var(--orange);
-  animation: blink 1.5s infinite;
-}
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-.live-text { color: var(--orange); font-weight: 800; font-size: 12px; letter-spacing: 1px; }
-
-.show-title { font-size: 24px; font-weight: bold; color: var(--leaf); margin-bottom: 4px; }
-.community-text { font-size: 16px; color: var(--teal); margin-bottom: 25px; }
-
-.progress-track { height: 6px; background-color: #F0F0F0; border-radius: 3px; overflow: hidden; }
-.progress-active { width: 65%; height: 100%; background-color: var(--green); transition: width 0.5s ease; }
-
-/* ACTION CENTER */
-.action-center { align-items: center; text-align: center; margin: 20px 0; }
-.play-button { 
-  width: 100px; 
-  height: 100px; 
-  border-radius: 50%; 
-  background-color: var(--green); 
-  border: 6px solid rgba(46, 204, 113, 0.2); 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  cursor: pointer; 
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 10px 20px rgba(46, 204, 113, 0.2);
-}
-.play-button.playing { 
-  background-color: var(--orange); 
-  border-color: rgba(255, 87, 51, 0.2); 
-  box-shadow: 0 10px 20px rgba(255, 87, 51, 0.2);
-}
-.play-button:active { transform: scale(0.9); }
-.play-icon { font-size: 32px; color: var(--white); }
-.play-label { margin-top: 15px; color: var(--leaf); font-weight: bold; letter-spacing: 1px; font-size: 13px; }
-
-/* NAV ROW */
-.nav-row { display: flex; width: 100%; max-width: 400px; justify-content: space-around; margin-top: 20px; }
-.nav-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; text-decoration: none; color: inherit; }
-.nav-emoji { font-size: 24px; margin-bottom: 5px; }
-.nav-text { color: var(--leaf); font-size: 12px; font-weight: 600; }
-
-/* VAULT SECTION (Inherited Feature) */
-.vault-section { width: 100%; max-width: 380px; margin-top: 30px; }
-.vault-header { font-weight: 900; font-size: 18px; color: var(--leaf); margin-bottom: 10px; opacity: 0.8; }
-.vault-list { display: flex; flex-direction: column; gap: 10px; }
-.vault-track { 
-  background: var(--white); 
-  padding: 15px; 
-  border-radius: 15px; 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-  cursor: pointer;
-}
-.vault-track:hover { border: 1px solid var(--green); }
-.vault-thumb { width:40px; height:40px; border-radius:8px; background: #eee; }
-.vault-info { flex: 1; min-width: 0; }
-.vault-name { font-weight: 700; font-size: 13px; color: var(--leaf); }
-.vault-artist { font-size: 11px; color: var(--teal); }
-
-/* HIDDEN STUFF */
-.hidden { display: none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>The Bukuma Herald — Agum Bukuma Radio</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1B4D3E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
+  <meta name="apple-mobile-web-app-title" content="Bukuma Herald">
+  <link rel="apple-touch-icon" href="/images/icon-512.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --cream:#FFF5E1;--leaf:#1B4D3E;--orange:#FF5733;--green:#2ECC71;--teal:#1ABC9C;--white:#FFFFFF;--shadow:rgba(46,204,113,0.1); }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{background-color:var(--cream);color:var(--leaf);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:20px;overflow-x:hidden;}
+    .header-section{align-items:center;text-align:center;margin-bottom:20px;}
+    .brand-title{font-size:28px;font-weight:900;color:var(--leaf);letter-spacing:-1px;text-transform:uppercase;}
+    .tagline-box{background-color:var(--orange);padding:4px 12px;border-radius:4px;display:inline-block;margin-top:5px;}
+    .tagline-text{color:var(--white);font-weight:bold;font-size:12px;}
+    .player-card{width:100%;max-width:380px;background-color:var(--white);border-radius:30px;padding:30px;box-shadow:0 10px 30px var(--shadow);margin:20px 0;}
+    .status-row{display:flex;align-items:center;margin-bottom:15px;}
+    .live-indicator{width:8px;height:8px;border-radius:50%;background-color:var(--orange);margin-right:6px;box-shadow:0 0 8px var(--orange);animation:blink 1.5s infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+    .live-text{color:var(--orange);font-weight:800;font-size:12px;letter-spacing:1px;}
+    .show-title{font-size:24px;font-weight:bold;color:var(--leaf);margin-bottom:4px;}
+    .community-text{font-size:16px;color:var(--teal);margin-bottom:25px;}
+    .progress-track{height:6px;background-color:#F0F0F0;border-radius:3px;overflow:hidden;}
+    .progress-active{width:0%;height:100%;background-color:var(--green);transition:width 0.5s ease;}
+    .action-center{align-items:center;text-align:center;margin:20px 0;}
+    .play-button{width:100px;height:100px;border-radius:50%;background-color:var(--green);border:6px solid rgba(46,204,113,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);box-shadow:0 10px 20px rgba(46,204,113,0.2);}
+    .play-button.playing{background-color:var(--orange);border-color:rgba(255,87,51,0.2);box-shadow:0 10px 20px rgba(255,87,51,0.2);}
+    .play-button:active{transform:scale(0.9);}
+    .play-icon{font-size:32px;color:var(--white);}
+    .play-label{margin-top:15px;color:var(--leaf);font-weight:bold;letter-spacing:1px;font-size:13px;}
+    .nav-row{display:flex;width:100%;max-width:400px;justify-content:space-around;margin-top:20px;}
+    .nav-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;text-decoration:none;color:inherit;}
+    .nav-emoji{font-size:24px;margin-bottom:5px;}
+    .nav-text{color:var(--leaf);font-size:12px;font-weight:600;}
+    .vault-section{width:100%;max-width:380px;margin-top:30px;}
+    .vault-header{font-weight:900;font-size:18px;color:var(--leaf);margin-bottom:10px;opacity:0.8;}
+    .vault-list{display:flex;flex-direction:column;gap:10px;}
+    .vault-track{background:var(--white);padding:15px;border-radius:15px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 10px rgba(0,0,0,0.03);cursor:pointer;}
+    .vault-track:hover{border:1px solid var(--green);}
+    .vault-thumb{width:40px;height:40px;border-radius:8px;background:#eee;}
+    .vault-info{flex:1;min-width:0;}
+    .vault-name{font-weight:700;font-size:13px;color:var(--leaf);}
+    .vault-artist{font-size:11px;color:var(--teal);}
+  </style>
 </head>
 <body>
-
-  <!-- Header Section -->
   <div class="header-section">
     <h1 class="brand-title">THE BUKUMA HERALD</h1>
-    <div class="tagline-box">
-      <span class="tagline-text">AGUM BUKUMA RADIO</span>
-    </div>
+    <div class="tagline-box"><span class="tagline-text">AGUM BUKUMA RADIO</span></div>
   </div>
-
-  <!-- Main Player Card -->
   <div class="player-card">
     <div class="status-row">
       <div class="live-indicator"></div>
       <span class="live-text" id="statusLabel">ON AIR</span>
     </div>
-    
-    <h2 class="show-title" id="displayTrackTitle">Morning Tide Show</h2>
-    <p class="community-text" id="displayTrackArtist">Optimism in the Niger Delta</p>
-    
-    <div class="progress-track">
-      <div class="progress-active" id="progressFill"></div>
-    </div>
+    <h2 class="show-title" id="displayTrackTitle">Agum Bukuma Radio</h2>
+    <p class="community-text" id="displayTrackArtist">The Voice of the Niger Delta</p>
+    <div class="progress-track"><div class="progress-active" id="progressFill"></div></div>
   </div>
-
-  <!-- Play Action Area -->
   <div class="action-center">
     <div class="play-button" id="playBtnMain" onclick="tuneIn()">
-      <span class="play-icon" id="playIcon">▶</span>
+      <span class="play-icon" id="playIcon">&#9654;</span>
     </div>
     <p class="play-label" id="playStatusText">TAP TO LISTEN</p>
   </div>
-
-  <!-- Navigation / Features -->
   <div class="nav-row">
-    <a href="#vault" class="nav-item">
-      <span class="nav-emoji">📻</span>
-      <span class="nav-text">Shows</span>
-    </a>
-    <div class="nav-item">
-      <span class="nav-emoji">💬</span>
-      <span class="nav-text">Talk</span>
-    </div>
-    <div class="nav-item">
-      <span class="nav-emoji">🌱</span>
-      <span class="nav-text">Growth</span>
-    </div>
+    <a href="/app/" class="nav-item"><span class="nav-emoji">&#128251;</span><span class="nav-text">Player</span></a>
+    <div class="nav-item"><span class="nav-emoji">&#128172;</span><span class="nav-text">Talk</span></div>
+    <div class="nav-item"><span class="nav-emoji">&#127807;</span><span class="nav-text">Growth</span></div>
   </div>
-
-  <!-- Community Vault -->
   <div class="vault-section" id="vault">
     <h3 class="vault-header">COMMUNITY VAULT</h3>
-    <div class="vault-list" id="vaultContainer">
-      <p style="opacity:0.5; font-size:12px">Syncing news feed...</p>
-    </div>
+    <div class="vault-list" id="vaultContainer"><p style="opacity:0.5;font-size:12px">Syncing...</p></div>
   </div>
-
-  <!-- Audio -->
   <audio id="radioStream" preload="none" crossorigin="anonymous"></audio>
+  <script>
+    'use strict';
+    const S = { playing: false, vol: 80, retryDelay: 2000, stallTimer: null };
 
-<script>
-const S = { playing: false, isLive: true, vol: 80 };
-
-// --- PWA & Service Worker ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-      console.log('[PWA] Heritage Herald Active');
-    });
-  });
-}
-
-// --- Media Session API ---
-function updateMediaSession(title, artist, thumb) {
-  if ('mediaSession' in navigator) {
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: title || 'Agum Bukuma Radio',
-      artist: artist || 'The Voice of the Niger Delta',
-      album: 'The Bukuma Herald',
-      artwork: [{ src: thumb || '/images/icon-512.png', sizes: '512x512', type: 'image/png' }]
-    });
-    navigator.mediaSession.setActionHandler('play', () => { tuneIn(); });
-    navigator.mediaSession.setActionHandler('pause', () => { tuneIn(); });
-  }
-}
-
-// --- Status Sync ---
-async function fetchStatus() {
-  try {
-    const r = await fetch('/api/status');
-    const d = await r.json();
-    if (S.isLive && d.currentTrack) {
-      document.getElementById('displayTrackTitle').textContent = d.currentTrack.title;
-      document.getElementById('displayTrackArtist').textContent = d.currentTrack.artist || 'Live Broadcast';
-      updateMediaSession(d.currentTrack.title, d.currentTrack.artist, d.currentTrack.thumbnail);
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
     }
-  } catch(e) {}
-}
 
-// --- Playback Logic ---
-function tuneIn() {
-  const audio = document.getElementById('radioStream');
-  const btn = document.getElementById('playBtnMain');
-  const icon = document.getElementById('playIcon');
-  const label = document.getElementById('playStatusText');
+    function updateMediaSession(title, artist) {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: title || 'Agum Bukuma Radio',
+          artist: artist || 'The Voice of the Niger Delta',
+          album: 'The Bukuma Herald',
+          artwork: [{ src: '/images/icon-512.png', sizes: '512x512', type: 'image/png' }]
+        });
+        navigator.mediaSession.setActionHandler('play',  () => { if (!S.playing) tuneIn(); });
+        navigator.mediaSession.setActionHandler('pause', () => { if (S.playing)  tuneIn(); });
+      }
+    }
 
-  S.isLive = true;
-  document.getElementById('statusLabel').textContent = 'ON AIR';
-  document.getElementById('statusLabel').style.color = 'var(--orange)';
+    // FIX: fetch status for track title display only — never drives play/stop
+    async function fetchStatus() {
+      try {
+        const r = await fetch('/api/status');
+        const d = await r.json();
+        if (d.currentTrack) {
+          document.getElementById('displayTrackTitle').textContent  = d.currentTrack.title  || 'Agum Bukuma Radio';
+          document.getElementById('displayTrackArtist').textContent = d.currentTrack.artist || 'Live Broadcast';
+          updateMediaSession(d.currentTrack.title, d.currentTrack.artist);
+        }
+        if (d.isPlaying) {
+          document.getElementById('statusLabel').textContent = 'ON AIR';
+        } else {
+          document.getElementById('statusLabel').textContent = 'OFFLINE';
+        }
+      } catch(e) {}
+    }
 
-  if (!S.playing) {
-    audio.src = '/api/stream?t=' + Date.now();
-    audio.play().then(() => {
+    const audio = document.getElementById('radioStream');
+
+    // FIX: audio error handler — auto-reconnect without full page logic reset
+    audio.addEventListener('error', () => {
+      if (!S.playing) return;
+      setTimeout(() => {
+        if (S.playing) {
+          audio.src = '/api/stream?' + Date.now();
+          audio.play().catch(() => {});
+        }
+      }, S.retryDelay);
+      S.retryDelay = Math.min(S.retryDelay * 1.5, 15000);
+    });
+
+    // FIX: stall detection
+    audio.addEventListener('waiting', () => {
+      if (!S.playing) return;
+      if (S.stallTimer) clearTimeout(S.stallTimer);
+      S.stallTimer = setTimeout(() => {
+        if (S.playing && audio.readyState < 3) {
+          audio.src = '/api/stream?' + Date.now();
+          audio.play().catch(() => {});
+        }
+      }, 10000);
+    });
+    audio.addEventListener('playing', () => {
+      if (S.stallTimer) { clearTimeout(S.stallTimer); S.stallTimer = null; }
+      S.retryDelay = 2000;
+    });
+    audio.addEventListener('ended', () => { S.playing = false; updatePlayUI(false); });
+
+    function tuneIn() {
+      if (!S.playing) {
+        audio.src = '/api/stream?' + Date.now();
+        audio.play().then(() => {
+          S.playing = true;
+          updatePlayUI(true);
+        }).catch(() => {});
+      } else {
+        audio.pause();
+        audio.src = '';
+        S.playing = false;
+        updatePlayUI(false);
+      }
+    }
+
+    function updatePlayUI(playing) {
+      const btn   = document.getElementById('playBtnMain');
+      const icon  = document.getElementById('playIcon');
+      const label = document.getElementById('playStatusText');
+      if (playing) {
+        btn.classList.add('playing');
+        icon.textContent  = '&#9646;&#9646;';
+        label.textContent = 'LISTENING LIVE';
+      } else {
+        btn.classList.remove('playing');
+        icon.innerHTML    = '&#9654;';
+        label.textContent = 'TAP TO LISTEN';
+      }
+    }
+
+    async function loadVault() {
+      try {
+        const r = await fetch('/api/vault');
+        const d = await r.json();
+        const container = document.getElementById('vaultContainer');
+        if (!container || !d.tracks.length) return;
+        container.innerHTML = d.tracks.map(t =>
+          '<div class="vault-track" onclick="playVaultTrack(\''+t.id+'\',\''+encodeURIComponent(t.title)+'\',\''+encodeURIComponent(t.artist||'')+'\')">'+
+          '<img src="'+(t.thumbnail||'https://via.placeholder.com/50')+'" class="vault-thumb">'+
+          '<div class="vault-info"><div class="vault-name">'+t.title+'</div><div class="vault-artist">'+(t.artist||'')+'</div></div></div>'
+        ).join('');
+      } catch(e) {}
+    }
+
+    function playVaultTrack(id, title, artist) {
+      audio.src = '/api/downloads/'+id+'.mp3';
+      audio.play().catch(() => {});
       S.playing = true;
-      btn.classList.add('playing');
-      icon.textContent = '⏸';
-      label.textContent = 'LISTENING LIVE';
-      updatePlayState(true);
-    });
-  } else {
-    audio.pause();
-    audio.src = '';
-    S.playing = false;
-    btn.classList.remove('playing');
-    icon.textContent = '▶';
-    label.textContent = 'TAP TO LISTEN';
-    updatePlayState(false);
-  }
-}
-
-function updatePlayState(playing) {
-  // Sync logic for any secondary UI
-}
-
-// --- Vault Logic ---
-async function loadVault() {
-  try {
-    const r = await fetch('/api/vault');
-    const d = await r.json();
-    const container = document.getElementById('vaultContainer');
-    if (!container) return;
-    container.innerHTML = d.tracks.map(t => `
-      <div class="vault-track" onclick="playVaultTrack('${t.id}', '${t.title}', '${t.artist}', '${t.thumbnail}')">
-        <img src="${t.thumbnail || 'https://via.placeholder.com/50'}" class="vault-thumb">
-        <div class="vault-info">
-          <div class="vault-name">${t.title}</div>
-          <div class="vault-artist">${t.artist}</div>
-        </div>
-      </div>
-    `).join('');
-  } catch(e) {}
-}
-
-function playVaultTrack(id, title, artist, thumb) {
-  S.isLive = false;
-  const audio = document.getElementById('radioStream');
-  audio.src = `/api/downloads/${id}.mp3`;
-  audio.play();
-  
-  S.playing = true;
-  document.getElementById('playBtnMain').classList.add('playing');
-  document.getElementById('playIcon').textContent = '⏸';
-  document.getElementById('playStatusText').textContent = 'LISTENING VAULT';
-
-  document.getElementById('statusLabel').textContent = 'COLLECTION';
-  document.getElementById('statusLabel').style.color = 'var(--green)';
-  
-  document.getElementById('displayTrackTitle').textContent = title;
-  document.getElementById('displayTrackArtist').textContent = artist;
-  
-  updateMediaSession(title, artist, thumb);
-}
-
-// Init
-fetchStatus();
-loadVault();
-setInterval(fetchStatus, 8000);
-
-// Simulate Progress
-let progOffset = 0;
-setInterval(() => {
-    if (S.playing) {
-        progOffset = (progOffset + 1) % 100;
-        document.getElementById('progressFill').style.width = (30 + (progOffset / 2)) + '%';
+      updatePlayUI(true);
+      document.getElementById('displayTrackTitle').textContent  = decodeURIComponent(title);
+      document.getElementById('displayTrackArtist').textContent = decodeURIComponent(artist);
+      updateMediaSession(decodeURIComponent(title), decodeURIComponent(artist));
     }
-}, 1000);
 
-</script>
+    // Init
+    fetchStatus();
+    loadVault();
+    setInterval(fetchStatus, 10000);
+
+    // Animated progress bar (UI only)
+    let prog = 0;
+    setInterval(() => {
+      if (S.playing) {
+        prog = (prog + 1) % 100;
+        document.getElementById('progressFill').style.width = (30 + prog / 2) + '%';
+      }
+    }, 1000);
+  </script>
 </body>
-</html>
+  </html>
