@@ -49,6 +49,7 @@
     .vault-info{flex:1;min-width:0;}
     .vault-name{font-weight:700;font-size:13px;color:var(--leaf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .vault-artist{font-size:11px;color:var(--teal);}
+    .vault-empty{opacity:0.5;font-size:12px;text-align:center;padding:20px 0;}
   </style>
 </head>
 <body>
@@ -56,6 +57,7 @@
     <h1 class="brand-title">THE BUKUMA HERALD</h1>
     <div class="tagline-box"><span class="tagline-text">AGUM BUKUMA RADIO</span></div>
   </div>
+
   <div class="player-card">
     <div class="status-row">
       <div class="live-indicator"></div>
@@ -65,128 +67,184 @@
     <p class="community-text" id="displayTrackArtist">The Voice of the Niger Delta</p>
     <div class="progress-track"><div class="progress-active" id="progressFill"></div></div>
   </div>
+
   <div class="action-center">
     <div class="play-button" id="playBtnMain" onclick="tuneIn()">
       <span class="play-icon" id="playIcon">&#9654;</span>
     </div>
     <p class="play-label" id="playStatusText">TAP TO LISTEN</p>
   </div>
+
   <div class="nav-row">
     <a href="/app/" class="nav-item"><span class="nav-emoji">&#128251;</span><span class="nav-text">Player</span></a>
     <div class="nav-item"><span class="nav-emoji">&#128172;</span><span class="nav-text">Talk</span></div>
     <div class="nav-item"><span class="nav-emoji">&#127807;</span><span class="nav-text">Growth</span></div>
   </div>
+
   <div class="vault-section">
     <h3 class="vault-header">COMMUNITY VAULT</h3>
-    <div class="vault-list" id="vaultContainer"><p style="opacity:0.5;font-size:12px">Syncing...</p></div>
+    <div class="vault-list" id="vaultContainer"><p class="vault-empty">Syncing...</p></div>
   </div>
+
+  <!-- crossorigin="anonymous" required for Web Audio API MediaElementSource -->
   <audio id="radioStream" preload="none" crossorigin="anonymous"></audio>
+
   <script>
-    'use strict';
-    const S = { playing: false, retryDelay: 2000, stallTimer: null };
+  'use strict';
+  const S = { playing: false, retryDelay: 2000, stallTimer: null };
 
-    if ('serviceWorker' in navigator)
-      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+  }
 
-    function updateMediaSession(title, artist) {
-      if (!('mediaSession' in navigator)) return;
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: title || 'Agum Bukuma Radio',
-        artist: artist || 'The Voice of the Niger Delta',
-        album: 'The Bukuma Herald',
-        artwork: [{ src: '/images/icon-512.png', sizes: '512x512', type: 'image/png' }]
-      });
-      navigator.mediaSession.setActionHandler('play',  () => { if (!S.playing) tuneIn(); });
-      navigator.mediaSession.setActionHandler('pause', () => { if  (S.playing) tuneIn(); });
-    }
-
-    async function fetchStatus() {
-      try {
-        const d = await fetch('/api/status').then(r => r.json());
-        if (d.currentTrack) {
-          document.getElementById('displayTrackTitle').textContent  = d.currentTrack.title  || 'Agum Bukuma Radio';
-          document.getElementById('displayTrackArtist').textContent = d.currentTrack.artist || 'Live Broadcast';
-          updateMediaSession(d.currentTrack.title, d.currentTrack.artist);
-        }
-        document.getElementById('statusLabel').textContent = d.isPlaying ? 'ON AIR' : 'OFFLINE';
-      } catch(e) {}
-    }
-
-    const audio = document.getElementById('radioStream');
-
-    audio.addEventListener('error', () => {
-      if (!S.playing) return;
-      setTimeout(() => {
-        if (S.playing) { audio.src = '/api/stream?' + Date.now(); audio.play().catch(() => {}); }
-      }, S.retryDelay);
-      S.retryDelay = Math.min(S.retryDelay * 1.5, 15000);
+  // Media Session API — shows now-playing on lock screen
+  function updateMediaSession(title, artist) {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title:  title  || 'Agum Bukuma Radio',
+      artist: artist || 'The Voice of the Niger Delta',
+      album:  'The Bukuma Herald',
+      artwork: [{ src: '/images/icon-512.png', sizes: '512x512', type: 'image/png' }]
     });
-    audio.addEventListener('waiting', () => {
-      if (!S.playing) return;
-      if (S.stallTimer) clearTimeout(S.stallTimer);
-      S.stallTimer = setTimeout(() => {
-        if (S.playing && audio.readyState < 3) { audio.src = '/api/stream?' + Date.now(); audio.play().catch(() => {}); }
-      }, 10000);
-    });
-    audio.addEventListener('playing', () => {
-      if (S.stallTimer) { clearTimeout(S.stallTimer); S.stallTimer = null; }
-      S.retryDelay = 2000;
-    });
-    audio.addEventListener('ended', () => { S.playing = false; updatePlayUI(false); });
+    navigator.mediaSession.setActionHandler('play',  () => { if (!S.playing) tuneIn(); });
+    navigator.mediaSession.setActionHandler('pause', () => { if (S.playing)  tuneIn(); });
+  }
 
-    function tuneIn() {
-      if (!S.playing) {
-        audio.src = '/api/stream?' + Date.now();
-        audio.play().then(() => { S.playing = true; updatePlayUI(true); }).catch(() => {});
-      } else {
-        audio.pause(); audio.src = '';
-        S.playing = false; updatePlayUI(false);
+  // Poll /api/status every 10 s to update track info
+  async function fetchStatus() {
+    try {
+      const d = await fetch('/api/status').then(r => r.json());
+      if (d.currentTrack) {
+        document.getElementById('displayTrackTitle').textContent  = d.currentTrack.title  || 'Agum Bukuma Radio';
+        document.getElementById('displayTrackArtist').textContent = d.currentTrack.artist || 'Live Broadcast';
+        updateMediaSession(d.currentTrack.title, d.currentTrack.artist);
       }
-    }
+      document.getElementById('statusLabel').textContent = d.isPlaying ? 'ON AIR' : 'OFFLINE';
+    } catch(e) {}
+  }
 
-    // FIX: use innerHTML so HTML entities render as actual symbols (not literal text)
-    function updatePlayUI(playing) {
-      document.getElementById('playBtnMain').classList.toggle('playing', playing);
-      document.getElementById('playIcon').innerHTML    = playing ? '&#9646;&#9646;' : '&#9654;';
-      document.getElementById('playStatusText').textContent = playing ? 'LISTENING LIVE' : 'TAP TO LISTEN';
-    }
+  const audio = document.getElementById('radioStream');
 
-    async function loadVault() {
-      try {
-        const d = await fetch('/api/vault').then(r => r.json());
-        const c = document.getElementById('vaultContainer');
-        if (!c || !d.tracks || !d.tracks.length) return;
-        c.innerHTML = d.tracks.map(t =>
-          '<div class="vault-track" onclick="playVaultTrack(\'' + t.id + '\',\'' +
-          encodeURIComponent(t.title) + '\',\'' + encodeURIComponent(t.artist || '') + '\')">' +
-          '<img src="' + (t.thumbnail || '/images/icon-512.png') + '" class="vault-thumb" onerror="this.src='/images/icon-512.png'">' +
-          '<div class="vault-info"><div class="vault-name">' + t.title + '</div>' +
-          '<div class="vault-artist">' + (t.artist || '') + '</div></div></div>'
-        ).join('');
-      } catch(e) {}
-    }
-
-    function playVaultTrack(id, title, artist) {
-      audio.src = '/api/downloads/' + id + '.mp3';
-      audio.play().catch(() => {});
-      S.playing = true; updatePlayUI(true);
-      const t = decodeURIComponent(title), a = decodeURIComponent(artist);
-      document.getElementById('displayTrackTitle').textContent  = t;
-      document.getElementById('displayTrackArtist').textContent = a;
-      updateMediaSession(t, a);
-    }
-
-    fetchStatus();
-    loadVault();
-    setInterval(fetchStatus, 10000);
-
-    let prog = 0;
-    setInterval(() => {
+  // On stream error: exponential back-off retry
+  audio.addEventListener('error', () => {
+    if (!S.playing) return;
+    setTimeout(() => {
       if (S.playing) {
-        prog = (prog + 1) % 100;
-        document.getElementById('progressFill').style.width = (30 + prog / 2) + '%';
+        audio.src = '/api/stream?' + Date.now();
+        audio.play().catch(() => {});
       }
-    }, 1000);
+    }, S.retryDelay);
+    S.retryDelay = Math.min(S.retryDelay * 1.5, 15000);
+  });
+
+  // On stall: retry after 10 s of buffering with no data
+  audio.addEventListener('waiting', () => {
+    if (!S.playing) return;
+    if (S.stallTimer) clearTimeout(S.stallTimer);
+    S.stallTimer = setTimeout(() => {
+      if (S.playing && audio.readyState < 3) {
+        audio.src = '/api/stream?' + Date.now();
+        audio.play().catch(() => {});
+      }
+    }, 10000);
+  });
+
+  audio.addEventListener('playing', () => {
+    if (S.stallTimer) { clearTimeout(S.stallTimer); S.stallTimer = null; }
+    S.retryDelay = 2000;
+  });
+
+  // FIX: 'ended' on a live stream means server dropped — retry instead of stopping
+  audio.addEventListener('ended', () => {
+    if (!S.playing) return;
+    setTimeout(() => {
+      if (S.playing) {
+        audio.src = '/api/stream?' + Date.now();
+        audio.play().catch(() => {});
+      }
+    }, S.retryDelay);
+  });
+
+  // Main play/pause toggle
+  function tuneIn() {
+    if (!S.playing) {
+      audio.src = '/api/stream?' + Date.now();
+      audio.play().then(() => {
+        S.playing = true;
+        updatePlayUI(true);
+      }).catch(() => {});
+    } else {
+      audio.pause();
+      audio.src = '';
+      S.playing = false;
+      updatePlayUI(false);
+    }
+  }
+
+  // FIX: use innerHTML so HTML entities render as symbols, not literal text
+  function updatePlayUI(playing) {
+    document.getElementById('playBtnMain').classList.toggle('playing', playing);
+    document.getElementById('playIcon').innerHTML     = playing ? '&#9646;&#9646;' : '&#9654;';
+    document.getElementById('playStatusText').textContent = playing ? 'LISTENING LIVE' : 'TAP TO LISTEN';
+  }
+
+  // Load vault (ready tracks from the library)
+  async function loadVault() {
+    try {
+      const d = await fetch('/api/vault').then(r => r.json());
+      const c = document.getElementById('vaultContainer');
+      if (!c) return;
+      if (!d.tracks || !d.tracks.length) {
+        c.innerHTML = '<p class="vault-empty">No tracks ready yet. Station is downloading...</p>';
+        return;
+      }
+      c.innerHTML = d.tracks.map(t => {
+        // FIX: use encodeURIComponent for filename and safe double-quote attribute delimiters
+        const safeTitle    = encodeURIComponent(t.title  || '');
+        const safeArtist   = encodeURIComponent(t.artist || '');
+        const safeFilename = encodeURIComponent(t.filename || (t.id + '.mp3'));
+        const thumb = t.thumbnail || '/images/icon-512.png';
+        return '<div class="vault-track" onclick="playVaultTrack(' +
+          JSON.stringify(safeFilename) + ',' +
+          JSON.stringify(safeTitle)    + ',' +
+          JSON.stringify(safeArtist)   + ')">' +
+          '<img src="' + thumb + '" class="vault-thumb" ' +
+          'onerror="this.onerror=null;this.src=&quot;/images/icon-512.png&quot;">' +
+          '<div class="vault-info">' +
+          '<div class="vault-name">' + (t.title || 'Unknown') + '</div>' +
+          '<div class="vault-artist">' + (t.artist || '') + '</div>' +
+          '</div></div>';
+      }).join('');
+    } catch(e) {}
+  }
+
+  // FIX: use /api/downloads/:filename (which now exists in server.js)
+  function playVaultTrack(filename, title, artist) {
+    audio.src = '/api/downloads/' + decodeURIComponent(filename);
+    audio.play().catch(() => {});
+    S.playing = true;
+    updatePlayUI(true);
+    const t = decodeURIComponent(title);
+    const a = decodeURIComponent(artist);
+    document.getElementById('displayTrackTitle').textContent  = t;
+    document.getElementById('displayTrackArtist').textContent = a;
+    updateMediaSession(t, a);
+  }
+
+  // Initial load
+  fetchStatus();
+  loadVault();
+  setInterval(fetchStatus, 10000);
+
+  // Fake progress animation while playing
+  let prog = 0;
+  setInterval(() => {
+    if (S.playing) {
+      prog = (prog + 1) % 100;
+      document.getElementById('progressFill').style.width = (30 + prog / 2) + '%';
+    }
+  }, 1000);
   </script>
 </body>
 </html>
