@@ -1,11 +1,11 @@
-// ── DOM ───────────────────────────────────────────────────────────────────────
-const DOMElements = {
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const DE = {
   audio:       document.getElementById('audioPlayer'),
   fileInput:   document.getElementById('localFileInput'),
   title:       document.getElementById('currTitle'),
   artist:      document.getElementById('currArtist'),
   dialTitle:   document.getElementById('dialTitle'),
-  btnPlayPause:document.getElementById('btnPlayPause'),
+  btnPlay:     document.getElementById('btnPlayPause'),
   playIcon:    document.getElementById('playIcon'),
   btnNext:     document.getElementById('btnNext'),
   btnPrev:     document.getElementById('btnPrev'),
@@ -15,8 +15,9 @@ const DOMElements = {
   canvas:      document.getElementById('waveformCanvas')
 };
 
-const ctx = DOMElements.canvas.getContext('2d');
-function resizeCanvas() { DOMElements.canvas.width = window.innerWidth; DOMElements.canvas.height = 160; }
+// ── Canvas ─────────────────────────────────────────────────────────────────────
+const ctx = DE.canvas.getContext('2d');
+function resizeCanvas() { DE.canvas.width = window.innerWidth; DE.canvas.height = 160; }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
@@ -29,20 +30,19 @@ let localPlaylist    = [];
 let localIndex       = 0;
 let ws               = null;
 let lastRadioTrack   = { title: 'AWAITING SIGNAL...', artist: 'Radio Mode' };
-// FIX 1: track the current stream URL so we only replace it when truly needed
 let currentStreamUrl = '';
-// FIX 2: reconnect back-off to stop hammering dead WS
 let wsRetryDelay     = 3000;
+let stallTimer       = null;
 
 // ── WebSocket ──────────────────────────────────────────────────────────────────
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   ws = new WebSocket(proto + '://' + location.host + '/ws');
   ws.onopen = () => {
-    wsRetryDelay = 3000; // reset back-off on success
+    wsRetryDelay = 3000;
     ws.send(JSON.stringify({ action: 'getStatus' }));
   };
-  ws.onmessage = (e) => {
+  ws.onmessage = e => {
     try {
       const d = JSON.parse(e.data);
       if (d.type === 'status' || d.type === 'nowPlaying') {
@@ -51,244 +51,195 @@ function connectWS() {
           title:  track ? track.title  : 'STATION IDLE',
           artist: track ? track.artist : 'Awaiting Signal'
         };
-        // FIX 3: NEVER stop/restart the radio audio stream based on WS status updates.
-        // The audio element streams continuously; WS is UI-only.
-        // Only stop if server explicitly says it stopped AND we thought we were playing.
+        // Server stopped — reflect in UI but DO NOT touch audio element
         if (d.isPlaying === false && appMode === 'radio' && isPlaying) {
-          // Server stopped — reflect in UI only, don't touch audio.src
-          // The stream will naturally end; let the audio 'ended'/'error' event handle it.
           isPlaying = false;
-          updateUIFromState();
+          updateUI();
         }
-        if (appMode === 'radio') updateUIFromState();
+        if (appMode === 'radio') updateUI();
       }
-      if (d.type === 'volume') {
-        // FIX 4: volume changes on server do NOT cause client to reconnect
-        // The server applies volume at FFmpeg level on the NEXT track.
-        // Nothing to do on the client.
-      }
-    } catch(err) {}
+    } catch(e) {}
   };
   ws.onclose = () => {
-    // FIX 5: exponential back-off with cap — don't spam reconnects
     setTimeout(connectWS, wsRetryDelay);
     wsRetryDelay = Math.min(wsRetryDelay * 1.5, 30000);
   };
 }
 
-// ── UI Update ──────────────────────────────────────────────────────────────────
-function updateUIFromState() {
+// ── UI ─────────────────────────────────────────────────────────────────────────
+function updateUI() {
   if (appMode === 'radio') {
-    DOMElements.title.textContent  = lastRadioTrack.title;
-    DOMElements.artist.textContent = lastRadioTrack.artist;
-    DOMElements.dialTitle.innerHTML = 'Agum Bukuma<br>Radio';
+    DE.title.textContent    = lastRadioTrack.title;
+    DE.artist.textContent   = lastRadioTrack.artist;
+    DE.dialTitle.innerHTML  = 'Agum Bukuma<br>Radio';
   } else {
-    if (localPlaylist.length === 0) {
-      DOMElements.title.textContent  = 'No Music Loaded';
-      DOMElements.artist.textContent = 'Tap to select files';
-      DOMElements.dialTitle.innerHTML = 'Local<br>Library';
+    if (!localPlaylist.length) {
+      DE.title.textContent   = 'No Music Loaded';
+      DE.artist.textContent  = 'Tap to select files';
+      DE.dialTitle.innerHTML = 'Local<br>Library';
     } else {
       const title = localPlaylist[localIndex].name.replace(/\.[^/.]+$/, '');
-      DOMElements.title.textContent  = title;
-      DOMElements.artist.textContent = 'Local Device';
-      DOMElements.dialTitle.innerHTML = title.substring(0, 15) + '...';
+      DE.title.textContent   = title;
+      DE.artist.textContent  = 'Local Device';
+      DE.dialTitle.innerHTML = title.substring(0, 15) + '...';
     }
   }
-  if (isPlaying) {
-    DOMElements.playIcon.setAttribute('name', 'pause');
-    DOMElements.btnPlayPause.classList.add('playing');
-    DOMElements.dial.classList.add('alive');
-  } else {
-    DOMElements.playIcon.setAttribute('name', 'play');
-    DOMElements.btnPlayPause.classList.remove('playing');
-    DOMElements.dial.classList.remove('alive');
-  }
+  DE.playIcon.setAttribute('name', isPlaying ? 'pause' : 'play');
+  DE.btnPlay.classList.toggle('playing', isPlaying);
+  DE.dial.classList.toggle('alive',      isPlaying);
 }
 
-// ── Visualizer ────────────────────────────────────────────────────────────────
+// ── Visualizer ─────────────────────────────────────────────────────────────────
 function initVisualizer() {
   if (isVisualizerInit) return;
   try {
     audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
     analyser  = audioCtx.createAnalyser();
     analyser.fftSize = 128;
-    const source = audioCtx.createMediaElementSource(DOMElements.audio);
-    source.connect(analyser);
+    const src = audioCtx.createMediaElementSource(DE.audio);
+    src.connect(analyser);
     analyser.connect(audioCtx.destination);
     dataArray = new Uint8Array(analyser.frequencyBinCount);
     isVisualizerInit = true;
-    drawWaveform();
-  } catch(e) { console.error('Visualizer:', e); }
+    drawWave();
+  } catch(e) {}
 }
-
-function playMechanicalClick() {
+function playClick() {
   initVisualizer();
   if (!audioCtx) return;
   audioCtx.resume().then(() => {
     if (audioCtx.state === 'suspended') return;
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
     osc.type = 'square';
     osc.frequency.setValueAtTime(300, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.04);
-    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
-    osc.connect(gain); gain.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.04);
+    osc.connect(g); g.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
   });
 }
+document.querySelectorAll('button, .center-dial').forEach(b => b.addEventListener('pointerdown', playClick));
 
-document.querySelectorAll('button, .center-dial').forEach(btn => btn.addEventListener('pointerdown', playMechanicalClick));
-
-function drawWaveform() {
-  requestAnimationFrame(drawWaveform);
-  ctx.clearRect(0, 0, DOMElements.canvas.width, DOMElements.canvas.height);
+function drawWave() {
+  requestAnimationFrame(drawWave);
+  ctx.clearRect(0, 0, DE.canvas.width, DE.canvas.height);
   if (!isPlaying || !isVisualizerInit) return;
   analyser.getByteFrequencyData(dataArray);
-  const bw = (DOMElements.canvas.width / dataArray.length) * 2;
+  const bw = (DE.canvas.width / dataArray.length) * 2;
   let x = 0;
   for (let i = 0; i < dataArray.length; i++) {
-    const bh = (dataArray[i] / 255) * DOMElements.canvas.height * 0.8;
-    ctx.fillStyle = 'rgb(0,' + (180 + dataArray[i]/3) + ',255)';
-    ctx.fillRect(x, (DOMElements.canvas.height - bh) / 2, bw - 1, bh);
+    const bh = (dataArray[i] / 255) * DE.canvas.height * 0.8;
+    ctx.fillStyle = 'rgb(0,' + (180 + dataArray[i] / 3) + ',255)';
+    ctx.fillRect(x, (DE.canvas.height - bh) / 2, bw - 1, bh);
     x += bw;
   }
 }
 
 // ── Playback ───────────────────────────────────────────────────────────────────
-// FIX 6: togglePlayback ONLY manages the <audio> element.
-// It never restarts a stream that is already playing.
+function startRadioStream() {
+  const url = '/api/stream?' + Date.now();
+  DE.audio.src = url;
+  currentStreamUrl = url;
+  DE.audio.play().catch(() => {});
+}
+
 function togglePlayback() {
   if (isPlaying) {
-    DOMElements.audio.pause();
-    if (appMode === 'radio') {
-      DOMElements.audio.src = '';
-      currentStreamUrl = '';
-    }
+    DE.audio.pause();
+    if (appMode === 'radio') { DE.audio.src = ''; currentStreamUrl = ''; }
     isPlaying = false;
   } else {
     if (appMode === 'radio') {
-      // FIX 7: append timestamp only on fresh connect, not on resume-after-pause
-      const url = '/api/stream?' + Date.now();
-      DOMElements.audio.src = url;
-      currentStreamUrl = url;
-      DOMElements.audio.play().catch(() => {});
+      startRadioStream();
     } else {
-      if (localPlaylist.length === 0) { DOMElements.fileInput.click(); return; }
-      if (!DOMElements.audio.src) loadLocalTrack();
-      DOMElements.audio.play().catch(() => {});
+      if (!localPlaylist.length) { DE.fileInput.click(); return; }
+      if (!DE.audio.src) loadLocalTrack();
+      DE.audio.play().catch(() => {});
     }
     isPlaying = true;
   }
-  updateUIFromState();
+  updateUI();
 }
 
 function loadLocalTrack() {
   if (!localPlaylist.length) return;
-  DOMElements.audio.src = URL.createObjectURL(localPlaylist[localIndex]);
-  updateUIFromState();
+  DE.audio.src = URL.createObjectURL(localPlaylist[localIndex]);
+  updateUI();
 }
-
 function skipLocal(dir) {
   if (appMode !== 'local' || !localPlaylist.length) return;
   localIndex = dir === 'next'
     ? (localIndex + 1) % localPlaylist.length
     : (localIndex - 1 + localPlaylist.length) % localPlaylist.length;
   loadLocalTrack();
-  if (isPlaying) DOMElements.audio.play().catch(() => {});
+  if (isPlaying) DE.audio.play().catch(() => {});
 }
 
-// ── Audio element events ───────────────────────────────────────────────────────
-// FIX 8: handle stream stalls/errors — auto-reconnect gracefully without full restart
-DOMElements.audio.addEventListener('error', (e) => {
+// ── Audio events ───────────────────────────────────────────────────────────────
+DE.audio.addEventListener('error', () => {
   if (appMode !== 'radio' || !isPlaying) return;
-  console.warn('[AUDIO] Stream error, reconnecting in 2s...', e);
-  setTimeout(() => {
-    if (appMode === 'radio' && isPlaying) {
-      const url = '/api/stream?' + Date.now();
-      DOMElements.audio.src = url;
-      currentStreamUrl = url;
-      DOMElements.audio.play().catch(() => {});
-    }
-  }, 2000);
+  setTimeout(() => { if (appMode === 'radio' && isPlaying) startRadioStream(); }, 2000);
 });
-
-DOMElements.audio.addEventListener('ended', () => {
+DE.audio.addEventListener('ended', () => {
   if (appMode === 'local') { skipLocal('next'); return; }
-  // Radio stream ended (server stopped) — show stopped state
-  if (appMode === 'radio') { isPlaying = false; updateUIFromState(); }
+  isPlaying = false; updateUI();
 });
-
-// FIX 9: stall detection — if radio stream stalls for 10s, reconnect
-let stallTimer = null;
-DOMElements.audio.addEventListener('waiting', () => {
+DE.audio.addEventListener('waiting', () => {
   if (appMode !== 'radio' || !isPlaying) return;
   if (stallTimer) clearTimeout(stallTimer);
   stallTimer = setTimeout(() => {
-    if (appMode === 'radio' && isPlaying && DOMElements.audio.readyState < 3) {
-      console.warn('[AUDIO] Stream stalled, reconnecting...');
-      const url = '/api/stream?' + Date.now();
-      DOMElements.audio.src = url;
-      currentStreamUrl = url;
-      DOMElements.audio.play().catch(() => {});
-    }
+    if (appMode === 'radio' && isPlaying && DE.audio.readyState < 3) startRadioStream();
   }, 10000);
 });
-DOMElements.audio.addEventListener('playing', () => {
+DE.audio.addEventListener('playing', () => {
   if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
 });
 
 // ── Controls ───────────────────────────────────────────────────────────────────
-DOMElements.btnPlayPause.addEventListener('click', () => {
-  initVisualizer();
-  setTimeout(togglePlayback, 50);
-});
-DOMElements.btnNext.addEventListener('click', () => {
-  initVisualizer();
-  if (appMode === 'local') setTimeout(() => skipLocal('next'), 50);
-});
-DOMElements.btnPrev.addEventListener('click', () => {
-  if (appMode === 'local') setTimeout(() => skipLocal('prev'), 50);
-});
-DOMElements.navRadio.addEventListener('click', () => {
+DE.btnPlay.addEventListener('click', () => { initVisualizer(); setTimeout(togglePlayback, 50); });
+DE.btnNext.addEventListener('click', () => { initVisualizer(); if (appMode === 'local') setTimeout(() => skipLocal('next'), 50); });
+DE.btnPrev.addEventListener('click', () => { if (appMode === 'local') setTimeout(() => skipLocal('prev'), 50); });
+
+DE.navRadio.addEventListener('click', () => {
   if (appMode === 'radio') return;
-  if (isPlaying) togglePlayback();
+  if (isPlaying) { DE.audio.pause(); DE.audio.src = ''; isPlaying = false; }
   appMode = 'radio';
-  DOMElements.navRadio.classList.add('active');
-  DOMElements.navLocal.classList.remove('active');
-  updateUIFromState();
+  DE.navRadio.classList.add('active');
+  DE.navLocal.classList.remove('active');
+  // FIX: auto-start the radio stream when switching to Radio mode
+  startRadioStream();
+  isPlaying = true;
+  updateUI();
 });
-DOMElements.navLocal.addEventListener('click', () => {
-  if (appMode === 'local') { DOMElements.fileInput.click(); return; }
+
+DE.navLocal.addEventListener('click', () => {
+  if (appMode === 'local') { DE.fileInput.click(); return; }
   if (isPlaying) togglePlayback();
   appMode = 'local';
-  DOMElements.navLocal.classList.add('active');
-  DOMElements.navRadio.classList.remove('active');
-  if (!localPlaylist.length) DOMElements.fileInput.click();
-  updateUIFromState();
+  DE.navLocal.classList.add('active');
+  DE.navRadio.classList.remove('active');
+  if (!localPlaylist.length) DE.fileInput.click();
+  updateUI();
 });
-DOMElements.fileInput.addEventListener('change', (e) => {
+
+DE.fileInput.addEventListener('change', e => {
   const files = Array.from(e.target.files).filter(f => f.type.startsWith('audio/'));
   if (files.length) {
-    localPlaylist = files;
-    localIndex    = 0;
+    localPlaylist = files; localIndex = 0;
     loadLocalTrack();
     if (!isPlaying) togglePlayback();
   }
 });
-DOMElements.dial.addEventListener('click', () => {
-  DOMElements.btnPlayPause.classList.add('active');
-  setTimeout(() => { DOMElements.btnPlayPause.classList.remove('active'); togglePlayback(); }, 150);
+
+DE.dial.addEventListener('click', () => {
+  DE.btnPlay.classList.add('active');
+  setTimeout(() => { DE.btnPlay.classList.remove('active'); togglePlayback(); }, 150);
 });
 
 // ── Init ───────────────────────────────────────────────────────────────────────
 connectWS();
-updateUIFromState();
-
-// FIX 10: iOS/Safari unlock — must happen on first touch gesture
-document.body.addEventListener('touchstart', function() {
-  if (!window.audioEnabled) {
-    DOMElements.audio.load();
-    window.audioEnabled = true;
-  }
+updateUI();
+document.body.addEventListener('touchstart', () => {
+  if (!window.audioEnabled) { DE.audio.load(); window.audioEnabled = true; }
 }, { once: true });
