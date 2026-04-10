@@ -1,47 +1,51 @@
-// ── DOM refs ──────────────────────────────────────────────────────────────────
+// ── DOM refs ──────────────────────────────────────────────────────────────────────────────
 const DE = {
-  audio:       document.getElementById('audioPlayer'),
-  fileInput:   document.getElementById('localFileInput'),
-  title:       document.getElementById('currTitle'),
-  artist:      document.getElementById('currArtist'),
-  dialTitle:   document.getElementById('dialTitle'),
-  btnPlay:     document.getElementById('btnPlayPause'),
-  playIcon:    document.getElementById('playIcon'),
-  btnNext:     document.getElementById('btnNext'),
-  btnPrev:     document.getElementById('btnPrev'),
-  navRadio:    document.getElementById('navRadio'),
-  navLocal:    document.getElementById('navLocal'),
-  dial:        document.getElementById('mainDial'),
-  canvas:      document.getElementById('waveformCanvas')
+  audio:      document.getElementById('audioPlayer'),
+  fileInput:  document.getElementById('localFileInput'),
+  title:      document.getElementById('currTitle'),
+  artist:     document.getElementById('currArtist'),
+  dialTitle:  document.getElementById('dialTitle'),
+  btnPlay:    document.getElementById('btnPlayPause'),
+  playIcon:   document.getElementById('playIcon'),
+  btnNext:    document.getElementById('btnNext'),
+  btnPrev:    document.getElementById('btnPrev'),
+  navRadio:   document.getElementById('navRadio'),
+  navLocal:   document.getElementById('navLocal'),
+  dial:       document.getElementById('mainDial'),
+  canvas:     document.getElementById('waveformCanvas')
 };
 
-// ── Canvas ─────────────────────────────────────────────────────────────────────
+// ── Canvas ──────────────────────────────────────────────────────────────────────────────
 const ctx = DE.canvas.getContext('2d');
 function resizeCanvas() { DE.canvas.width = window.innerWidth; DE.canvas.height = 160; }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// ── State ──────────────────────────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────────────────────────────────
 let audioCtx, analyser, dataArray;
 let isVisualizerInit = false;
-let appMode          = 'radio';
-let isPlaying        = false;
-let localPlaylist    = [];
-let localIndex       = 0;
-let ws               = null;
-let lastRadioTrack   = { title: 'AWAITING SIGNAL...', artist: 'Radio Mode' };
+let appMode    = 'radio';
+let isPlaying  = false;
+let localPlaylist = [];
+let localIndex    = 0;
+let ws = null;
+let lastRadioTrack  = { title: 'AWAITING SIGNAL...', artist: 'Radio Mode' };
+let serverIsPlaying = true; // optimistic: assume server is on-air until told otherwise
 let currentStreamUrl = '';
-let wsRetryDelay     = 3000;
-let stallTimer       = null;
+let wsRetryDelay = 3000;
+let stallTimer  = null;
+let radioRetryDelay = 2000; // exponential back-off for stream errors
 
-// ── WebSocket ──────────────────────────────────────────────────────────────────
+// ── WebSocket ────────────────────────────────────────────────────────────────────────
 function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   ws = new WebSocket(proto + '://' + location.host + '/ws');
+
   ws.onopen = () => {
     wsRetryDelay = 3000;
     ws.send(JSON.stringify({ action: 'getStatus' }));
   };
+
   ws.onmessage = e => {
     try {
       const d = JSON.parse(e.data);
@@ -51,8 +55,14 @@ function connectWS() {
           title:  track ? track.title  : 'STATION IDLE',
           artist: track ? track.artist : 'Awaiting Signal'
         };
-        // Server stopped — reflect in UI but DO NOT touch audio element
+
+        // Update server playing state (used to know if stream is live)
+        if (typeof d.isPlaying === 'boolean') serverIsPlaying = d.isPlaying;
+
+        // Server stopped: reflect in UI only — never touch audio element from WS handler
         if (d.isPlaying === false && appMode === 'radio' && isPlaying) {
+          // Server stopped broadcasting — update UI to show idle but keep connection
+          // so when server resumes, the stream automatically recovers
           isPlaying = false;
           updateUI();
         }
@@ -60,36 +70,37 @@ function connectWS() {
       }
     } catch(e) {}
   };
+
   ws.onclose = () => {
     setTimeout(connectWS, wsRetryDelay);
     wsRetryDelay = Math.min(wsRetryDelay * 1.5, 30000);
   };
 }
 
-// ── UI ─────────────────────────────────────────────────────────────────────────
+// ── UI ───────────────────────────────────────────────────────────────────────────────────
 function updateUI() {
   if (appMode === 'radio') {
-    DE.title.textContent    = lastRadioTrack.title;
-    DE.artist.textContent   = lastRadioTrack.artist;
-    DE.dialTitle.innerHTML  = 'Agum Bukuma<br>Radio';
+    DE.title.textContent  = lastRadioTrack.title;
+    DE.artist.textContent = lastRadioTrack.artist;
+    DE.dialTitle.innerHTML = 'Agum Bukuma<br>Radio';
   } else {
     if (!localPlaylist.length) {
-      DE.title.textContent   = 'No Music Loaded';
-      DE.artist.textContent  = 'Tap to select files';
+      DE.title.textContent  = 'No Music Loaded';
+      DE.artist.textContent = 'Tap to select files';
       DE.dialTitle.innerHTML = 'Local<br>Library';
     } else {
       const title = localPlaylist[localIndex].name.replace(/\.[^/.]+$/, '');
-      DE.title.textContent   = title;
-      DE.artist.textContent  = 'Local Device';
+      DE.title.textContent  = title;
+      DE.artist.textContent = 'Local Device';
       DE.dialTitle.innerHTML = title.substring(0, 15) + '...';
     }
   }
   DE.playIcon.setAttribute('name', isPlaying ? 'pause' : 'play');
   DE.btnPlay.classList.toggle('playing', isPlaying);
-  DE.dial.classList.toggle('alive',      isPlaying);
-}
+  DE.dial.classList.toggle('alive', isPlaying);
+            }
 
-// ── Visualizer ─────────────────────────────────────────────────────────────────
+// ── Visualizer ─────────────────────────────────────────────────────────────────────────────
 function initVisualizer() {
   if (isVisualizerInit) return;
   try {
@@ -102,8 +113,9 @@ function initVisualizer() {
     dataArray = new Uint8Array(analyser.frequencyBinCount);
     isVisualizerInit = true;
     drawWave();
-  } catch(e) {}
+  } catch(e) { console.warn('[VIZ] Could not init visualizer:', e.message); }
 }
+
 function playClick() {
   initVisualizer();
   if (!audioCtx) return;
@@ -119,6 +131,7 @@ function playClick() {
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
   });
 }
+
 document.querySelectorAll('button, .center-dial').forEach(b => b.addEventListener('pointerdown', playClick));
 
 function drawWave() {
@@ -136,11 +149,13 @@ function drawWave() {
   }
 }
 
-// ── Playback ───────────────────────────────────────────────────────────────────
+// ── Playback ─────────────────────────────────────────────────────────────────────────────
+// Connect to the live radio stream — call this to begin listening
 function startRadioStream() {
   const url = '/api/stream?' + Date.now();
   DE.audio.src = url;
   currentStreamUrl = url;
+  radioRetryDelay = 2000; // reset back-off
   DE.audio.play().catch(() => {});
 }
 
@@ -167,6 +182,7 @@ function loadLocalTrack() {
   DE.audio.src = URL.createObjectURL(localPlaylist[localIndex]);
   updateUI();
 }
+
 function skipLocal(dir) {
   if (appMode !== 'local' || !localPlaylist.length) return;
   localIndex = dir === 'next'
@@ -176,15 +192,28 @@ function skipLocal(dir) {
   if (isPlaying) DE.audio.play().catch(() => {});
 }
 
-// ── Audio events ───────────────────────────────────────────────────────────────
+// ── Audio events ──────────────────────────────────────────────────────────────────────────
+// Stream error handler with exponential back-off
 DE.audio.addEventListener('error', () => {
   if (appMode !== 'radio' || !isPlaying) return;
-  setTimeout(() => { if (appMode === 'radio' && isPlaying) startRadioStream(); }, 2000);
+  setTimeout(() => {
+    if (appMode === 'radio' && isPlaying) startRadioStream();
+  }, radioRetryDelay);
+  radioRetryDelay = Math.min(radioRetryDelay * 1.5, 15000);
 });
+
+// FIX: 'ended' on radio stream means server dropped — reconnect, don't stay silent
 DE.audio.addEventListener('ended', () => {
   if (appMode === 'local') { skipLocal('next'); return; }
-  isPlaying = false; updateUI();
+  // Radio mode: server finished a track or restarted — reconnect after short delay
+  if (appMode === 'radio' && isPlaying) {
+    setTimeout(() => {
+      if (appMode === 'radio' && isPlaying) startRadioStream();
+    }, radioRetryDelay);
+  }
 });
+
+// Stall detection: if buffering for 10 s with no data, reconnect
 DE.audio.addEventListener('waiting', () => {
   if (appMode !== 'radio' || !isPlaying) return;
   if (stallTimer) clearTimeout(stallTimer);
@@ -192,22 +221,25 @@ DE.audio.addEventListener('waiting', () => {
     if (appMode === 'radio' && isPlaying && DE.audio.readyState < 3) startRadioStream();
   }, 10000);
 });
+
 DE.audio.addEventListener('playing', () => {
   if (stallTimer) { clearTimeout(stallTimer); stallTimer = null; }
+  radioRetryDelay = 2000; // reset back-off on successful play
 });
 
-// ── Controls ───────────────────────────────────────────────────────────────────
+// ── Controls ─────────────────────────────────────────────────────────────────────────────
 DE.btnPlay.addEventListener('click', () => { initVisualizer(); setTimeout(togglePlayback, 50); });
 DE.btnNext.addEventListener('click', () => { initVisualizer(); if (appMode === 'local') setTimeout(() => skipLocal('next'), 50); });
 DE.btnPrev.addEventListener('click', () => { if (appMode === 'local') setTimeout(() => skipLocal('prev'), 50); });
 
 DE.navRadio.addEventListener('click', () => {
   if (appMode === 'radio') return;
+  // Switch from local to radio: stop local audio
   if (isPlaying) { DE.audio.pause(); DE.audio.src = ''; isPlaying = false; }
   appMode = 'radio';
   DE.navRadio.classList.add('active');
   DE.navLocal.classList.remove('active');
-  // FIX: auto-start the radio stream when switching to Radio mode
+  // Auto-start the radio stream
   startRadioStream();
   isPlaying = true;
   updateUI();
@@ -237,9 +269,11 @@ DE.dial.addEventListener('click', () => {
   setTimeout(() => { DE.btnPlay.classList.remove('active'); togglePlayback(); }, 150);
 });
 
-// ── Init ───────────────────────────────────────────────────────────────────────
+// ── Init ───────────────────────────────────────────────────────────────────────────────────
 connectWS();
 updateUI();
+
+// Unlock audio context on first touch (required by mobile browsers)
 document.body.addEventListener('touchstart', () => {
   if (!window.audioEnabled) { DE.audio.load(); window.audioEnabled = true; }
 }, { once: true });
