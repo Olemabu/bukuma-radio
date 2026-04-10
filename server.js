@@ -56,14 +56,14 @@ function seedQueue() {
     { title: 'Earth Song',             artist: 'Wizard Chan',      youtubeQuery: 'Wizard Chan Earth Song Ijaw' },
     { title: 'Paddle of the Niger Delta', artist: 'Barrister Smooth', youtubeQuery: 'Chief Barrister Smooth Ijaw highlife Niger Delta' },
     { title: 'Tompolo',                artist: 'Alfred J King',    youtubeQuery: 'Alfred J King Tompolo Ijaw' },
-    { title: 'Halo Halo',              artist: 'Wizard Chan',      youtubeQuery: 'Wizard Chan Halo Halo Ijaw' },
+    { title: 'Halo Halo',             artist: 'Wizard Chan',      youtubeQuery: 'Wizard Chan Halo Halo Ijaw' },
     { title: 'Ijaw Cultural Heritage', artist: 'Barrister Smooth', youtubeQuery: 'Barrister Smooth Ijaw cultural highlife best' },
     { title: 'Adaka Boro',             artist: 'Alfred J King',    youtubeQuery: 'Alfred J King Adaka Boro' },
     { title: 'HighLife',               artist: 'Wizard Chan',      youtubeQuery: 'Wizard Chan HighLife Ijaw Afro Teme' },
     { title: 'Miss You',               artist: 'Wizard Chan',      youtubeQuery: 'Wizard Chan Miss You Thousand Voice' },
     { title: 'Miekemedonmo',           artist: 'Alfred J King',    youtubeQuery: 'Alfred J King Miekemedonmo' }
   ].map(t => ({ ...t, id: Math.random().toString(36).slice(2), status: 'pending', duration: 'Unknown' }));
-  }
+}
 
 // ── Persistence helpers ───────────────────────────────────────────────────────
 function loadState() {
@@ -104,7 +104,7 @@ function saveState() {
   } catch(e) {}
 }
 function savePlaylists() { try { fs.writeFileSync(playlistsFile, JSON.stringify(playlists, null, 2)); } catch(e) {} }
-function saveNews()      { try { fs.writeFileSync(newsFile,      JSON.stringify(news, null, 2));      } catch(e) {} }
+function saveNews()      { try { fs.writeFileSync(newsFile,      JSON.stringify(news,      null, 2)); } catch(e) {} }
 
 const upload = multer({ dest: path.join(__dirname, 'public/uploads') });
 
@@ -121,7 +121,8 @@ function getStatus() {
   };
 }
 
-// ── Scout ─────────────────────────────────────────────────────────────────────
+// ── Scout: background downloader ──────────────────────────────────────────────
+// FIX: use spawn() array args for yt-dlp — no shell, no metachar injection
 function enqueueDownload(track) {
   if (!track || track.status === 'ready' || track.status === 'downloading') return;
   if (downloadQueue.find(t => t.id === track.id)) return;
@@ -135,27 +136,56 @@ function processDownloadQueue() {
   if (!live || live.status === 'ready') { processDownloadQueue(); return; }
   isDownloading = true;
   live.status = 'downloading';
+
+  // Sanitise filename: strip non-alphanumeric, collapse whitespace to underscore
   const cleanTitle = (live.artist + ' - ' + live.title)
     .replace(/[^a-z0-9 _-]/gi, '_').replace(/\s+/g, '_');
   const localPath = path.join(downloadsDir, cleanTitle + '.mp3');
+
   if (fs.existsSync(localPath)) {
     live.status = 'ready'; live.localPath = localPath;
     saveState(); broadcast(getStatus());
     isDownloading = false; processDownloadQueue(); return;
   }
-  const ea  = 'youtube:player_client=default,android_sdkless';
-  const cmd = '"' + YTDLP_PATH + '" -x --audio-format mp3 --no-playlist --ignore-errors --geo-bypass' +
-    ' --no-check-certificates --extractor-args "' + ea + '" -o "' + localPath + '"' +
-    ' "ytsearch1:' + (live.youtubeQuery || (live.artist + ' ' + live.title)) + '"';
+
+  // FIX: use spawn with args array — shell metacharacters in queries/URLs are safe
+  const query = live.youtubeQuery || (live.artist + ' ' + live.title);
+  const ytArgs = [
+    '-x', '--audio-format', 'mp3',
+    '--no-playlist', '--ignore-errors', '--geo-bypass', '--no-check-certificates',
+    '--extractor-args', 'youtube:player_client=default,android_sdkless',
+    '-o', localPath,
+    'ytsearch1:' + query
+  ];
   console.log('[SCOUT] Downloading: ' + live.title);
-  exec(cmd, { timeout: 180000 }, (err) => {
-    live.status = (!err && fs.existsSync(localPath)) ? 'ready' : 'error';
-    if (live.status === 'ready') live.localPath = localPath;
-    console.log('[SCOUT] ' + (live.status === 'ready' ? 'Ready' : 'Failed') + ': ' + live.title);
+
+  const ytProc = spawn(YTDLP_PATH, ytArgs, { stdio: ['ignore', 'ignore', 'pipe'] });
+  let ytErr = '';
+  ytProc.stderr.on('data', d => { ytErr += d.toString(); });
+  ytProc.on('close', code => {
+    const ok = code === 0 && fs.existsSync(localPath);
+    live.status = ok ? 'ready' : 'error';
+    if (ok) live.localPath = localPath;
+    if (!ok) console.warn('[SCOUT] Failed: ' + live.title + ' code=' + code + ' err=' + ytErr.slice(0,200));
+    else console.log('[SCOUT] Ready: ' + live.title);
     saveState(); broadcast(getStatus());
     isDownloading = false; processDownloadQueue();
   });
+  ytProc.on('error', err => {
+    live.status = 'error';
+    console.error('[SCOUT] spawn error:', err.message);
+    saveState(); broadcast(getStatus());
+    isDownloading = false; processDownloadQueue();
+  });
+
+  // Timeout: kill if takes too long
+  const killTimer = setTimeout(() => {
+    console.warn('[SCOUT] Download timeout, killing: ' + live.title);
+    try { ytProc.kill('SIGKILL'); } catch(e) {}
+  }, 180000);
+  ytProc.on('close', () => clearTimeout(killTimer));
 }
+
 let scoutTimer = null;
 function startScout() {
   if (scoutTimer) clearInterval(scoutTimer);
@@ -165,13 +195,13 @@ function startScout() {
       if (queue[idx] && queue[idx].status === 'pending') enqueueDownload(queue[idx]);
     }
   }, 10000);
-    }
+        }
 
 // ── The Player ─────────────────────────────────────────────────────────────────
 function playTrack() {
   if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
   if (isStartingTrack) { console.log('[PLAYER] guard: already starting'); return; }
-  if (!isPlaying)      { console.log('[PLAYER] guard: not playing'); return; }
+  if (!isPlaying)      { console.log('[PLAYER] guard: not playing');       return; }
   if (queue.length === 0) return;
   if (libraryIndex >= queue.length) libraryIndex = 0;
 
@@ -180,7 +210,7 @@ function playTrack() {
   if (track.status !== 'ready' || !track.localPath || !fs.existsSync(track.localPath)) {
     if (track.status === 'pending' || track.status === 'downloading') {
       enqueueDownload(track);
-      console.log('[PLAYER] Waiting for download: ' + track.title + ' (' + track.status + ')');
+      console.log('[PLAYER] Waiting for: ' + track.title + ' (' + track.status + ')');
       playNextTimeout = setTimeout(playTrack, 3000);
       return;
     }
@@ -199,12 +229,13 @@ function playTrack() {
         next = (next + 1) % queue.length;
         scanned++;
       }
-      console.log('[PLAYER] Skipping ' + (scanned + 1) + ' errored track(s), jumping to index ' + next);
+      console.log('[PLAYER] Skipping ' + (scanned + 1) + ' errored, jumping to index ' + next);
       libraryIndex = next;
       saveState();
       playNextTimeout = setTimeout(playTrack, 500);
       return;
     }
+    // status='ready' but file missing — re-queue download
     track.status = 'pending'; track.localPath = null;
     enqueueDownload(track);
     playNextTimeout = setTimeout(playTrack, 3000);
@@ -252,13 +283,15 @@ function playTrack() {
     dead.forEach(c => { try { c.end(); } catch(e){} streamClients.delete(c); });
   });
 
-  proc.on('close', (code) => {
+  proc.on('close', code => {
     if (currentProcess !== proc) return;
     currentProcess = null;
-    console.log('[PLAYER] Finished: ' + (currentTrack ? currentTrack.title : '?') + ' (' + bytesOut + ' bytes, code ' + code + ')');
+    console.log('[PLAYER] Finished: ' + (currentTrack ? currentTrack.title : '?') +
+      ' (' + bytesOut + ' bytes, code ' + code + ')');
     if (!isPlaying) return;
+
     if (bytesOut < 8192) {
-      console.warn('[PLAYER] Short play (' + bytesOut + ' bytes) — marking error and skipping');
+      console.warn('[PLAYER] Short play (' + bytesOut + ' bytes) — marking error');
       const t = queue.find(q => q.id === currentTrack.id);
       if (t) t.status = 'error';
       saveState(); broadcast(getStatus());
@@ -266,6 +299,7 @@ function playTrack() {
       playNextTimeout = setTimeout(playTrack, 1000);
       return;
     }
+
     libraryIndex = (libraryIndex + 1) % queue.length;
     saveState(); broadcast(getStatus());
     playNextTimeout = setTimeout(playTrack, 500);
@@ -293,6 +327,7 @@ function startPlayback() {
   if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
   saveState(); broadcast(getStatus()); playTrack();
 }
+
 function stopPlayback() {
   isPlaying = false;
   if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
@@ -303,6 +338,7 @@ function stopPlayback() {
   isStartingTrack = false; currentTrack = null;
   saveState(); broadcast(getStatus());
 }
+
 function skipTrack() {
   if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
   const old = currentProcess; currentProcess = null; isStartingTrack = false;
@@ -311,10 +347,11 @@ function skipTrack() {
   saveState(); broadcast(getStatus());
   if (isPlaying) playTrack();
 }
+
 function setVolume(val) {
   volume = Math.min(100, Math.max(0, parseInt(val) || 80));
   saveState(); broadcast({ type: 'volume', value: volume });
-}
+          }
 
 // ── Jingles ────────────────────────────────────────────────────────────────────
 function startAutoJingleLoop() {
@@ -331,8 +368,8 @@ function dropJingle(jingleFile) {
   if (!fs.existsSync(p)) p = path.join(dataDir, 'jingles', jingleFile);
   if (!fs.existsSync(p)) return;
   try { currentProcess.stdout.pause(); } catch(e) {}
-  const args = ['-hide_banner', '-loglevel', 'error', '-i', p, '-f', 'mp3', '-b:a', '128k', 'pipe:1'];
-  activeJingleProcess = spawn(FFMPEG_PATH, args, { stdio: ['ignore', 'pipe', 'ignore'] });
+  const jArgs = ['-hide_banner', '-loglevel', 'error', '-i', p, '-f', 'mp3', '-b:a', '128k', 'pipe:1'];
+  activeJingleProcess = spawn(FFMPEG_PATH, jArgs, { stdio: ['ignore', 'pipe', 'ignore'] });
   activeJingleProcess.stdout.on('data', chunk => {
     streamClients.forEach(c => { try { if (!c.writableEnded) c.write(chunk); } catch(e) {} });
   });
@@ -343,12 +380,11 @@ function dropJingle(jingleFile) {
 }
 
 // ── Stream handler ─────────────────────────────────────────────────────────────
-// New listeners attach mid-song. The stream is a live pipe. No FFmpeg restart on join.
 function streamHandler(req, res) {
-  res.setHeader('Content-Type',       'audio/mpeg');
-  res.setHeader('Transfer-Encoding',  'chunked');
-  res.setHeader('Cache-Control',      'no-cache, no-store');
-  res.setHeader('Connection',         'keep-alive');
+  res.setHeader('Content-Type',           'audio/mpeg');
+  res.setHeader('Transfer-Encoding',      'chunked');
+  res.setHeader('Cache-Control',          'no-cache, no-store');
+  res.setHeader('Connection',             'keep-alive');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('icy-name',    'Agum Bukuma Radio');
@@ -361,7 +397,7 @@ function streamHandler(req, res) {
     streamClients.delete(res);
     broadcast({ type: 'listeners', count: streamClients.size });
   });
-  console.log('[STREAM] Listener connected. Total: ' + streamClients.size);
+  console.log('[STREAM] Listener joined. Total: ' + streamClients.size);
 }
 
 // ── WebSocket ──────────────────────────────────────────────────────────────────
@@ -417,12 +453,13 @@ app.post('/api/admin/login', (req, res) => {
   if (req.body.password === ADMIN_PASSWORD) res.json({ success: true });
   else res.status(401).json({ success: false });
 });
-app.get('/api/admin/verify', requireAuth, (req, res) => res.json({ success: true }));
-app.post('/api/play',  requireAuth, (req, res) => { startPlayback(); res.json({ success: true }); });
-app.post('/api/pause', requireAuth, (req, res) => { stopPlayback();  res.json({ success: true }); });
-app.post('/api/skip',  requireAuth, (req, res) => { skipTrack();     res.json({ success: true }); });
-app.post('/api/queue/skip', requireAuth, (req, res) => { skipTrack(); res.json({ success: true }); });
-app.post('/api/volume', requireAuth, (req, res) => { setVolume(req.body.value); res.json({ success: true, volume }); });
+app.get( '/api/admin/verify', requireAuth, (req, res) => res.json({ success: true }));
+app.post('/api/play',       requireAuth, (req, res) => { startPlayback(); res.json({ success: true }); });
+app.post('/api/pause',      requireAuth, (req, res) => { stopPlayback();  res.json({ success: true }); });
+app.post('/api/skip',       requireAuth, (req, res) => { skipTrack();     res.json({ success: true }); });
+app.post('/api/queue/skip', requireAuth, (req, res) => { skipTrack();     res.json({ success: true }); });
+app.post('/api/volume',     requireAuth, (req, res) => { setVolume(req.body.value); res.json({ success: true, volume }); });
+
 app.post('/api/admin/onair', requireAuth, (req, res) => {
   if (req.body.state) startPlayback(); else stopPlayback();
   res.json({ success: true, isPlaying });
@@ -452,11 +489,11 @@ app.post('/api/queue/add', requireAuth, (req, res) => {
 });
 app.delete('/api/queue/:id', requireAuth, (req, res) => {
   const id = req.params.id;
-  const wasCurrentlyPlaying = currentTrack && currentTrack.id === id;
+  const wasPlaying = currentTrack && currentTrack.id === id;
   queue = queue.filter(t => t.id !== id);
   if (libraryIndex >= queue.length) libraryIndex = Math.max(0, queue.length - 1);
   saveState();
-  if (wasCurrentlyPlaying && isPlaying) skipTrack(); else broadcast(getStatus());
+  if (wasPlaying && isPlaying) skipTrack(); else broadcast(getStatus());
   res.json({ success: true });
 });
 app.post('/api/queue/:id/play-now', requireAuth, (req, res) => {
@@ -482,7 +519,8 @@ app.post('/api/upload', requireAuth, upload.single('audio'), async (req, res) =>
     if (md.common.title)  title  = md.common.title;
     if (md.common.artist) artist = md.common.artist;
   } catch(e) {}
-  const track = { id: Math.random().toString(36).slice(2), status: 'ready', title, artist, youtubeQuery: 'LOCAL', localPath: newPath };
+  const track = { id: Math.random().toString(36).slice(2), status: 'ready',
+    title, artist, youtubeQuery: 'LOCAL', localPath: newPath };
   queue.push(track); saveState(); broadcast(getStatus());
   if (!isPlaying) startPlayback();
   res.json({ success: true, track });
@@ -490,26 +528,34 @@ app.post('/api/upload', requireAuth, upload.single('audio'), async (req, res) =>
 app.get('/api/youtube/search', (req, res) => {
   const raw = req.query.q;
   if (!raw) return res.json({ results: [] });
-  const q = raw.replace(/['"\\/]/g, '');
-  const ea  = 'youtube:player_client=default,android_sdkless';
-  const cmd = '"' + YTDLP_PATH + '" --quiet --no-warnings --flat-playlist' +
-    ' --print "%(id)s|||%(title)s|||%(duration_string)s"' +
-    ' --extractor-args "' + ea + '" "ytsearch5:' + q + '"';
-  exec(cmd, { timeout: 30000 }, (err, stdout) => {
-    if (err || !stdout || !stdout.trim()) return res.json({ results: [] });
-    const results = stdout.trim().split('\n').filter(l => l.includes('|||')).map(line => {
+  // Sanitise: strip only characters dangerous to yt-dlp argument parsing
+  const q = String(raw).replace(/["']/g, '');
+  // FIX: use spawn args array — no shell, no & injection
+  const ytArgs = [
+    '--quiet', '--no-warnings', '--flat-playlist',
+    '--print', '%(id)s|||%(title)s|||%(duration_string)s',
+    '--extractor-args', 'youtube:player_client=default,android_sdkless',
+    'ytsearch5:' + q
+  ];
+  const ytProc = spawn(YTDLP_PATH, ytArgs, { stdio: ['ignore', 'pipe', 'ignore'] });
+  let out = '';
+  ytProc.stdout.on('data', d => { out += d.toString(); });
+  ytProc.on('close', () => {
+    if (!out.trim()) return res.json({ results: [] });
+    const results = out.trim().split('\n').filter(l => l.includes('|||')).map(line => {
       const parts = line.split('|||').map(s => s ? s.trim() : '');
-      const vid = parts[0], title = parts[1], dur = parts[2];
-      return { videoId: vid, title: title,
-        url: 'https://www.youtube.com/watch?v=' + vid,
-        thumbnail: 'https://i.ytimg.com/vi/' + vid + '/mqdefault.jpg',
-        duration: dur };
+      return { videoId: parts[0], title: parts[1],
+        url: 'https://www.youtube.com/watch?v=' + parts[0],
+        thumbnail: 'https://i.ytimg.com/vi/' + parts[0] + '/mqdefault.jpg',
+        duration: parts[2] };
     });
     res.json({ results });
   });
+  ytProc.on('error', () => res.json({ results: [] }));
+  setTimeout(() => { try { ytProc.kill(); } catch(e){} }, 30000);
 });
 
-app.get('/api/herald', (req, res) => res.json({ news }));
+app.get('/api/herald',  (req, res) => res.json({ news }));
 app.post('/api/herald', requireAuth, (req, res) => {
   const item = { id: Date.now().toString(), date: new Date().toISOString(), ...req.body };
   news.unshift(item); saveNews(); res.json({ success: true, item });
@@ -517,18 +563,18 @@ app.post('/api/herald', requireAuth, (req, res) => {
 app.delete('/api/herald/:id', requireAuth, (req, res) => {
   news = news.filter(n => n.id !== req.params.id); saveNews(); res.json({ success: true });
 });
-
 app.get('/api/vault', (req, res) => {
   const pl = playlists[0] || { tracks: [] };
-  res.json({ tracks: pl.tracks.map(t => ({ id: t.id, title: t.title, artist: t.artist, duration: t.duration, thumbnail: t.thumbnail, status: 'ready' })) });
+  res.json({ tracks: pl.tracks.map(t => ({ id: t.id, title: t.title, artist: t.artist,
+    duration: t.duration, thumbnail: t.thumbnail, status: 'ready' })) });
 });
 
 function handleGetPlaylists(req, res)   { res.json({ playlists }); }
-function handleSavePlaylist(req, res) {
+function handleSavePlaylist(req, res)   {
   const pl = { id: Date.now().toString(), name: req.body.name, tracks: [...queue] };
   playlists.push(pl); savePlaylists(); res.json({ success: true, playlists });
 }
-function handleLoadPlaylist(req, res) {
+function handleLoadPlaylist(req, res)   {
   const pl = playlists.find(p => p.id === req.params.id);
   if (!pl) return res.status(404).json({ success: false });
   queue = pl.tracks.map(t => ({ ...t, id: Math.random().toString(36).slice(2) }));
@@ -542,10 +588,10 @@ function handleAddTrackToPlaylist(req, res) {
   pl.tracks = pl.tracks || []; pl.tracks.push(req.body.track); savePlaylists();
   res.json({ success: true, count: pl.tracks.length });
 }
-app.get( '/api/playlists',              requireAuth, handleGetPlaylists);
-app.post('/api/playlists',              requireAuth, handleSavePlaylist);
-app.post('/api/playlists/:id/load',     requireAuth, handleLoadPlaylist);
-app.post('/api/playlists/:id/add-track',requireAuth, handleAddTrackToPlaylist);
+app.get( '/api/playlists',                requireAuth, handleGetPlaylists);
+app.post('/api/playlists',                requireAuth, handleSavePlaylist);
+app.post('/api/playlists/:id/load',       requireAuth, handleLoadPlaylist);
+app.post('/api/playlists/:id/add-track',  requireAuth, handleAddTrackToPlaylist);
 app.get( '/api/admin/playlists',              requireAuth, handleGetPlaylists);
 app.post('/api/admin/playlists',              requireAuth, handleSavePlaylist);
 app.post('/api/admin/playlists/:id/load',     requireAuth, handleLoadPlaylist);
@@ -604,7 +650,7 @@ server.listen(PORT, () => {
   if (autoJingles.start) startAutoJingleLoop();
   setTimeout(() => {
     if (isPlaying && queue.length > 0 && !currentProcess && !isStartingTrack) {
-      console.log('[BOOT] Resuming playback from saved state');
+      console.log('[BOOT] Resuming playback');
       playTrack();
     }
   }, 5000);
