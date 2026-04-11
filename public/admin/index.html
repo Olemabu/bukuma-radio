@@ -213,35 +213,73 @@
         function renderLibrary(tracks, current) {
             const list = document.getElementById('libraryList');
             if (!tracks || tracks.length === 0) return;
-            const currentJSON = JSON.stringify(tracks);
             const currentID = current?.id || "";
-            if (currentJSON === lastLibraryJSON && currentID === lastCurrentID) return;
-            lastLibraryJSON = currentJSON;
-            lastCurrentID = currentID;
-            list.innerHTML = tracks.map(t => `
-              <div class="track-item ${currentID === t.id ? 'playing' : ''}" id="ti-${t.id}">
-                <div style="min-width:0; flex:1;">
-                  <div class="track-title" style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.title}</div>
-                  <div class="track-artist" style="font-size:10px; opacity:0.5;">${t.artist}</div>
-                  <div class="rename-form" id="rf-${t.id}" style="display:none; margin-top:6px;">
-                    <input type="text" id="rt-${t.id}" value="${t.title.replace(/"/g,'&quot;')}" placeholder="Track title"
-                      style="width:60%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit;">
-                    <input type="text" id="ra-${t.id}" value="${t.artist.replace(/"/g,'&quot;')}" placeholder="Artist"
-                      style="width:33%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit; margin-left:4px;">
-                    <div style="margin-top:5px; display:flex; gap:6px;">
-                      <button class="glass-button" style="padding:3px 10px; font-size:9px; background:rgba(0,242,254,0.2);" onclick="saveRename('${t.id}')">SAVE</button>
-                      <button class="glass-button" style="padding:3px 10px; font-size:9px;" onclick="cancelRename('${t.id}')">CANCEL</button>
-                    </div>
-                  </div>
-                </div>
-                <div style="display:flex; gap:6px; align-items:center; margin-left:10px; flex-shrink:0;">
-                  <button class="glass-button" title="Rename track" style="padding:4px 8px; font-size:11px; background:transparent; border:1px solid rgba(255,255,255,0.1);" onclick="toggleRename('${t.id}')">✏️</button>
-                  <button class="glass-button" style="padding:4px 10px; font-size:9px;" onclick="playNow('${t.id}')">PLAY</button>
-                </div>
-              </div>
-            `).join('');
+
+            const newJSON = JSON.stringify(tracks.map(t => ({ id: t.id, title: t.title, artist: t.artist })));
+
+            if (newJSON !== lastLibraryJSON) {
+                lastLibraryJSON = newJSON;
+                const existingIds = new Set([...list.querySelectorAll('.track-item')].map(el => el.id.replace('ti-', '')));
+                const newIds = new Set(tracks.map(t => t.id));
+
+                existingIds.forEach(id => {
+                    if (!newIds.has(id)) { const el = document.getElementById('ti-' + id); if (el) el.remove(); }
+                });
+
+                tracks.forEach((t, i) => {
+                    let item = document.getElementById('ti-' + t.id);
+                    if (!item) {
+                        const tmp = document.createElement('div');
+                        tmp.innerHTML = buildTrackHTML(t, currentID);
+                        item = tmp.firstElementChild;
+                        const sibling = list.children[i];
+                        if (sibling) list.insertBefore(item, sibling); else list.appendChild(item);
+                    } else {
+                        const titleEl = item.querySelector('.track-title');
+                        const artistEl = item.querySelector('.track-artist');
+                        if (titleEl && titleEl.textContent !== t.title) titleEl.textContent = t.title;
+                        if (artistEl && artistEl.textContent !== t.artist) artistEl.textContent = t.artist;
+                        const rf = item.querySelector('.rename-form');
+                        if (rf && rf.style.display !== 'block') {
+                            const ti = item.querySelector('.rename-title-input');
+                            const ai = item.querySelector('.rename-artist-input');
+                            if (ti) ti.value = t.title;
+                            if (ai) ai.value = t.artist;
+                        }
+                    }
+                });
+            }
+
+            if (currentID !== lastCurrentID) {
+                lastCurrentID = currentID;
+                list.querySelectorAll('.track-item').forEach(el => {
+                    el.classList.toggle('playing', el.id === 'ti-' + currentID);
+                });
+            }
         }
 
+        function buildTrackHTML(t, currentID) {
+            const playing = currentID === t.id ? 'playing' : '';
+            const te = t.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const ae = t.artist.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return '<div class="track-item ' + playing + '" id="ti-' + t.id + '">' +
+              '<div style="min-width:0; flex:1;">' +
+              '<div class="track-title" style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + te + '</div>' +
+              '<div class="track-artist" style="font-size:10px; opacity:0.5;">' + ae + '</div>' +
+              '<div class="rename-form" id="rf-' + t.id + '" style="display:none; margin-top:6px;">' +
+              '<input type="text" class="rename-title-input" id="rt-' + t.id + '" value="' + te + '" placeholder="Track title"' +
+              ' style="width:60%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit;">' +
+              '<input type="text" class="rename-artist-input" id="ra-' + t.id + '" value="' + ae + '" placeholder="Artist"' +
+              ' style="width:33%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit; margin-left:4px;">' +
+              '<div style="margin-top:5px; display:flex; gap:6px;">' +
+              '<button class="glass-button" style="padding:3px 10px; font-size:9px; background:rgba(0,242,254,0.2);" onclick="saveRename(\'' + t.id + '\')">SAVE</button>' +
+              '<button class="glass-button" style="padding:3px 10px; font-size:9px;" onclick="cancelRename(\'' + t.id + '\')">CANCEL</button>' +
+              '</div></div></div>' +
+              '<div style="display:flex; gap:6px; align-items:center; margin-left:10px; flex-shrink:0;">' +
+              '<button class="glass-button" title="Rename track" style="padding:4px 8px; font-size:11px; background:transparent; border:1px solid rgba(255,255,255,0.1);" onclick="toggleRename(\'' + t.id + '\')">\u270F\uFE0F</button>' +
+              '<button class="glass-button" style="padding:4px 10px; font-size:9px;" onclick="playNow(\'' + t.id + '\')">PLAY</button>' +
+              '</div></div>';
+        }
         function toggleRename(id) {
             const rf = document.getElementById('rf-' + id);
             if (!rf) return;
