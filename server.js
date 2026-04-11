@@ -319,6 +319,19 @@ app.post('/api/skip', (req, res) => { state.currentMusicIdx = (state.currentMusi
 app.post('/api/mic', (req, res) => { state.micMode = req.body.mode; if(state.micMode !== 'OFF') startMicFilter(); broadcastStatus(); res.json({ok:true}); });
 app.post('/api/volume', (req, res) => { state.volume = req.body.volume; saveState(); broadcastStatus(); res.json({ok:true}); });
 
+app.get('/api/debug-meta', async (req, res) => {
+    try {
+        const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
+        if (files.length === 0) return res.json({ error: 'no files' });
+        const f = files[0];
+        const filePath = path.join(MUSIC_DIR, f);
+        const meta = await mm.parseFile(filePath);
+        res.json({ filename: f, common: meta.common, native_keys: Object.keys(meta.native || {}) });
+    } catch(e) {
+        res.json({ error: e.message });
+    }
+});
+
 // --- INIT ---
 loadState();
 startMaster();
