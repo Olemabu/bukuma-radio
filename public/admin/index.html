@@ -48,18 +48,28 @@
                     <div id="trackArtist" style="font-size: 1.4rem; opacity: 0.6; margin-top: 8px; font-weight: 300;">AWAITING SIGNAL...</div>
                 </div>
 
-                <!-- Admin Progress Bar -->
-                <div style="margin-top: 25px;">
-                    <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; position: relative;">
-                        <div id="progFill" style="height: 100%; width: 0%; background: var(--glass-accent); box-shadow: 0 0 10px var(--glass-accent); transition: width 0.3s linear;"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 10px; font-family: monospace; opacity: 0.5; margin-top: 6px;">
-                        <span id="progStart">0:00</span>
-                        <span id="progEnd">0:00</span>
-                    </div>
-                </div>
-
-                <div class="vu-strip" style="height: 14px; margin-top: 20px;"><div id="masterVU" class="vu-fill"></div></div>
+                <!-- Admin Progress Bar / Seeker -->
+        <div style="margin-top: 25px;">
+            <div style="position: relative; height: 22px; display: flex; align-items: center;">
+                <!-- background track -->
+                <div style="position:absolute; left:0; right:0; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; pointer-events:none;"></div>
+                <!-- filled portion -->
+                <div id="progFill" style="position:absolute; left:0; height:6px; width:0%; background:var(--glass-accent); box-shadow:0 0 10px var(--glass-accent); border-radius:3px; pointer-events:none; transition:width 0.25s linear;"></div>
+                <!-- seeker handle -->
+                <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1"
+                    style="position:absolute; left:0; right:0; width:100%; height:100%; opacity:0; cursor:pointer; margin:0;"
+                    oninput="onSeekInput(this.value)"
+                    onmousedown="seekDragging=true"
+                    ontouchstart="seekDragging=true"
+                    onmouseup="onSeekCommit(this.value)"
+                    ontouchend="onSeekCommit(this.value)">
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; font-family: monospace; opacity: 0.5; margin-top: 4px;">
+                <span id="progStart">0:00</span>
+                <span id="progEnd">0:00</span>
+            </div>
+        </div>
+        <div class="vu-strip" style="height: 14px; margin-top: 20px;"><div id="masterVU" class="vu-fill"></div></div>
             </div>
 
             <div class="master-controls">
@@ -87,20 +97,26 @@
             <div class="glass-card">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                     <div>
-                        <div class="section-title">Microphone Mixer</div>
-                        <div class="mic-switch-container" style="padding: 5px; background: rgba(0,0,0,0.2); border-radius: 40px; display: flex; border: 1px solid rgba(255,255,255,0.05);">
-                            <div class="mic-mode active" id="modeOFF" onclick="setMic('OFF')">OFF</div>
-                            <div class="mic-mode" id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
-                            <div class="mic-mode" id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
-                        
-                        <div style="margin-top:12px;">
-                            <p style="font-size:10px; margin-bottom:5px; opacity:0.5;">MIC DUCK LEVEL (when music plays under mic)</p>
-                            <input type="range" min="0" max="100" value="30" style="width:100%;" oninput="setDuckLevel(this.value)" id="duckSlider">
-                            <div style="display:flex; justify-content:space-between; font-size:9px; opacity:0.4; margin-top:3px;"><span>Quiet</span><span id="duckVal">30%</span><span>Loud</span></div>
-                        </div></div>
+                        <div>
+                    <div class="section-title">Microphone Mixer</div>
+                    <div class="mic-switch-container" style="padding: 5px; background: rgba(0,0,0,0.2); border-radius: 40px; display: flex; border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="mic-mode active" id="modeOFF" onclick="setMic('OFF')">OFF</div>
+                        <div class="mic-mode" id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
+                        <div class="mic-mode" id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
                     </div>
-                    <div>
-                        <div class="section-title">Global Sync Level</div>
+                    <div style="margin-top:12px;">
+                        <p style="font-size:10px; margin-bottom:5px; opacity:0.5;">DUCK LEVEL — music volume under mic (0=silent, 100=no duck)</p>
+                        <input type="range" min="0" max="100" value="30" style="width:100%;" oninput="setDuckLevel(this.value)" id="duckSlider">
+                        <div style="display:flex; justify-content:space-between; font-size:9px; opacity:0.4; margin-top:3px;"><span>Silent</span><span id="duckVal">30%</span><span>Full</span></div>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <p style="font-size:10px; margin-bottom:5px; opacity:0.5;">MIC VU</p>
+                        <div style="height:8px; background:rgba(0,0,0,0.3); border-radius:4px; overflow:hidden;">
+                            <div id="micVU" style="height:100%; width:0%; background:linear-gradient(to right,#2ed573,#ffa502,#ff4757); transition:width 0.05s linear;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-title">Global Sync Level</div>
                         <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.5;">MASTER BROADCAST GAIN</p>
                         <input type="range" style="width: 100%;" value="80" oninput="setVolume(this.value)">
                     </div>
@@ -159,15 +175,18 @@
                         playBtn.style.color = '';
                     }
 
-                    // Progress Bar Logic
-                    if (data.duration > 0) {
-                        const perc = (data.elapsedTime / data.duration) * 100;
+                    // Progress Bar / Seeker Logic
+                if (data.duration > 0) {
+                    const perc = (data.elapsedTime / data.duration) * 100;
+                    if (!seekDragging) {
                         document.getElementById('progFill').style.width = perc + '%';
-                        document.getElementById('progStart').textContent = formatTime(data.elapsedTime);
-                        document.getElementById('progEnd').textContent = formatTime(data.duration);
+                        document.getElementById('seekBar').value = perc;
                     }
-
-                    // Update Remote Status
+                    document.getElementById('progStart').textContent = formatTime(data.elapsedTime);
+                    document.getElementById('progEnd').textContent = formatTime(data.duration);
+                    seekCurrentDuration = data.duration;
+                }
+                        // Update Remote Status
                     if (data.listenerStats) {
                         document.getElementById('latencyVal').textContent = Math.round(data.listenerStats.latency || 0) + 'ms';
                         document.getElementById('remoteVU').style.width = (data.listenerStats.vu || 0) + '%';
@@ -175,6 +194,10 @@
 
                     // Render Library if it has changed
                     renderLibrary(data.library, data.currentTrack);
+                }
+                if (data.type === 'vu') {
+                    const vuBar = document.getElementById('masterVU');
+                    if (vuBar) vuBar.style.width = data.vuLevel + '%';
                 }
             };
             
@@ -209,6 +232,28 @@
 
         let lastLibraryJSON = "";
         let lastCurrentID = "";
+        let seekDragging = false;
+        let seekCurrentDuration = 0;
+
+        function onSeekInput(pct) {
+            // While dragging: update the fill bar visually but don't seek yet
+            document.getElementById('progFill').style.width = pct + '%';
+            if (seekCurrentDuration > 0) {
+                document.getElementById('progStart').textContent = formatTime(seekCurrentDuration * pct / 100);
+            }
+        }
+
+        function onSeekCommit(pct) {
+            seekDragging = false;
+            if (seekCurrentDuration <= 0) return;
+            const seconds = seekCurrentDuration * pct / 100;
+            fetch('/api/seek', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ seconds })
+            }).catch(err => console.error('Seek error:', err));
+        }
+
 
         function renderLibrary(tracks, current) {
             const list = document.getElementById('libraryList');
@@ -341,13 +386,28 @@
             ws = new WebSocket(`${proto}://${location.host}/ws`);
             
             processor.onaudioprocess = e => {
-                const input = e.inputBuffer.getChannelData(0);
-                const pcm = new Int16Array(input.length);
-                for (let i = 0; i < input.length; i++) {
-                    pcm[i] = Math.max(-1, Math.min(1, input[i])) * 0x7FFF;
-                }
-                if (ws.readyState === WebSocket.OPEN) ws.send(pcm.buffer);
-            };
+            const input = e.inputBuffer.getChannelData(0);
+            const pcm = new Int16Array(input.length);
+            let sumSq = 0;
+            for (let i = 0; i < input.length; i++) {
+                const s = Math.max(-1, Math.min(1, input[i]));
+                pcm[i] = s * 0x7FFF;
+                sumSq += s * s;
+            }
+            // Update mic VU meter in admin UI
+            const rms = Math.sqrt(sumSq / input.length);
+            const vuPct = Math.min(100, Math.round(rms * 400));
+            const micVUBar = document.getElementById('micVU');
+            if (micVUBar) micVUBar.style.width = vuPct + '%';
+            // Send PCM to server
+            if (ws.readyState === WebSocket.OPEN) ws.send(pcm.buffer);
+            // Send feedback ping every ~20 chunks for latency measurement
+            if (!processor._feedbackCounter) processor._feedbackCounter = 0;
+            processor._feedbackCounter++;
+            if (processor._feedbackCounter % 20 === 0 && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'feedback', vu: vuPct, timestamp: Date.now() }));
+            }
+        };
             
             source.connect(processor);
             processor.connect(audioCtx.destination);
