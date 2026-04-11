@@ -458,6 +458,32 @@ app.post('/api/mic-duck', (req, res) => {
     }
     res.json({ ok: true, micDuckLevel: state.micDuckLevel });
 });
+app.post('/api/delete-track', (req, res) => {
+    const id = req.body.id;
+    if (!id) return res.status(400).json({ error: 'missing id' });
+    const track = state.library.find(t => t.id === id);
+    if (!track) return res.status(404).json({ error: 'not found' });
+    try {
+        fs.unlinkSync(track.path);
+    } catch(e) {
+        return res.status(500).json({ error: e.message });
+    }
+    // Remove from library, queue, metaCache
+    state.library = state.library.filter(t => t.id !== id);
+    state.queue = state.queue.filter(t => t.id !== id);
+    if (metaCache[track.path.split('/').pop().replace('.mp3','')]) {
+        delete metaCache[track.path.split('/').pop().replace('.mp3','')];
+        saveMetaCache();
+    }
+    if (state.currentTrack && state.currentTrack.id === id) {
+        state.currentMusicIdx = 0;
+        playTrack();
+    } else {
+        state.currentMusicIdx = Math.min(state.currentMusicIdx, state.queue.length - 1);
+    }
+    broadcastStatus();
+    res.json({ ok: true, remaining: state.library.length });
+});
 
 // --- INIT ---
 loadState();
