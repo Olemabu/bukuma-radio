@@ -1,250 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>The Bukuma Herald — Agum Bukuma Radio</title>
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#1B4D3E">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
-  <meta name="apple-mobile-web-app-title" content="Bukuma Herald">
-  <link rel="apple-touch-icon" href="/images/icon-512.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
-  <style>
-    :root{--cream:#FFF5E1;--leaf:#1B4D3E;--orange:#FF5733;--green:#2ECC71;--teal:#1ABC9C;--white:#FFFFFF;--shadow:rgba(46,204,113,0.1);}
-    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-    body{background:var(--cream);color:var(--leaf);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:space-around;padding:20px;overflow-x:hidden;}
-    .header-section{text-align:center;margin-bottom:20px;}
-    .brand-title{font-size:28px;font-weight:900;color:var(--leaf);letter-spacing:-1px;text-transform:uppercase;}
-    .tagline-box{background:var(--orange);padding:4px 12px;border-radius:4px;display:inline-block;margin-top:5px;}
-    .tagline-text{color:#fff;font-weight:bold;font-size:12px;}
-    .player-card{width:100%;max-width:380px;background:#fff;border-radius:30px;padding:30px;box-shadow:0 10px 30px var(--shadow);margin:20px 0;}
-    .status-row{display:flex;align-items:center;margin-bottom:15px;}
-    .live-indicator{width:8px;height:8px;border-radius:50%;background:var(--orange);margin-right:6px;box-shadow:0 0 8px var(--orange);animation:blink 1.5s infinite;}
-    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
-    .live-text{color:var(--orange);font-weight:800;font-size:12px;letter-spacing:1px;}
-    .show-title{font-size:24px;font-weight:bold;color:var(--leaf);margin-bottom:4px;}
-    .community-text{font-size:16px;color:var(--teal);margin-bottom:25px;}
-    .progress-track{height:6px;background:#F0F0F0;border-radius:3px;overflow:hidden;}
-    .progress-active{width:0%;height:100%;background:var(--green);transition:width 0.5s ease;}
-    .action-center{text-align:center;margin:20px 0;}
-    .play-button{width:100px;height:100px;border-radius:50%;background:var(--green);border:6px solid rgba(46,204,113,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s;box-shadow:0 10px 20px rgba(46,204,113,0.2);margin:0 auto;}
-    .play-button.playing{background:var(--orange);border-color:rgba(255,87,51,0.2);box-shadow:0 10px 20px rgba(255,87,51,0.2);}
-    .play-button:active{transform:scale(0.9);}
-    .play-icon{font-size:32px;color:#fff;line-height:1;}
-    .play-label{margin-top:15px;color:var(--leaf);font-weight:bold;letter-spacing:1px;font-size:13px;}
-    .nav-row{display:flex;width:100%;max-width:400px;justify-content:space-around;margin-top:20px;}
-    .nav-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;text-decoration:none;color:inherit;}
-    .nav-emoji{font-size:24px;margin-bottom:5px;}
-    .nav-text{color:var(--leaf);font-size:12px;font-weight:600;}
-    .vault-section{width:100%;max-width:380px;margin-top:30px;}
-    .vault-header{font-weight:900;font-size:18px;color:var(--leaf);margin-bottom:10px;opacity:0.8;}
-    .vault-list{display:flex;flex-direction:column;gap:10px;}
-    .vault-track{background:#fff;padding:15px;border-radius:15px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 10px rgba(0,0,0,0.03);cursor:pointer;}
-    .vault-track:hover{border:1px solid var(--green);}
-    .vault-thumb{width:40px;height:40px;border-radius:8px;background:#eee;object-fit:cover;}
-    .vault-info{flex:1;min-width:0;}
-    .vault-name{font-weight:700;font-size:13px;color:var(--leaf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .vault-artist{font-size:11px;color:var(--teal);}
-    .vault-empty{opacity:0.5;font-size:12px;text-align:center;padding:20px 0;}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agum Bukuma Radio — Live</title>
+    <link rel="stylesheet" href="/css/glass.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top right, #1e3a8a, #0f172a); }
+        .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; z-index: 10; }
+        .station-header { text-align: center; }
+        .station-name { font-size: 3rem; font-weight: 900; margin: 0; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 10px 20px rgba(0,242,254,0.2); }
+        .portal-card { width: 350px; text-align: center; }
+        .on-air-tag { background: rgba(255, 61, 0, 0.2); border: 1px solid rgba(255, 61, 0, 0.4); color: #ff3d00; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 900; letter-spacing: 2px; display: inline-block; margin-bottom: 1rem; box-shadow: 0 0 15px rgba(255, 61, 0, 0.2); }
+        .track-title { font-size: 1.5rem; font-weight: 700; margin: 10px 0 5px; color: #fff; }
+        .track-artist { font-size: 0.9rem; opacity: 0.7; margin-bottom: 1rem; }
+        
+        .progress-box { width: 100%; margin: 10px 0 20px; text-align: left; }
+        .progress-bar-container { width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05); }
+        .progress-fill { height: 100%; width: 0%; background: var(--glass-accent); box-shadow: 0 0 10px var(--glass-accent); transition: width 0.3s linear; }
+        .progress-time { display: flex; justify-content: space-between; font-size: 9px; opacity: 0.5; margin-top: 5px; font-weight: 700; }
+
+        .main-button { width: 120px; height: 120px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.3), inset 0 2px 5px rgba(255,255,255,0.2); margin: 0 auto; }
+        .main-button:hover { transform: scale(1.1) translateY(-5px); background: rgba(255,255,255,0.15); box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 30px rgba(0,242,254,0.3); }
+        .main-button:active { transform: scale(0.95); }
+        .main-button.playing { background: var(--glass-accent); color: #000; box-shadow: 0 0 50px rgba(0,242,254,0.6); }
+
+        .viz-container { height: 60px; display: flex; align-items: flex-end; gap: 4px; margin-top: 2rem; }
+        .viz-bar { flex: 1; background: var(--glass-accent); width: 4px; height: 10px; border-radius: 2px; transition: height 0.1s; opacity: 0.4; }
+        
+        .volume-box { position: absolute; bottom: 40px; width: 250px; display: flex; align-items: center; gap: 1rem; }
+        .volume-icon { font-size: 1.2rem; opacity: 0.5; }
+    </style>
 </head>
 <body>
-  <div class="header-section">
-    <h1 class="brand-title">THE BUKUMA HERALD</h1>
-    <div class="tagline-box"><span class="tagline-text">AGUM BUKUMA RADIO</span></div>
-  </div>
+    <div class="container">
+        <div class="station-header">
+            <h1 class="station-name">AGUM BUKUMA</h1>
+            <p style="opacity: 0.5; letter-spacing: 4px; font-weight: 300;">PURE DRIVE STATION</p>
+        </div>
 
-  <div class="player-card">
-    <div class="status-row">
-      <div class="live-indicator"></div>
-      <span class="live-text" id="statusLabel">ON AIR</span>
+        <div class="glass-card portal-card">
+            <div id="airTag" class="on-air-tag">CONNECTING...</div>
+            <div class="track-title" id="trackTitle">AWAITING FEED</div>
+            <div class="track-artist" id="trackArtist">STATION STANDBY</div>
+
+            <div class="progress-box">
+                <div class="progress-bar-container">
+                    <div id="progFill" class="progress-fill"></div>
+                </div>
+                <div class="progress-time">
+                    <span id="progStart">0:00</span>
+                    <span id="progEnd">0:00</span>
+                </div>
+            </div>
+
+            <button class="main-button" id="playBtn" onclick="toggleTuneIn()">
+                <span id="playIcon">▶</span>
+            </button>
+            <p style="margin-top: 1.5rem; font-size: 11px; opacity: 0.4; font-weight: 700; letter-spacing: 2px;">CONNECTION PORTAL</p>
+
+            <div class="viz-container" id="viz">
+                <div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div>
+                <div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div>
+                <div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div>
+            </div>
+        </div>
+
+        <div class="volume-box glass-card" style="padding: 15px 25px; border-radius: 50px; flex-direction: row; position: relative; bottom: 0;">
+            <span class="volume-icon">🔈</span>
+            <input type="range" id="volSlider" min="0" max="100" value="80" style="flex: 1;" oninput="updateVolume(this.value)">
+            <span class="volume-icon">🔊</span>
+        </div>
     </div>
-    <h2 class="show-title" id="displayTrackTitle">Agum Bukuma Radio</h2>
-    <p class="community-text" id="displayTrackArtist">The Voice of the Niger Delta</p>
-    <div class="progress-track"><div class="progress-active" id="progressFill"></div></div>
-  </div>
 
-  <div class="action-center">
-    <div class="play-button" id="playBtnMain" onclick="tuneIn()">
-      <span class="play-icon" id="playIcon">&#9654;</span>
-    </div>
-    <p class="play-label" id="playStatusText">TAP TO LISTEN</p>
-  </div>
+    <audio id="radio" crossorigin="anonymous"></audio>
 
-  <div class="nav-row">
-    <a href="/app/" class="nav-item"><span class="nav-emoji">&#128251;</span><span class="nav-text">Player</span></a>
-    <div class="nav-item"><span class="nav-emoji">&#128172;</span><span class="nav-text">Talk</span></div>
-    <div class="nav-item"><span class="nav-emoji">&#127807;</span><span class="nav-text">Growth</span></div>
-  </div>
+    <script>
+        const audio = document.getElementById('radio');
+        const playBtn = document.getElementById('playBtn');
+        const playIcon = document.getElementById('playIcon');
+        let isPlaying = false;
+        let ws = null;
+        let analyzer = null;
+        let audioCtx = null;
 
-  <div class="vault-section">
-    <h3 class="vault-header">COMMUNITY VAULT</h3>
-    <div class="vault-list" id="vaultContainer"><p class="vault-empty">Syncing...</p></div>
-  </div>
+        function initWS() {
+            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            ws = new WebSocket(`${proto}://${location.host}/ws`);
+            
+            ws.onmessage = e => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'status') {
+                    updateUI(data);
+                }
+            };
+            ws.onclose = () => setTimeout(initWS, 2000);
+        }
 
-  <!-- crossorigin="anonymous" required for Web Audio API MediaElementSource -->
-  <audio id="radioStream" preload="none" crossorigin="anonymous"></audio>
+        function updateUI(data) {
+            document.getElementById('trackTitle').textContent = data.currentTrack?.title || 'AGUM BUKUMA RADIO';
+            document.getElementById('trackArtist').textContent = data.currentTrack?.artist || 'STATION LIVE';
+            
+            const airTag = document.getElementById('airTag');
+            airTag.textContent = data.isPlaying ? 'ON-AIR' : 'OFFLINE';
+            airTag.style.borderColor = data.isPlaying ? 'rgba(0, 242, 254, 0.4)' : 'rgba(255, 61, 0, 0.4)';
+            airTag.style.color = data.isPlaying ? '#00f2fe' : '#ff3d00';
 
-  <script>
-  'use strict';
-  const S = { playing: false, retryDelay: 2000, stallTimer: null };
+            // Progress Bar
+            if (data.duration > 0) {
+                const perc = (data.elapsedTime / data.duration) * 100;
+                document.getElementById('progFill').style.width = perc + '%';
+                document.getElementById('progStart').textContent = formatTime(data.elapsedTime);
+                document.getElementById('progEnd').textContent = formatTime(data.duration);
+            }
 
-  // Register Service Worker
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
-  }
+            // Ghost Fix: Force stop if server says off
+            if (!data.isPlaying && isPlaying) {
+                toggleTuneIn();
+            }
+        }
 
-  // Media Session API — shows now-playing on lock screen
-  function updateMediaSession(title, artist) {
-    if (!('mediaSession' in navigator)) return;
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title:  title  || 'Agum Bukuma Radio',
-      artist: artist || 'The Voice of the Niger Delta',
-      album:  'The Bukuma Herald',
-      artwork: [{ src: '/images/icon-512.png', sizes: '512x512', type: 'image/png' }]
-    });
-    navigator.mediaSession.setActionHandler('play',  () => { if (!S.playing) tuneIn(); });
-    navigator.mediaSession.setActionHandler('pause', () => { if (S.playing)  tuneIn(); });
-  }
+        function formatTime(s) {
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return `${m}:${sec.toString().padStart(2, '0')}`;
+        }
 
-  // Poll /api/status every 10 s to update track info
-  async function fetchStatus() {
-    try {
-      const d = await fetch('/api/status').then(r => r.json());
-      if (d.currentTrack) {
-        document.getElementById('displayTrackTitle').textContent  = d.currentTrack.title  || 'Agum Bukuma Radio';
-        document.getElementById('displayTrackArtist').textContent = d.currentTrack.artist || 'Live Broadcast';
-        updateMediaSession(d.currentTrack.title, d.currentTrack.artist);
-      }
-      document.getElementById('statusLabel').textContent = d.isPlaying ? 'ON AIR' : 'OFFLINE';
-    } catch(e) {}
-  }
+        function setupAnalysis() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioCtx.createMediaElementSource(audio);
+            analyzer = audioCtx.createAnalyser();
+            analyzer.fftSize = 256;
+            source.connect(analyzer);
+            analyzer.connect(audioCtx.destination);
 
-  const audio = document.getElementById('radioStream');
+            const bufferLength = analyzer.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
 
-  // On stream error: exponential back-off retry
-  audio.addEventListener('error', () => {
-    if (!S.playing) return;
-    setTimeout(() => {
-      if (S.playing) {
-        audio.src = '/api/stream?' + Date.now();
-        audio.play().catch(() => {});
-      }
-    }, S.retryDelay);
-    S.retryDelay = Math.min(S.retryDelay * 1.5, 15000);
-  });
+            function sendFeedback() {
+                if (!isPlaying || !ws || ws.readyState !== WebSocket.OPEN) return requestAnimationFrame(sendFeedback);
+                analyzer.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for(let i = 0; i < bufferLength; i++) sum += dataArray[i];
+                const avg = sum / bufferLength;
+                
+                ws.send(JSON.stringify({
+                    type: 'feedback',
+                    vu: avg / 255 * 100,
+                    timestamp: Date.now()
+                }));
+                requestAnimationFrame(sendFeedback);
+            }
+            sendFeedback();
+        }
 
-  // On stall: retry after 10 s of buffering with no data
-  audio.addEventListener('waiting', () => {
-    if (!S.playing) return;
-    if (S.stallTimer) clearTimeout(S.stallTimer);
-    S.stallTimer = setTimeout(() => {
-      if (S.playing && audio.readyState < 3) {
-        audio.src = '/api/stream?' + Date.now();
-        audio.play().catch(() => {});
-      }
-    }, 10000);
-  });
+        function toggleTuneIn() {
+            if (!isPlaying) {
+                audio.src = '/stream?' + Date.now();
+                audio.play().then(() => {
+                    isPlaying = true;
+                    playBtn.classList.add('playing');
+                    playIcon.innerHTML = '⏸';
+                    setupAnalysis();
+                }).catch(e => console.error(e));
+            } else {
+                audio.pause();
+                audio.src = '';
+                isPlaying = false;
+                playBtn.classList.remove('playing');
+                playIcon.innerHTML = '▶';
+            }
+        }
 
-  audio.addEventListener('playing', () => {
-    if (S.stallTimer) { clearTimeout(S.stallTimer); S.stallTimer = null; }
-    S.retryDelay = 2000;
-  });
+        function updateVolume(v) { audio.volume = v / 100; }
 
-  // FIX: 'ended' on a live stream means server dropped — retry instead of stopping
-  audio.addEventListener('ended', () => {
-    if (!S.playing) return;
-    setTimeout(() => {
-      if (S.playing) {
-        audio.src = '/api/stream?' + Date.now();
-        audio.play().catch(() => {});
-      }
-    }, S.retryDelay);
-  });
+        initWS();
 
-  // Main play/pause toggle
-  function tuneIn() {
-    if (!S.playing) {
-      audio.src = '/api/stream?' + Date.now();
-      audio.play().then(() => {
-        S.playing = true;
-        updatePlayUI(true);
-      }).catch(() => {});
-    } else {
-      audio.pause();
-      audio.src = '';
-      S.playing = false;
-      updatePlayUI(false);
-    }
-  }
-
-  // FIX: use innerHTML so HTML entities render as symbols, not literal text
-  function updatePlayUI(playing) {
-    document.getElementById('playBtnMain').classList.toggle('playing', playing);
-    document.getElementById('playIcon').innerHTML     = playing ? '&#9646;&#9646;' : '&#9654;';
-    document.getElementById('playStatusText').textContent = playing ? 'LISTENING LIVE' : 'TAP TO LISTEN';
-  }
-
-  // Load vault (ready tracks from the library)
-  async function loadVault() {
-    try {
-      const d = await fetch('/api/vault').then(r => r.json());
-      const c = document.getElementById('vaultContainer');
-      if (!c) return;
-      if (!d.tracks || !d.tracks.length) {
-        c.innerHTML = '<p class="vault-empty">No tracks ready yet. Station is downloading...</p>';
-        return;
-      }
-      c.innerHTML = d.tracks.map(t => {
-        // FIX: use encodeURIComponent for filename and safe double-quote attribute delimiters
-        const safeTitle    = encodeURIComponent(t.title  || '');
-        const safeArtist   = encodeURIComponent(t.artist || '');
-        const safeFilename = encodeURIComponent(t.filename || (t.id + '.mp3'));
-        const thumb = t.thumbnail || '/images/icon-512.png';
-        return '<div class="vault-track" onclick="playVaultTrack(' +
-          JSON.stringify(safeFilename) + ',' +
-          JSON.stringify(safeTitle)    + ',' +
-          JSON.stringify(safeArtist)   + ')">' +
-          '<img src="' + thumb + '" class="vault-thumb" ' +
-          'onerror="this.onerror=null;this.src=&quot;/images/icon-512.png&quot;">' +
-          '<div class="vault-info">' +
-          '<div class="vault-name">' + (t.title || 'Unknown') + '</div>' +
-          '<div class="vault-artist">' + (t.artist || '') + '</div>' +
-          '</div></div>';
-      }).join('');
-    } catch(e) {}
-  }
-
-  // FIX: use /api/downloads/:filename (which now exists in server.js)
-  function playVaultTrack(filename, title, artist) {
-    audio.src = '/api/downloads/' + decodeURIComponent(filename);
-    audio.play().catch(() => {});
-    S.playing = true;
-    updatePlayUI(true);
-    const t = decodeURIComponent(title);
-    const a = decodeURIComponent(artist);
-    document.getElementById('displayTrackTitle').textContent  = t;
-    document.getElementById('displayTrackArtist').textContent = a;
-    updateMediaSession(t, a);
-  }
-
-  // Initial load
-  fetchStatus();
-  loadVault();
-  setInterval(fetchStatus, 10000);
-
-  // Fake progress animation while playing
-  let prog = 0;
-  setInterval(() => {
-    if (S.playing) {
-      prog = (prog + 1) % 100;
-      document.getElementById('progressFill').style.width = (30 + prog / 2) + '%';
-    }
-  }, 1000);
-  </script>
+        // Fake Viz Animation
+        setInterval(() => {
+            if (!isPlaying) return;
+            document.querySelectorAll('.viz-bar').forEach(bar => {
+                bar.style.height = (Math.random() * 40 + 10) + 'px';
+                bar.style.opacity = Math.random() * 0.6 + 0.4;
+            });
+        }, 100);
+    </script>
 </body>
 </html>

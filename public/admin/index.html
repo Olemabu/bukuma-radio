@@ -1,998 +1,283 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>Bukuma Radio — Station Master</title>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root {
-  --bg: #1a1c22;
-  --panel: #2d313a;
-  --chassis: #3d424d;
-  --ledge: #181a1f;
-  --accent: #ff4757;
-  --accent2: #70a1ff;
-  --green: #2ed573;
-  --yellow: #ffa502;
-  --text: #ffffff;
-  --muted: #a4b0be;
-  --brass: linear-gradient(135deg, #d4af37 0%, #f9e29c 45%, #b8860b 100%);
-  --shadow-raised: 0 10px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.1);
-  --shadow-inset: inset 0 2px 5px rgba(0,0,0,0.5);
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Master — Agum Bukuma Radio</title>
+    <link rel="stylesheet" href="/css/glass.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #020617; overflow: auto; min-width: 1000px; }
+        .dashboard { padding: 40px; display: grid; grid-template-columns: 1fr 350px; gap: 30px; max-width: 1400px; margin: 0 auto; }
+        
+        .section-title { font-size: 11px; font-weight: 900; letter-spacing: 3px; opacity: 0.5; margin-bottom: 20px; text-transform: uppercase; }
+        
+        .console-main { display: flex; flex-direction: column; gap: 30px; }
+        .master-controls { display: flex; gap: 20px; align-items: center; }
+        
+        .transport-btn { width: 80px; height: 80px; border-radius: 20px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
+        
+        .mic-switch-container { display: flex; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 40px; gap: 10px; width: fit-content; border: 1px solid rgba(255,255,255,0.05); }
+        .mic-mode { padding: 12px 25px; border-radius: 30px; cursor: pointer; font-size: 12px; font-weight: 800; transition: all 0.3s; opacity: 0.5; }
+        .mic-mode.active { background: var(--glass-accent); color: #000; opacity: 1; box-shadow: 0 0 20px rgba(0,242,254,0.4); }
+        
+        .vu-strip { height: 10px; background: rgba(0,0,0,0.4); border-radius: 5px; overflow: hidden; position: relative; margin-top: 20px; }
+        .vu-fill { height: 100%; width: 0%; background: linear-gradient(to right, #00f2fe, #ff3d00); transition: width 0.1s linear; }
 
-html, body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Segoe UI", Roboto, sans-serif;
-  overflow-x: hidden;
-}
-
-#loginScreen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: radial-gradient(circle at center, #2d313a, #1a1c22);
-}
-
-.login-card {
-  background: var(--panel);
-  border: 4px solid var(--chassis);
-  border-radius: 20px;
-  padding: 50px;
-  width: 380px;
-  text-align: center;
-  box-shadow: 0 50px 100px rgba(0,0,0,0.8);
-  position: relative;
-}
-.login-card::before { content: 'MODEL 24-B SERIAL: 001'; position: absolute; top: 15px; right: 20px; font-size: 8px; font-weight: 700; color: var(--muted); opacity: 0.5; }
-
-.login-card h1 { font-size: 1.8rem; margin-bottom: 30px; letter-spacing: -1px; }
-.login-card input {
-  width: 100%; padding: 15px; background: var(--ledge); border: 2px solid var(--chassis);
-  border-radius: 8px; color: var(--text); font-size: 1.1rem; margin-bottom: 20px;
-  box-shadow: var(--shadow-inset); text-align: center;
-}
-.login-card button {
-  width: 100%; padding: 15px; background: var(--accent); color: white;
-  border: none; border-radius: 8px; font-weight: 900; cursor: pointer;
-  box-shadow: 0 6px 0 #b33939; transition: all 0.1s;
-}
-.login-card button:active { transform: translateY(4px); box-shadow: 0 2px 0 #b33939; }
-
-#mainScreen { display: none; flex-direction: column; min-height: 100vh; }
-
-.chassis {
-  background: var(--panel);
-  border: 6px solid var(--chassis);
-  border-bottom: 12px solid #111;
-  border-right: 12px solid #222;
-  border-radius: 24px;
-  margin: 20px auto;
-  width: 95%; max-width: 1200px;
-  padding: 30px;
-  box-shadow: 0 80px 150px rgba(0,0,0,0.9);
-}
-
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid var(--ledge); padding-bottom: 20px; }
-.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s; }
-.on-air-badge.active { background: #ff4757; color: white; border-color: #ff4757; box-shadow: 0 0 15px rgba(255, 71, 87, 0.5); animation: pulse-red 2s infinite; }
-@keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-.sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #666; display: inline-block; margin-left: 10px; transition: background 0.3s; }
-.sync-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
-
-.btn-hardware {
-  background: var(--chassis);
-  border: none;
-  border-bottom: 5px solid #111;
-  border-radius: 12px;
-  color: white;
-  padding: 15px 25px;
-  font-weight: 900;
-  cursor: pointer;
-  transition: all 0.1s;
-  display: flex; align-items: center; gap: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-.btn-hardware:active, .btn-hardware.active { transform: translateY(3px); border-bottom-width: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-
-.btn-green { background: #26ae60; border-bottom-color: #1e8449; }
-.btn-red { background: #c0392b; border-bottom-color: #922b21; }
-.btn-blue { background: #2980b9; border-bottom-color: #1a5276; }
-
-.matrix-display {
-  background: #050805;
-  border: 4px solid var(--ledge);
-  border-radius: 12px;
-  padding: 20px;
-  color: var(--green);
-  font-family: "Courier New", monospace;
-  box-shadow: inset 0 0 20px #000;
-  margin-bottom: 25px;
-}
-
-.main-grid { display: grid; grid-template-columns: 1fr 60px 320px; gap: 20px; }
-
-.key-hint { font-size: 10px; color: var(--muted); background: var(--ledge); padding: 2px 5px; border-radius: 3px; font-weight: 900; border: 1px solid #111; margin-right: 5px; vertical-align: middle; }
-
-.card { background: var(--panel); padding: 5px 0; }
-.card-title { font-size: 11px; font-weight: 900; letter-spacing: 2px; opacity: 0.6; margin-bottom: 12px; text-transform: uppercase; }
-
-.mic-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
-.mic-unit { background: var(--ledge); padding: 15px; border-radius: 12px; border: 2px solid var(--chassis); text-align: center; }
-
-.vu-meter { width: 100%; height: 12px; background: #000; border-radius: 6px; overflow: hidden; margin-top: 10px; position: relative; border: 1px solid #222; }
-.vu-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--green); transition: width 0.1s linear; }
-.progress-container { margin-top: 15px; }
-.progress-labels { display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-
-.queue-panel { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; max-height: 600px; overflow-y: auto; }
-
-.nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-.nav-btn { background: var(--ledge); border: none; padding: 10px 20px; border-radius: 8px; color: var(--muted); cursor: pointer; font-weight: 700; transition: 0.2s; }
-.nav-btn.active { background: var(--accent2); color: #000; box-shadow: 0 0 15px var(--accent2); }
-
-#searchStatus { margin: 10px 0; font-size: 12px; color: var(--yellow); font-weight: 700; }
-.results-list { max-height: 300px; overflow-y: auto; }
-.result-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid var(--chassis); }
-
-/* Pulse Animations */
-@keyframes pulse-green { 0% { box-shadow: 0 0 5px #2ecc71; } 50% { box-shadow: 0 0 20px #2ecc71; } 100% { box-shadow: 0 0 5px #2ecc71; } }
-@keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
-.sync-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; display: inline-block; margin-left: 10px; vertical-align: middle; transition: all 0.3s; }
-.sync-dot.connected { background: #2ed573; box-shadow: 0 0 10px #2ed573; animation: pulse-green 3s infinite; }
-
-.on-air-badge { background: #111; color: #444; padding: 8px 16px; border-radius: 4px; font-weight: 900; border: 1px solid #333; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-.on-air-badge:hover { background: #222; border-color: #444; color: #666; }
-.on-air-badge:active { transform: translateY(2px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.8); }
-.on-air-badge.active { background: #ff4757; color: white; border-color: #ff4757; box-shadow: 0 0 20px rgba(255, 71, 87, 0.4), inset 0 1px 3px rgba(255,255,255,0.3); animation: pulse-red 2s infinite; }
-
-.btn-mini { padding: 4px 8px; font-size: 9px; border-radius: 4px; font-weight: 900; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; transition: all 0.2s; }
-.btn-mini:hover { background: rgba(255,255,255,0.2); border-color: var(--accent2); }
-
-::selection { background: var(--accent); color: white; }
-
-/* Status Badges */
-.status-badge {
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 9px;
-    font-weight: 900;
-    text-transform: uppercase;
-    margin-left: 8px;
-    border: 1px solid currentColor;
-}
-.status-pending { color: var(--muted); }
-.status-downloading { color: var(--yellow); animation: pulse 1s infinite; }
-.status-ready { color: var(--green); }
-.status-error { color: var(--accent); }
-
-@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-
-/* VERTICAL VU MONITOR */
-.master-monitor-bay {
-  background: var(--ledge);
-  border: 4px solid var(--chassis);
-  border-radius: 12px;
-  padding: 15px 5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  box-shadow: var(--shadow-inset);
-  height: 400px;
-  position: relative;
-}
-.peak-light {
-  width: 10px; height: 10px;
-  background: #330000;
-  border-radius: 50%;
-  border: 1px solid #111;
-  transition: background 0.1s, box-shadow 0.1s;
-}
-.peak-light.active {
-  background: #ff4757;
-  box-shadow: 0 0 15px #ff4757;
-}
-.vu-vertical-track {
-  width: 14px;
-  flex: 1;
-  background: #000;
-  border-radius: 2px;
-  display: flex;
-  flex-direction: column-reverse;
-  padding: 1px;
-  gap: 1.5px;
-  border: 1px solid #222;
-}
-.vu-segment {
-  width: 100%;
-  height: 4px;
-  background: #151515;
-  border-radius: 1px;
-  transition: background 0.05s;
-}
-.vu-segment.green.on  { background: #2ed573; box-shadow: 0 0 3px #2ed573; }
-.vu-segment.yellow.on { background: #ffa502; box-shadow: 0 0 3px #ffa502; }
-.vu-segment.red.on    { background: #ff4757; box-shadow: 0 0 5px #ff4757; }
-
-/* Jingle Drawer Fix */
-.jingle-drawer {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: rgba(45, 49, 58, 0.95);
-  backdrop-filter: blur(10px);
-  border: 4px solid var(--chassis);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-  display: none;
-  z-index: 1000;
-  width: 320px;
-  animation: slide-up 0.3s ease-out;
-}
-@keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-.jingle-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-}
-.jingle-grid .btn-hardware {
-  padding: 10px;
-  font-size: 10px;
-  justify-content: center;
-}
-</style>
+        .library-panel { max-height: 700px; overflow-y: auto; }
+        .track-item { padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
+        .track-item:hover { background: rgba(255,255,255,0.05); }
+        .track-item.playing { border-color: var(--glass-accent); background: rgba(0,242,254,0.05); }
+    </style>
 </head>
 <body>
-
-<div id="loginScreen">
-  <div class="login-card">
-    <p class="card-title" style="margin-bottom:10px">Station Authenticator</p>
-    <h1>&#127899; STATION MASTER</h1>
-    <input type="password" id="pwInput" placeholder="ENTER ACCESS CODE">
-    <button onclick="doLogin()">AUTHORIZE LOGIN</button>
-    <div id="loginError" style="color:var(--accent); margin-top:15px; font-size:12px; font-weight:700;"></div>
-  </div>
-</div>
-
-<div id="mainScreen">
-  <div class="chassis">
-    <header>
-      <div style="display:flex;align-items:center;gap:20px">
-        <div class="logo" style="font-size:24px; font-weight:900;">AGUM <span style="color:var(--accent2)">BUKUMA</span></div>
-        <button class="on-air-badge" id="onAirBadge" onclick="toggleOnAir()" style="min-width:120px; font-family:'Courier New', monospace; font-size:14px">OFF AIR</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:20px">
-        <span id="listenerCount" style="font-size:11px; font-weight:900; letter-spacing:1px; opacity:0.8;">0 UPLINKS ACTIVE</span>
-        <div id="wsStatusDot" class="sync-dot"></div>
-      </div>
-    </header>
-
-    <nav class="nav-tabs">
-      <button class="nav-btn active" onclick="showTab('play',this)">CONSOLE</button>
-      <button class="nav-btn" onclick="showTab('program',this)">PROGRAM 📅</button>
-      <button class="nav-btn" onclick="showTab('requests',this)">REQS</button>
-      <button class="nav-btn" onclick="showTab('news',this)">HERALD</button>
-      <button class="nav-btn" onclick="showTab('drive',this)">DRIVE 💿</button>
-      <button class="nav-btn" onclick="showTab('community',this)">PEOPLE</button>
-    </nav>
-
-    <div id="tab-play" class="tab-pane">
-      <div class="main-grid">
-        <!-- COLUMN 1: CONSOLE CONTROLS -->
-        <div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px">
-              <span style="font-size:10px; letter-spacing:2px; font-weight:900; opacity:0.6">STATION TIME</span>
-              <div id="currentTime" style="font-size:48px; font-family:'Courier New', monospace; font-weight:900; color:var(--green); text-shadow:0 0 15px rgba(39,174,96,0.3)">00:00:00</div>
-            </div>
-            <div style="display:flex; justify-content:space-between; font-size:9px; margin-bottom:15px; opacity:0.5; letter-spacing:1px">
-               <span>TRANSMISSION FEED</span>
-               <span>SIGNAL DELAY: <span id="localLatency" style="color:var(--green)">0ms</span></span>
-            </div>
-            <div style="display:flex; gap:15px; align-items:center">
-               <div id="trackThumb" style="width:60px;height:60px;background:#111;border:1px solid #333;border-radius:6px;overflow:hidden"></div>
-               <div style="min-width:0">
-                 <div id="trackTitle" style="font-size:18px; font-weight:900; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">STATION IDLE</div>
-                 <div id="trackArtist" style="font-size:12px; opacity:0.8">AWAITING SEED...</div>
-               </div>
-            </div>
-            <div class="progress-container">
-                <div class="progress-labels">
-                    <span id="progressTime">00:00 / 00:00</span>
-                    <span id="progressPercent">0%</span>
+    <div class="dashboard">
+        <div class="console-main">
+            <div class="glass-card" style="position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div id="airTag" class="on-air-tag" style="margin-bottom: 5px; font-size: 10px;">OFFLINE</div>
+                        <h1 class="station-name" style="font-size: 2.2rem; margin: 0; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 10px 20px rgba(0,242,254,0.2);">AGUM BUKUMA RADIO</h1>
+                    </div>
+                    <div id="currentTime" style="font-size: 1.2rem; font-family: 'Courier New', monospace; opacity: 0.3; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 10px;">00:00:00</div>
                 </div>
-                <div class="vu-meter"><div id="progressBar" class="vu-bar"></div></div>
-            </div>
-          
-          <div style="display:flex; gap:15px; margin-top:20px; margin-bottom:30px">
-            <button class="btn-hardware btn-green" id="btnPlay" onclick="playStation()" title="Shortcut: P">
-               <span class="key-hint">P</span> PLAY
-            </button>
-            <button class="btn-hardware btn-red" id="btnStop" onclick="pausePlayback()" title="Shortcut: P">
-               STOP
-            </button>
-            <button class="btn-hardware" onclick="skipTrack()" title="Shortcut: S">
-               <span class="key-hint">S</span> SKIP
-            </button>
-            <button class="btn-hardware btn-blue" id="jingleToggleBtn" onclick="toggleJingleDrawer(event)" style="margin-left:auto">
-               HOT JINGLES 🎹
-            </button>
-            <button class="btn-hardware btn-red" onclick="panicReset()" style="padding:10px 15px; font-size:10px; opacity:0.6; border-bottom-width:2px;" title="Reset Engine">
-               PANIC
-            </button>
-          </div>
+                
+                <div style="margin-top: 10px;">
+                    <p class="section-title" style="margin-bottom: 5px; opacity: 0.4;">NOW BROADCASTING FROM DISK</p>
+                    <div id="trackTitle" style="font-size: 2.8rem; font-weight: 900; color: #fff; line-height: 1; letter-spacing: -1px;">STATION IDLE</div>
+                    <div id="trackArtist" style="font-size: 1.4rem; opacity: 0.6; margin-top: 8px; font-weight: 300;">AWAITING SIGNAL...</div>
+                </div>
 
-          <div id="jingleDrawer" class="jingle-drawer">
-             <div class="card-title">JINGLE BANK (HOT BUTTONS)</div>
-             <div class="jingle-grid">
-                <button class="btn-hardware" onclick="triggerJingle('01')" style="color:var(--green)"><span class="key-hint">1</span> 01</button>
-                <button class="btn-hardware" onclick="triggerJingle('02')"><span class="key-hint">2</span> 02</button>
-                <button class="btn-hardware" onclick="triggerJingle('03')"><span class="key-hint">3</span> 03</button>
-                <button class="btn-hardware" onclick="triggerJingle('04')"><span class="key-hint">4</span> 04</button>
-                <button class="btn-hardware" onclick="triggerJingle('05')"><span class="key-hint">5</span> 05</button>
-                <button class="btn-hardware" onclick="triggerJingle('06')"><span class="key-hint">6</span> 06</button>
-                <button class="btn-hardware" onclick="triggerJingle('07')"><span class="key-hint">7</span> 07</button>
-                <button class="btn-hardware" onclick="triggerJingle('08')"><span class="key-hint">8</span> 08</button>
-                <button class="btn-hardware" onclick="triggerJingle('09')"><span class="key-hint">9</span> 09</button>
-                <button class="btn-hardware" onclick="triggerJingle('10')"><span class="key-hint">0</span> 10</button>
-             </div>
-             <div style="margin-top:15px; border-top:1px solid var(--chassis); padding-top:10px; display:flex; justify-content:space-between; align-items:center">
-                <span style="font-size:10px; opacity:0.5">AUTO JINGLES</span>
-                <button class="btn-hardware" id="btnAutoJingles" onclick="toggleAutoJingles()" style="padding:5px 10px; font-size:9px">OFF</button>
-             </div>
-          </div>
+                <!-- Admin Progress Bar -->
+                <div style="margin-top: 25px;">
+                    <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; position: relative;">
+                        <div id="progFill" style="height: 100%; width: 0%; background: var(--glass-accent); box-shadow: 0 0 10px var(--glass-accent); transition: width 0.3s linear;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; font-family: monospace; opacity: 0.5; margin-top: 6px;">
+                        <span id="progStart">0:00</span>
+                        <span id="progEnd">0:00</span>
+                    </div>
+                </div>
 
-          <div class="mic-panel">
-            <div class="mic-unit">
-               <div class="card-title">STUDIO MIC (<span class="key-hint">SPACE</span>)</div>
-               <div style="display:flex; gap:8px">
-                 <button class="btn-hardware" id="micBtnTalk" style="flex:1" onclick="setMic(1)">TALK</button>
-                 <button class="btn-hardware" id="micBtnSolo" style="flex:1" onclick="setMic(2)">SOLO</button>
-                 <button class="btn-hardware btn-red" id="micBtnOff" style="flex:1" onclick="setMic(0)">OFF</button>
-               </div>
-                 <div id="micStatus" style="font-size:10px; font-weight:900; margin-top:10px; color:var(--muted)">READY</div>
-                 <div class="vu-meter" style="height:4px; margin-top:8px; background:#111;"><div id="localMicVU" class="vu-bar" style="background:#00ffff; box-shadow:0 0 8px #00ffff; transition: width 0.05s linear;"></div></div>
+                <div class="vu-strip" style="height: 14px; margin-top: 20px;"><div id="masterVU" class="vu-fill"></div></div>
             </div>
-            <div class="mic-unit">
-               <div class="card-title">GAIN (<span class="key-hint">↑</span> / <span class="key-hint">↓</span>)</div>
-               <input type="range" id="volumeSlider" style="width:100%; margin-top:10px" oninput="setVolume(this.value)">
-               <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:900; margin-top:5px">
-                 <span>0%</span>
-                 <span id="volumeVal">80%</span>
-                 <span>100%</span>
-               </div>
-            </div>
-            <div class="mic-unit">
-               <div class="card-title">MIC BOOST</div>
-               <input type="range" id="micGainSlider" min="0" max="300" style="width:100%; margin-top:10px" oninput="setMicGain(this.value)">
-               <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:900; margin-top:5px">
-                 <span>MUTE</span>
-                 <span id="micGainVal">150%</span>
-                 <span>300%</span>
-               </div>
-            </div>
-          </div>
 
-          <div style="margin-top:30px">
-            <div class="card-title">INTELLIGENT SEARCH</div>
-            <div style="display:flex; gap:10px">
-              <input type="text" id="searchInput" placeholder="Universal Search..." style="flex:1; padding:12px; background:var(--ledge); border:2px solid var(--chassis); border-radius:8px; color:white">
-              <button class="btn-hardware btn-blue" onclick="doSearch()">SEARCH</button>
+            <div class="master-controls">
+                <button class="transport-btn glass-button" onclick="playStation()" id="playBtn">▶</button>
+                <button class="transport-btn glass-button" onclick="stopStation()" style="background: rgba(255, 61, 0, 0.4);">⬛</button>
+                <button class="transport-btn glass-button" onclick="skipTrack()" style="background: rgba(255,255,255,0.1);">⏭</button>
+                
+                <div style="margin-left: auto; text-align: right;">
+                    <div class="section-title">Remote Listener Status</div>
+                    <div class="glass-card" style="padding: 10px 20px; display: flex; align-items: center; gap: 20px; border-radius: 40px; margin-top: 5px;">
+                        <div style="text-align: left;">
+                            <div style="font-size: 10px; opacity: 0.5;">LATENCY</div>
+                            <div id="latencyVal" style="font-weight: 800; font-family: monospace; font-size: 14px; color: var(--glass-accent);">0ms</div>
+                        </div>
+                        <div style="flex: 1; min-width: 100px;">
+                            <div style="font-size: 10px; opacity: 0.5; margin-bottom: 4px;">REMOTE VU</div>
+                            <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden;">
+                                <div id="remoteVU" style="height: 100%; width: 0%; background: #2ed573; transition: width 0.1s linear;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="searchStatus">Awaiting Input...</div>
-            <div class="results-list" id="resultsList"></div>
-          </div>
+
+            <div class="glass-card">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <div class="section-title">Microphone Mixer</div>
+                        <div class="mic-switch-container" style="padding: 5px; background: rgba(0,0,0,0.2); border-radius: 40px; display: flex; border: 1px solid rgba(255,255,255,0.05);">
+                            <div class="mic-mode active" id="modeOFF" onclick="setMic('OFF')">OFF</div>
+                            <div class="mic-mode" id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
+                            <div class="mic-mode" id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="section-title">Global Sync Level</div>
+                        <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.5;">MASTER BROADCAST GAIN</p>
+                        <input type="range" style="width: 100%;" value="80" oninput="setVolume(this.value)">
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- COLUMN 2: MASTER MONITOR -->
-        <div>
-          <div class="card-title">MASTER BROADCAST FEED</div>
-          <div class="master-monitor-bay">
-             <div class="peak-light" id="peakLight"></div>
-             <p style="font-size:8px; font-weight:900; margin-bottom:5px">PEAK</p>
-             <div class="vu-vertical-track" id="masterVU">
-                <!-- 40 segments -->
-             </div>
-             <p style="font-size:10px; font-weight:900; writing-mode: vertical-rl; text-orientation: mixed; margin-top:10px; opacity:0.5; letter-spacing:2px">STRICT OUTPUT</p>
-          </div>
+        <div class="library-panel glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div class="section-title" style="margin: 0;">Permanent Drive Library</div>
+                <button class="glass-button" style="padding: 5px 12px; font-size: 10px;" onclick="savePlaylist()">SAVE SET</button>
+            </div>
+            <div id="libraryList">
+                <p style="opacity: 0.3; text-align: center; padding: 40px;">Scanning disk...</p>
+            </div>
         </div>
+    </div>
 
-        <!-- COLUMN 3: QUEUE & LIBRARY -->
-        <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-             <div class="card-title" style="margin-bottom:0">PLAYBACK QUEUE</div>
-             <button class="btn-hardware btn-blue" onclick="saveAsPlaylist()" style="padding:5px 10px; font-size:10px">SAVE AS...</button>
-          </div>
-          <div class="tab-content active" id="console">
-            <h2 class="section-title">PERMANENT DISK LIBRARY</h2>
-            <div id="queueList" class="track-list">
-                <p style="text-align:center; opacity:0.5; padding:20px">Scanning Library...</p>
-            </div>
-          </div>
-          
-          <div id="setSelectionModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--chassis); border:4px solid var(--accent2); border-radius:15px; padding:20px; z-index:2000; width:300px; box-shadow:0 0 100px rgba(0,0,0,0.8)">
-             <div class="card-title">SELECT TARGET ARCHIVE</div>
-             <div id="setOptions" style="display:grid; gap:8px; margin-top:15px"></div>
-             <button class="btn-hardware btn-red" style="width:100%; margin-top:20px" onclick="closeSetModal()">CANCEL</button>
-          </div>
-          
-          <div class="card-title" style="margin-top:20px">CURATED SETS</div>
-          <div id="playlistLibrary" style="display:grid; grid-template-columns:1fr; gap:10px">
-             <!-- Loaded from API -->
-          </div>
-        </div>
-      </div> <!-- End main-grid -->
-    </div> <!-- End tab-play -->
+    <script>
+        let state = { micMode: 'OFF', lastMicMode: 'DUCK' };
 
-    <div id="tab-program" class="tab-pane" style="display:none">
-       <div class="card-title">STATION PRIORITY PROGRAM (MULTI-DAY LOOP)</div>
-       <div style="display:grid; grid-template-columns: 1fr 300px; gap:20px">
-          <div class="matrix-display" style="padding:20px">
-             <div style="margin-bottom:15px; display:flex; justify-content:space-between">
-                <span style="font-weight:900; opacity:0.6">PRIORITY QUEUE</span>
-                <button class="btn-hardware btn-red" style="padding:5px 10px; font-size:10px" onclick="resetProgram()">RESET LOOP</button>
-             </div>
-             <div id="programList">
-                <p style="text-align:center; opacity:0.3; padding:20px">No program scheduled. Fallonback to seed library.</p>
-             </div>
-          </div>
-          <div>
-             <div class="card-title">ADD TO PROGRAM</div>
-             <div id="programSetPicker" style="display:grid; gap:10px">
-                <!-- Curated sets list here -->
-             </div>
-          </div>
-       </div>
-    </div>
-    
-    <div id="tab-requests" class="tab-pane" style="display:none">
-       <div class="card-title">LISTENER REQUESTS</div>
-       <div id="requestsList"></div>
-    </div>
-    <div id="tab-drive" class="tab-pane" style="display:none">
-       <div class="card-title">STATION PERMANENT DRIVE (RAILWAY VOLUME)</div>
-       <div class="matrix-display" style="padding:0; overflow:hidden">
-          <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left">
-             <thead style="background:rgba(255,255,255,0.05)">
-                <tr>
-                   <th style="padding:10px">FILENAME</th>
-                   <th style="padding:10px">CATEGORY</th>
-                   <th style="padding:10px">SIZE</th>
-                </tr>
-             </thead>
-             <tbody id="driveList">
-                <!-- Loaded from API -->
-             </tbody>
-          </table>
-       </div>
-    </div>
-    <div id="tab-news" class="tab-pane" style="display:none">
-       <div class="card-title">HERALD PUBLISHER</div>
-       <div class="matrix-display" style="color:white; font-family:inherit">
-          <input type="text" id="newsTitle" placeholder="HEADLINE" style="width:100%; padding:10px; margin-bottom:10px; background:#111; border:1px solid #333; color:white">
-          <textarea id="newsContent" placeholder="CONTENT" style="width:100%; height:100px; padding:10px; background:#111; border:1px solid #333; color:white"></textarea>
-          <button class="btn-hardware btn-green" onclick="publishNews()">COMMIT TO HERALD</button>
-       </div>
-       <div id="newsList" style="margin-top:20px"></div>
-    </div>
-    <div id="tab-community" class="tab-pane" style="display:none">
-       <div class="card-title">VILLAGE REGISTRY</div>
-       <div id="listenersList"></div>
-    </div>
-  </div> <!-- Chassis End -->
-</div> <!-- mainScreen End -->
-
-<script>
-'use strict';
-const S = { 
-    token: null, isPlaying: false, isOnAir: false, currentTrack: null, 
-    ws: null, micState: 0, volume: 80,
-    audioCtx: null, scriptNode: null, micStream: null,
-    playlists: []
-};
-
-function doLogin() {
-    const pw = document.getElementById('pwInput').value;
-    fetch('/api/admin/login', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ password: pw })
-    }).then(r => r.json()).then(d => {
-        if (d.success) {
-            S.token = pw;
-            document.getElementById('loginScreen').style.display='none';
-            document.getElementById('mainScreen').style.display='flex';
-            init();
-        } else {
-            document.getElementById('loginError').textContent = 'INVALID ACCESS CODE';
+        function updateTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
         }
-    });
-}
+        setInterval(updateTime, 1000);
 
-function init() {
-    connectWS();
-    fetchStatus();
-    setInterval(fetchStatus, 5000);
-    setInterval(() => { document.getElementById('currentTime').textContent = new Date().toLocaleTimeString(); }, 1000);
+        initStatusWS();
 
-    // KEYBOARD SHORTCUTS
-    window.addEventListener('keydown', e => {
-        if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
-        switch(e.key.toLowerCase()) {
-            case ' ': e.preventDefault(); toggleSpaceMic(); break;
-            case 's': skipTrack(); break;
-            case 'p': playStation(); break;
-            case 'arrowup': e.preventDefault(); setVolume(Math.min(100, S.volume + 5)); break;
-            case 'arrowdown': e.preventDefault(); setVolume(Math.max(0, S.volume - 5)); break;
-        }
-    });
-}
-
-function toggleSpaceMic() { setMic(S.micState === 0 ? 1 : 0); }
-
-function connectWS() {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    S.ws = new WebSocket(`${proto}://${location.host}`);
-    S.ws.onopen = () => {
-        document.getElementById('wsStatusDot').style.background = 'var(--green)';
-        S.ws.send(JSON.stringify({ action: 'adminLogin', password: S.token }));
-    };
-    S.ws.onmessage = e => {
-        if (typeof e.data === 'string') handleMsg(JSON.parse(e.data));
-    };
-    S.ws.onclose = () => setTimeout(connectWS, 2000);
-}
-
-function handleMsg(d) {
-    if (d.type === 'status' || d.type === 'nowPlaying') updateUI(d);
-    if (d.type === 'listeners') document.getElementById('listenerCount').textContent = d.count + ' UPLINKS ACTIVE';
-    if (d.type === 'vu') updateMasterVU(d.level);
-    if (d.type === 'playlists') { S.playlists = d.playlists; loadPlaylistLibrary(); }
-    
-    if (d.type === 'server_mic_vu') {
-        document.getElementById('localMicVU').style.width = d.level + '%';
-        const isSpeaking = d.level > 10;
-        if (S.micState !== 0) {
-            document.getElementById('micStatus').textContent = isSpeaking ? '🎙 VOICE TRANSMITTING 🎙' : (S.micState === 1 ? 'TALK ACTIVE (SILENT)' : 'SOLO MODE (SILENT)');
-            document.getElementById('micStatus').style.color = isSpeaking ? 'var(--blue-neon, #00ffff)' : 'var(--green)';
-        }
-    }
-    
-    // Heartbeat for sync status
-    document.getElementById('wsStatusDot').classList.add('connected');
-}
-
-let peakTimeout = null;
-function updateMasterVU(level) {
-    const track = document.getElementById('masterVU');
-    const segments = track.querySelectorAll('.vu-segment');
-    const onCount = Math.floor((level / 100) * segments.length);
-    
-    segments.forEach((seg, i) => {
-        if (i < onCount) seg.classList.add('on');
-        else seg.classList.remove('on');
-    });
-
-    if (level > 92) {
-        document.getElementById('peakLight').classList.add('active');
-        if (peakTimeout) clearTimeout(peakTimeout);
-        peakTimeout = setTimeout(() => {
-            document.getElementById('peakLight').classList.remove('active');
-        }, 1000);
-    }
-}
-
-// ── Mic logic: 16-bit PCM (Match FFmpeg Mixer) ───────────────────────────────
-async function setMic(state) {
-    if (state === S.micState && state !== 0) return;
-    S.micState = state;
-    
-    document.getElementById('micBtnTalk').classList.toggle('active', state === 1);
-    document.getElementById('micBtnSolo').classList.toggle('active', state === 2);
-    document.getElementById('micBtnOff').classList.toggle('active', state === 0);
-    document.getElementById('micStatus').textContent = state === 0 ? 'OFF' : (state === 1 ? 'TALK ACTIVE' : 'SOLO MODE');
-    document.getElementById('micStatus').style.color = state === 0 ? 'var(--muted)' : (state === 1 ? 'var(--green)' : 'var(--yellow)');
-
-    fetch('/api/duck', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state}) });
-
-    if (state > 0) startMicStream();
-    else stopMicStream();
-}
-
-async function startMicStream() {
-    try {
-        if (S.audioCtx) return;
-        S.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        S.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 22050 });
-        const source = S.audioCtx.createMediaStreamSource(S.micStream);
-        S.scriptNode = S.audioCtx.createScriptProcessor(4096, 1, 1);
-        
-        S.scriptNode.onaudioprocess = e => {
-            if (S.micState === 0) {
-                document.getElementById('localMicVU').style.width = '0%';
-                document.getElementById('micStatus').textContent = 'OFF';
-                document.getElementById('micStatus').style.color = 'var(--muted)';
-                return;
-            }
-            const inputData = e.inputBuffer.getChannelData(0);
-            const pcmData = new Int16Array(inputData.length);
+        function initStatusWS() {
+            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            const statusWs = new WebSocket(`${proto}://${location.host}/ws`);
             
-            for (let i = 0; i < inputData.length; i++) {
-                pcmData[i] = Math.max(-32768, Math.min(32767, inputData[i] * 32768));
+            statusWs.onmessage = e => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'status') {
+                    // Update Station Info
+                    const airTag = document.getElementById('airTag');
+                    airTag.textContent = data.isPlaying ? 'ON AIR' : 'OFFLINE';
+                    airTag.style.background = data.isPlaying ? 'rgba(0, 242, 254, 0.2)' : 'rgba(255, 61, 0, 0.2)';
+                    airTag.style.color = data.isPlaying ? 'var(--glass-accent)' : '#ff3d00';
+                    
+                    document.getElementById('trackTitle').textContent = data.currentTrack?.title || 'STATION IDLE';
+                    document.getElementById('trackArtist').textContent = data.currentTrack?.artist || 'AWAITING SIGNAL...';
+                    
+                    // Master Button Logic
+                    const playBtn = document.getElementById('playBtn');
+                    if (data.isPlaying) {
+                        playBtn.innerHTML = '⏸';
+                        playBtn.onclick = stopStation;
+                        playBtn.style.background = 'var(--glass-accent)';
+                        playBtn.style.color = '#000';
+                    } else {
+                        playBtn.innerHTML = '▶';
+                        playBtn.onclick = playStation;
+                        playBtn.style.background = '';
+                        playBtn.style.color = '';
+                    }
+
+                    // Progress Bar Logic
+                    if (data.duration > 0) {
+                        const perc = (data.elapsedTime / data.duration) * 100;
+                        document.getElementById('progFill').style.width = perc + '%';
+                        document.getElementById('progStart').textContent = formatTime(data.elapsedTime);
+                        document.getElementById('progEnd').textContent = formatTime(data.duration);
+                    }
+
+                    // Update Remote Status
+                    if (data.listenerStats) {
+                        document.getElementById('latencyVal').textContent = Math.round(data.listenerStats.latency || 0) + 'ms';
+                        document.getElementById('remoteVU').style.width = (data.listenerStats.vu || 0) + '%';
+                    }
+
+                    // Render Library if it has changed
+                    renderLibrary(data.library, data.currentTrack);
+                }
+            };
+            
+            function formatTime(s) {
+                const m = Math.floor(s / 60);
+                const sec = Math.floor(s % 60);
+                return `${m}:${sec.toString().padStart(2, '0')}`;
             }
             
-            if (S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(pcmData.buffer);
-        };
-        source.connect(S.scriptNode);
-        S.scriptNode.connect(S.audioCtx.destination);
-    } catch(err) { 
-        console.error("Mic Access Error:", err);
-        alert("Microphone Access Blocked: " + err.message + "\nEnsure you are using HTTPS and have granted permissions.");
-        setMic(0); 
-    }
-}
+            statusWs.onclose = () => setTimeout(initStatusWS, 2000);
+        }
 
-function stopMicStream() {
-    if (S.scriptNode) { S.scriptNode.disconnect(); S.scriptNode = null; }
-    if (S.audioCtx) { S.audioCtx.close(); S.audioCtx = null; }
-    if (S.micStream) { S.micStream.getTracks().forEach(t => t.stop()); S.micStream = null; }
-}
+        function playNow(id) {
+            fetch('/api/play-id', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+        }
 
-function fetchStatus() { fetch('/api/status').then(r => r.json()).then(updateUI); }
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', e => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (state.micMode === 'OFF') {
+                    setMic(state.lastMicMode);
+                } else {
+                    setMic('OFF');
+                }
+            }
+        });
 
-function updateUI(d) {
-    if (typeof d.isOnAir !== 'undefined') S.isOnAir = d.isOnAir;
-    if (typeof d.isPlaying !== 'undefined') S.isPlaying = d.isPlaying;
-    if (typeof d.volume !== 'undefined') S.volume = d.volume;
+        let lastLibraryJSON = "";
+        let lastCurrentID = "";
 
-    // Master status mapping for Professional Persistence
-    const badge = document.getElementById('onAirBadge');
-    if (badge) {
-        badge.textContent = S.isOnAir ? 'LIVE / ON AIR' : 'STATION OFF-AIR';
-        badge.classList.toggle('active', !!S.isOnAir);
-        badge.style.background = S.isOnAir ? '#ff4757' : '#111';
-        badge.style.color = S.isOnAir ? '#fff' : '#444';
-    }
-    
-    // Play/Pause buttons reflect MUSIC state specifically
-    const btnPlay = document.getElementById('btnPlay');
-    const btnStop = document.getElementById('btnStop');
-    if (btnPlay && btnStop) {
-        if (S.isPlaying) { btnPlay.style.display = 'none'; btnStop.style.display = 'flex'; }
-        else { btnPlay.style.display = 'flex'; btnStop.style.display = 'none'; }
-    }
-    if (d.currentTrack) {
-        document.getElementById('trackTitle').textContent = (d.currentTrack.title ? d.currentTrack.title.toUpperCase() : 'STATION IDLE');
-        document.getElementById('trackArtist').textContent = (d.currentTrack.artist ? d.currentTrack.artist.toUpperCase() : 'AWAITING SIGNAL');
-        if (d.currentTrack.thumbnail) document.getElementById('trackThumb').innerHTML = `<img src="${d.currentTrack.thumbnail}" style="width:100%;height:100%;object-fit:cover">`;
-    } else {
-        document.getElementById('trackTitle').textContent = "STATION IDLE";
-        document.getElementById('trackArtist').textContent = "AWAITING SIGNAL...";
-        document.getElementById('trackThumb').innerHTML = "";
-    }
-    
-    if (d.autoJingles) {
-        S.autoJingles = d.autoJingles;
-        const jBtn = document.getElementById('btnAutoJingles');
-        if (jBtn) {
-            jBtn.innerHTML = d.autoJingles.start 
-                ? `JINGLES: <span style="color:var(--green)">ON</span>` 
-                : `JINGLES: <span style="color:var(--accent)">OFF</span>`;
-            if (d.autoJingles.start) {
-                jBtn.classList.remove('btn-red');
-                jBtn.classList.add('btn-green');
-            } else {
-                jBtn.classList.remove('btn-green');
-                jBtn.classList.add('btn-red');
+        function renderLibrary(tracks, current) {
+            const list = document.getElementById('libraryList');
+            if (!tracks || tracks.length === 0) return;
+
+            const currentJSON = JSON.stringify(tracks);
+            const currentID = current?.id || "";
+
+            // Only re-render if library content or selection changed
+            if (currentJSON === lastLibraryJSON && currentID === lastCurrentID) return;
+            
+            lastLibraryJSON = currentJSON;
+            lastCurrentID = currentID;
+
+            list.innerHTML = tracks.map(t => `
+                <div class="track-item ${currentID === t.id ? 'playing' : ''}">
+                    <div style="min-width: 0; flex: 1;">
+                        <div style="font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.title}</div>
+                        <div style="font-size: 10px; opacity: 0.5;">${t.artist}</div>
+                    </div>
+                    <button class="glass-button" style="padding: 4px 10px; font-size: 9px; margin-left: 10px;" onclick="playNow('${t.id}')">PLAY</button>
+                </div>
+            `).join('');
+        }
+
+        function setMic(mode) {
+            if (mode !== 'OFF') state.lastMicMode = mode;
+            state.micMode = mode;
+            document.querySelectorAll('.mic-mode').forEach(m => m.classList.remove('active'));
+            document.getElementById('mode' + mode).classList.add('active');
+            fetch('/api/mic', { method: 'POST', body: JSON.stringify({ mode }), headers: { 'Content-Type': 'application/json' } });
+            
+            if (mode !== 'OFF') startMic(); else stopMic();
+        }
+
+        let micAudio = null;
+        let ws = null;
+
+        async function startMic() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioCtx = new AudioContext({ sampleRate: 22050 });
+            const source = audioCtx.createMediaStreamSource(stream);
+            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+            
+            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            ws = new WebSocket(`${proto}://${location.host}/ws`);
+            
+            processor.onaudioprocess = e => {
+                const input = e.inputBuffer.getChannelData(0);
+                const pcm = new Int16Array(input.length);
+                for (let i = 0; i < input.length; i++) {
+                    pcm[i] = Math.max(-1, Math.min(1, input[i])) * 0x7FFF;
+                }
+                if (ws.readyState === WebSocket.OPEN) ws.send(pcm.buffer);
+            };
+            
+            source.connect(processor);
+            processor.connect(audioCtx.destination);
+            micAudio = { stream, audioCtx, processor };
+        }
+
+        function stopMic() {
+            if (micAudio) {
+                micAudio.stream.getTracks().forEach(t => t.stop());
+                micAudio.audioCtx.close();
+                ws.close();
+                micAudio = null;
             }
         }
-    }
-    
-    const vol = (typeof d.volume === 'number') ? d.volume : 80;
-    document.getElementById('volumeSlider').value = vol;
-    document.getElementById('volumeVal').textContent = vol + '%';
-    
-    // Mic Gain / Boost
-    const mGain = (typeof d.micGain === 'number') ? d.micGain : 150;
-    if (document.getElementById('micGainSlider')) document.getElementById('micGainSlider').value = mGain;
-    if (document.getElementById('micGainVal')) document.getElementById('micGainVal').textContent = mGain + '%';
-    
-    // Latency Update
-    const lat = d.latencyMs || 0;
-    const latEl = document.getElementById('localLatency');
-    if (latEl) {
-        latEl.textContent = lat + 'ms';
-        latEl.style.color = (lat < 500) ? 'var(--green)' : 'var(--yellow)';
-    }
 
-    
-    // --- Anti-Flicker Logic: If the engine claims it's playing but the queue is momentarily empty, keep the light on
-    const actuallyOnAir = (d.isPlaying || (d.currentTrack && d.currentTrack.id)) ? 'ON AIR' : 'OFF AIR';
-    const statusEl = document.getElementById('statusIndicator');
-    if (statusEl) {
-        statusEl.textContent = actuallyOnAir;
-        statusEl.className = 'status-tag ' + (actuallyOnAir === 'ON AIR' ? 'status-playing' : '');
-    }
-    
-    if (btnPlay) btnPlay.classList.toggle('active', d.isPlaying);
-    if (btnStop) btnStop.classList.toggle('active', !d.isPlaying);
-    
-    const qEl = document.getElementById('queueList');
-    if (d.queue?.length) {
-        qEl.innerHTML = d.queue.map((t, i) => {
-            const isNowPlaying = (t.isNowPlaying) && d.isPlaying;
-            const isReady = t.status === 'ready';
-            
-            // --- Logic Update: Only allow PLAY NOW if track is physically on the disk
-            const playBtn = (isReady && !isNowPlaying) 
-                ? `<button onclick="playNow('${t.id}')" style="background:none; border:1px solid var(--green); color:var(--green); border-radius:4px; padding:2px 6px; cursor:pointer; margin-left:10px; font-size:9px; font-weight:900">PLAY NOW</button>` 
-                : '';
-            
-            const statusLabel = isReady ? '💿 ON-DISK' : (t.status ? t.status.toUpperCase() : 'PENDING');
-            const statusClass = isReady ? 'status-ready' : (t.status ? `status-${t.status}` : 'status-pending');
-            
-            const activeStyle = isNowPlaying ? 'border: 1px solid var(--green); background: rgba(39, 174, 96, 0.2);' : 'border: 1px solid #333; background: rgba(0,0,0,0.3);';
-            const opacityStyle = (!isReady && !isNowPlaying) ? 'opacity: 0.5;' : '';
-            const nowPlayingTag = isNowPlaying ? '<span style="color:var(--green); font-size:9px; font-weight:900; margin-right:10px;">NOW PLAYING</span>' : '';
-
-            return `
-            <div style="display:flex; align-items:center; padding:12px; margin-bottom:5px; border-radius:8px; font-size:12px; ${activeStyle} ${opacityStyle}">
-                <span style="font-weight:900; opacity:0.5; width:20px">${i+1}</span>
-                <span style="flex:1; margin:0 10px; font-weight:700">${nowPlayingTag}${t.title}</span>
-                <span class="status-badge ${statusClass}">${statusLabel}</span>
-                ${playBtn}
-                <button onclick="removeFromQueue('${t.id}')" style="background:none; border:none; color:var(--accent); cursor:pointer; margin-left:10px; font-size:16px">×</button>
-            </div>
-        `}).join('');
-    } else qEl.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px">Permanent Disk Empty</p>';
-    
-    // Update Progress Bar
-    if (d.currentTrack && d.currentTrack.progress) {
-        const p = d.currentTrack.progress;
-        document.getElementById('progressBar').style.width = p.percent + '%';
-        document.getElementById('progressTime').textContent = `${p.formattedElapsed} / ${p.formattedDuration}`;
-        document.getElementById('progressPercent').textContent = Math.floor(p.percent) + '%';
-    } else {
-        document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('progressTime').textContent = '00:00 / 00:00';
-        document.getElementById('progressPercent').textContent = '0%';
-    }
-    
-    // Refresh Playlists and Drive occasionally
-    if (Date.now() - (S.lastExtRef || 0) > 30000) {
-        fetchDrive();
-        loadPlaylistLibrary();
-        loadProgramUI();
-        S.lastExtRef = Date.now();
-    }
-}
-
-function apiFetch(url, options = {}) {
-    options.headers = options.headers || {};
-    options.headers['Authorization'] = S.token;
-    return fetch(url, options);
-}
-
-function playStation() { apiFetch('/api/play', {method:'POST'}).then(fetchStatus); }
-function pausePlayback() { apiFetch('/api/pause', {method:'POST'}).then(fetchStatus); }
-function skipTrack() { apiFetch('/api/skip', {method:'POST'}).then(fetchStatus); }
-function playNow(id) { apiFetch(`/api/queue/${id}/play-now`, {method:'POST'}).then(fetchStatus); }
-function toggleOnAir() {
-    const newState = !S.isOnAir;
-    if (!newState && !confirm("KILL GLOBAL BROADCAST STATE? (Going Off-Air will disconnect all active listeners)")) return;
-    apiFetch('/api/admin/onair', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({state:newState}) }).then(fetchStatus);
-}
-function setVolume(val) { S.volume = parseInt(val); document.getElementById('volumeVal').textContent = val + '%'; apiFetch('/api/volume', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
-function setMicGain(val) { S.micGain = parseInt(val); document.getElementById('micGainVal').textContent = val + '%'; apiFetch('/api/volume/mic', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({value:val})}); }
-function triggerJingle(id) { apiFetch(`/api/jingle/${id}`, {method:'POST'}).then(() => { /* flash effect? */ }); }
-function removeFromQueue(id) { apiFetch(`/api/queue/${id}`, {method:'DELETE'}).then(fetchStatus); }
-function panicReset() { if (confirm("DANGER: This will instantly purge your current queue and refill from the seed library. Proceed?")) apiFetch('/api/admin/panic', {method:'POST'}).then(fetchStatus); }
-function toggleAutoJingles() { if(S.ws && S.ws.readyState === WebSocket.OPEN) S.ws.send(JSON.stringify({ action: 'toggleAutoJingles' })); }
-
-function doSearch() {
-    const q = document.getElementById('searchInput').value; if (!q) return;
-    document.getElementById('searchStatus').textContent = 'Scanning Airwaves...';
-    // Searching is GET so standard fetch is fine, but we can use apiFetch too
-    fetch(`/api/youtube/search?q=${encodeURIComponent(q)}`).then(r => r.json()).then(d => {
-        const res = d.results || [];
-        document.getElementById('searchStatus').textContent = `${res.length} Matches Found`;
-        document.getElementById('resultsList').innerHTML = res.map(r => `
-            <div class="result-item">
-                <img src="${r.thumbnail}" width="40" height="40" style="border-radius:4px">
-                <div style="flex:1; font-size:12px; font-weight:700">${r.title}</div>
-                <div style="display:flex; gap:5px">
-                    <button class="btn-hardware btn-blue" style="padding:5px 10px; font-size:10px" onclick='addToQueue(${JSON.stringify(r)})'>+ QUEUE</button>
-                    <button class="btn-mini" onclick='openSetModal(null, ${JSON.stringify(r)})' title="Archive Directly">💾</button>
-                </div>
-            </div>`).join('');
-    });
-}
-
-function addToQueue(track) { apiFetch('/api/queue/add', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(track) }).then(() => { document.getElementById('searchInput').value = ''; fetchStatus(); }); }
-
-function showTab(id, btn) {
-    document.querySelectorAll('.tab-pane').forEach(p => p.style.display='none');
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-'+id).style.display='block';
-    if (btn) btn.classList.add('active'); 
-    if (id === 'news') fetchNews();
-    if (id === 'drive') fetchDrive();
-}
-
-function fetchDrive() {
-    apiFetch('/api/admin/drive').then(r => r.json()).then(d => {
-        const list = document.getElementById('driveList');
-        if (!list) return;
-        list.innerHTML = d.files.map(f => `
-           <tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
-              <td style="padding:10px; color:var(--green); font-weight:900; font-family:monospace">${f.name}</td>
-              <td style="padding:10px; opacity:0.7; font-size:10px">${f.category}</td>
-              <td style="padding:10px; opacity:0.5; font-size:10px">${(f.size / 1024 / 1024).toFixed(2)} MB</td>
-              <td style="padding:10px; text-align:right">
-                 <button class="btn-hardware btn-green" style="padding:4px 8px; font-size:9px" onclick='playFromDrive(${JSON.stringify({ filePath: f.fullPath, fileName: f.name })})'>PLAY ⚡</button>
-              </td>
-           </tr>
-        `).join('');
-    });
-}
-
-function saveAsPlaylist() {
-    const name = prompt("Enter Name for this Curated Set:");
-    if (!name) return;
-    apiFetch('/api/admin/playlists', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) }).then(loadPlaylistLibrary);
-}
-
-function loadPlaylistLibrary() {
-    apiFetch('/api/admin/playlists').then(r => r.json()).then(d => {
-        S.playlists = d.playlists || [];
-        const libs = [document.getElementById('playlistLibrary'), document.getElementById('programSetPicker')];
-        const html = S.playlists.map(p => `
-            <div style="background:var(--ledge); border:1px solid #333; border-radius:8px; padding:15px; display:flex; justify-content:space-between; align-items:center">
-                <div style="flex:1">
-                   <div style="font-weight:900; font-size:12px">${p.name}</div>
-                   <div style="font-size:10px; opacity:0.5">${p.tracks.length} Tracks</div>
-                </div>
-                ${document.body.contains(libs[0]) ? `<button class="btn-hardware btn-green" style="padding:8px 12px; font-size:10px" onclick="loadPlaylist('${p.id}')">LOAD</button>` : ''}
-                ${document.body.contains(libs[1]) ? `<button class="btn-hardware btn-blue" style="margin-left:5px; padding:8px 12px; font-size:10px" onclick="addToProgram('${p.id}','${p.name}')">+ PRG</button>` : ''}
-            </div>
-        `).join('');
-        if (libs[0]) libs[0].innerHTML = html;
-        if (libs[1]) libs[1].innerHTML = html;
-    });
-}
-
-function loadProgramUI() {
-    apiFetch('/api/admin/programs').then(r => r.json()).then(d => {
-        const list = document.getElementById('programList');
-        if (!list) return;
-        S.programs = d.programs || [];
-        if (S.programs.length === 0) {
-            list.innerHTML = '<p style="text-align:center; opacity:0.3; padding:20px">No program scheduled. Fallonback to random seed library.</p>';
-            return;
-        }
-        list.innerHTML = S.programs.map((p, i) => `
-            <div style="background:rgba(255,255,255,0.03); border:1px solid #444; border-radius:8px; padding:15px; margin-bottom:10px; display:flex; align-items:center">
-                <span style="font-weight:900; opacity:0.3; width:30px">#${i+1}</span>
-                <div style="flex:1">
-                   <div style="font-weight:900; color:var(--green)">${p.name.toUpperCase()}</div>
-                   <div style="font-size:10px; opacity:0.5">TYPE: CURATED SET</div>
-                </div>
-                <button onclick="removeFromProgram(${i})" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:20px">&times;</button>
-            </div>
-        `).join('');
-    });
-}
-
-function addToProgram(id, name) {
-    const programs = [...(S.programs || []), { type: 'set', playlistId: id, name }];
-    apiFetch('/api/admin/programs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ programs }) }).then(loadProgramUI);
-}
-
-function removeFromProgram(idx) {
-    const programs = (S.programs || []).filter((_, i) => i !== idx);
-    apiFetch('/api/admin/programs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ programs }) }).then(loadProgramUI);
-}
-
-function resetProgram() {
-    if (confirm("Reset current program loop to start?")) apiFetch('/api/admin/programs/reset', {method:'POST'}).then(() => alert("Program loop will restart after current song."));
-}
-
-let pendingTrack = null;
-function openSetModal(queueId, directTrack) {
-    pendingTrack = queueId ? S.queue?.find(t => t.id === queueId) : directTrack;
-    if (!pendingTrack) return;
-    
-    const container = document.getElementById('setOptions');
-    container.innerHTML = S.playlists.map(p => `
-        <button class="btn-hardware" style="text-align:left; font-size:10px" onclick="saveToSet('${p.id}')">${p.name}</button>
-    `).join('');
-    document.getElementById('setSelectionModal').style.display = 'block';
-}
-
-function closeSetModal() {
-    document.getElementById('setSelectionModal').style.display = 'none';
-    pendingTrack = null;
-}
-
-function saveToSet(setId) {
-    if (!pendingTrack) return;
-    apiFetch(`/api/admin/playlists/${setId}/add-track`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ track: pendingTrack })
-    }).then(r => r.json()).then(d => {
-        if (d.success) {
-            alert(`Track archived to curated set! (Current count: ${d.count})`);
-            closeSetModal();
-        }
-    });
-}
-
-function playFromDrive(data) {
-    if (!confirm(`Deploy music file with Signature Intro? \n${data.fileName}`)) return;
-    apiFetch('/api/admin/drive/play', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    }).then(r => r.json()).then(d => {
-        if (d.success) showTab('play', document.querySelector('[onclick*="showTab(\'play\'"]'));
-    });
-}
-
-function toggleJingleDrawer(e) {
-    if (e) e.stopPropagation();
-    const d = document.getElementById('jingleDrawer');
-    const isShowing = d.style.display === 'block';
-    d.style.display = isShowing ? 'none' : 'block';
-    document.getElementById('jingleToggleBtn').classList.toggle('active', !isShowing);
-}
-
-document.addEventListener('keydown', (e) => {
-    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-    
-    // Shortcuts 1-9 and 0
-    if (e.key >= '1' && e.key <= '9') {
-        const id = e.key.padStart(2, '0');
-        triggerJingle(id);
-    } else if (e.key === '0') {
-        triggerJingle('10');
-    }
-});
-
-function loadPlaylist(id) { apiFetch(`/api/admin/playlists/${id}/load`, {method:'POST'}).then(fetchStatus); }
-
-function fetchNews() {
-    fetch('/api/herald').then(r => r.json()).then(d => {
-        document.getElementById('newsList').innerHTML = (d.news || []).map(n => `<div style="padding:15px; background:var(--ledge); border:1px solid #333; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between"><div><div style="font-weight:900">${n.title}</div><div style="font-size:10px; opacity:0.6">${n.content.substring(0, 100)}...</div></div><button onclick="deleteNews('${n.id}')" style="color:var(--accent); background:none; border:none; cursor:pointer">DELETE</button></div>`).join('');
-    }).catch(e => {
-        document.getElementById('newsList').innerHTML = `<p style="opacity:0.5; font-size:10px">Herald module pending backend deployment</p>`;
-    });
-}
-function publishNews() { const title = document.getElementById('newsTitle').value; const content = document.getElementById('newsContent').value; apiFetch('/api/herald', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({title, content, status:'new'}) }).then(() => { document.getElementById('newsTitle').value=''; document.getElementById('newsContent').value=''; fetchNews(); }); }
-function deleteNews(id) { apiFetch(`/api/herald/${id}`, {method:'DELETE'}).then(fetchNews); }
-document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter')doLogin(); });
-
-// Build VU Segments
-(function() {
-    const track = document.getElementById('masterVU');
-    let html = '';
-    for(let i=0; i<40; i++) {
-        let color = 'green';
-        if (i > 25) color = 'yellow';
-        if (i > 34) color = 'red';
-        html += `<div class="vu-segment ${color}"></div>`;
-    }
-    track.innerHTML = html;
-})();
-</script>
+        function playStation() { fetch('/api/play', { method: 'POST' }); }
+        function stopStation() { fetch('/api/stop', { method: 'POST' }); }
+        function skipTrack() { fetch('/api/skip', { method: 'POST' }); }
+        function setVolume(v) { fetch('/api/volume', { method: 'POST', body: JSON.stringify({ volume: v }), headers: { 'Content-Type': 'application/json' } }); }
+    </script>
 </body>
 </html>
