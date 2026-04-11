@@ -7,6 +7,7 @@ const fs = require('fs');
 const { PassThrough } = require('stream');
 const mm = require('music-metadata');
 const crypto = require('crypto');
+const multer = require('multer');
 
 /**
  * AGUM BUKUMA RADIO - PURE DRIVE (STABLE VERSION)
@@ -26,6 +27,18 @@ const MUSIC_DIR = path.join(DATA_DIR, 'downloads'); // Pointing back to 'downloa
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 
 if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
+
+// Multer Storage Configuration
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, MUSIC_DIR),
+    filename: (req, file, cb) => {
+        // Keep original filename but ensure it ends in .mp3 for the scanner
+        let name = file.originalname;
+        if (!name.toLowerCase().endsWith('.mp3')) name += '.mp3';
+        cb(null, name);
+    }
+});
+const upload = multer({ storage });
 
 // State
 let state = {
@@ -483,6 +496,12 @@ app.post('/api/delete-track', (req, res) => {
     }
     broadcastStatus();
     res.json({ ok: true, remaining: state.library.length });
+});
+
+app.post('/api/upload', upload.array('tracks'), async (req, res) => {
+    console.log(`[API] Uploaded ${req.files ? req.files.length : 0} tracks.`);
+    await scanLibrary();
+    res.json({ ok: true, count: req.files ? req.files.length : 0 });
 });
 
 // --- INIT ---

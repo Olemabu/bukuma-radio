@@ -27,7 +27,14 @@
         .library-panel { max-height: 700px; overflow-y: auto; }
         .track-item { padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
         .track-item:hover { background: rgba(255,255,255,0.05); }
-        .track-item.playing { border-color: var(--glass-accent); background: rgba(0,242,254,0.05); }
+        .track-item.playing { border-color: var(--glass-accent); background: rgba(0,242,254,0.15); box-shadow: 0 0 15px rgba(0,242,254,0.1); }
+        .track-item.playing .track-title { color: var(--glass-accent); }
+
+        /* Modal & Progress */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .glass-modal { width: 400px; padding: 30px; text-align: center; }
+        .progress-container { height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; margin: 20px 0; border: 1px solid rgba(255,255,255,0.05); }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(to right, #00f2fe, #4facfe); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(0,242,254,0.5); }
     </style>
 </head>
 <body>
@@ -127,11 +134,27 @@
         <div class="library-panel glass-card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div class="section-title" style="margin: 0;">Permanent Drive Library</div>
-                <button class="glass-button" style="padding: 5px 12px; font-size: 10px;" onclick="savePlaylist()">SAVE SET</button>
+                <div style="display: flex; gap: 8px;">
+                    <input type="file" id="trackUpload" multiple accept="audio/mpeg" style="display:none;" onchange="handleFileUpload(this)">
+                    <button class="glass-button" id="uploadBtn" style="padding: 5px 12px; font-size: 10px; background: rgba(0,242,254,0.1); border-color: rgba(0,242,254,0.3);" onclick="document.getElementById('trackUpload').click()">\u2b06\ufe0f UPLOAD</button>
+                    <button class="glass-button" style="padding: 5px 12px; font-size: 10px;" onclick="savePlaylist()">SAVE SET</button>
+                </div>
             </div>
             <div id="libraryList">
                 <p style="opacity: 0.3; text-align: center; padding: 40px;">Scanning disk...</p>
             </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="glass-card glass-modal">
+            <h2 id="modalTitle" style="margin-top: 0; color: var(--glass-accent);">UPLOADING...</h2>
+            <p id="modalMsg" style="opacity: 0.7; font-size: 14px;">Please wait while we sync your tracks</p>
+            <div id="modalProgress" class="progress-container">
+                <div id="modalProgressFill" class="progress-fill"></div>
+            </div>
+            <div id="modalSub" style="font-size: 12px; font-family: monospace; opacity: 0.5;">0%</div>
         </div>
     </div>
 
@@ -211,10 +234,24 @@
         }
 
         function playNow(id) {
+            const btn = document.querySelector(`#ti-${id} .play-btn`);
+            const oldText = btn.innerHTML;
+            btn.innerHTML = 'WAIT...';
+            btn.disabled = true;
+
             fetch('/api/play-id', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id })
+            }).then(() => {
+                setTimeout(() => {
+                    btn.innerHTML = oldText;
+                    btn.disabled = false;
+                }, 1000);
+            }).catch(e => {
+                alert('Connection Error');
+                btn.innerHTML = oldText;
+                btn.disabled = false;
             });
         }
 
@@ -322,7 +359,7 @@
               '</div></div></div>' +
               '<div style="display:flex; gap:6px; align-items:center; margin-left:10px; flex-shrink:0;">' +
               '<button class="glass-button" title="Rename track" style="padding:4px 8px; font-size:11px; background:transparent; border:1px solid rgba(255,255,255,0.1);" onclick="toggleRename(\'' + t.id + '\')">\u270F\uFE0F</button>' +
-              '<button class="glass-button" style="padding:4px 10px; font-size:9px;" onclick="playNow(\'' + t.id + '\')">PLAY</button>' +
+              '<button class="glass-button play-btn" style="padding:4px 10px; font-size:9px;" onclick="playNow(\'' + t.id + '\')">PLAY</button>' +
               '</div></div>';
         }
         function toggleRename(id) {
@@ -430,6 +467,62 @@
         function setDuckLevel(v) {
             document.getElementById('duckVal').textContent = v + '%';
             fetch('/api/mic-duck', { method: 'POST', body: JSON.stringify({ duckLevel: parseInt(v) }), headers: { 'Content-Type': 'application/json' } });
+        }
+
+        async function handleFileUpload(input) {
+            if (!input.files || input.files.length === 0) return;
+            
+            const modal = document.getElementById('uploadModal');
+            const fill = document.getElementById('modalProgressFill');
+            const title = document.getElementById('modalTitle');
+            const msg = document.getElementById('modalMsg');
+            const sub = document.getElementById('modalSub');
+            
+            modal.style.display = 'flex';
+            title.innerText = 'UPLOADING...';
+            msg.innerText = `Syncing ${input.files.length} tracks to Permanent Drive`;
+            fill.style.width = '0%';
+            sub.innerText = '0%';
+
+            const formData = new FormData();
+            for (let i = 0; i < input.files.length; i++) {
+                formData.append('tracks', input.files[i]);
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/upload', true);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    fill.style.width = pct + '%';
+                    sub.innerText = pct + '%';
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    title.innerText = 'SUCCESS!';
+                    msg.innerText = 'Library database updated.';
+                    fill.style.width = '100%';
+                    sub.innerText = '100%';
+                    
+                    setTimeout(() => {
+                        modal.style.display = 'none';
+                        input.value = '';
+                    }, 2000);
+                } else {
+                    alert('Upload failed: ' + xhr.statusText);
+                    modal.style.display = 'none';
+                }
+            };
+
+            xhr.onerror = () => {
+                alert('Network error during upload');
+                modal.style.display = 'none';
+            };
+
+            xhr.send(formData);
         }
     </script>
 </body>
