@@ -65,26 +65,51 @@ function saveState() {
     } catch(e) {}
 }
 
-function scanLibrary() {
+// In-memory metadata cache: filename -> { title, artist }
+const metaCache = {};
+
+async function getTrackMeta(filename, filePath) {
+    if (metaCache[filename]) return metaCache[filename];
+    try {
+        const meta = await mm.parseFile(filePath, { duration: false });
+        const title = (meta.common.title || '').trim() || filename.replace(/\.mp3$/i, '');
+        const artist = (meta.common.artist || meta.common.albumartist || '').trim() || 'Permanent Drive';
+        metaCache[filename] = { title, artist };
+    } catch(e) {
+        metaCache[filename] = { title: filename.replace(/\.mp3$/i, ''), artist: 'Permanent Drive' };
+    }
+    return metaCache[filename];
+}
+
+async function scanLibrary() {
     try {
         const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
-        state.library = files.map(f => ({
-            id: crypto.createHash('md5').update(f).digest('hex').slice(0, 12),
-            title: f.replace('.mp3', ''),
-            artist: 'Permanent Drive',
-            path: path.join(MUSIC_DIR, f)
-        }));
-        
-        // Refresh queue and try to find the current track in the new list to stay in sync
+
+        // Resolve metadata for any files not yet cached
+        const newFiles = files.filter(f => !metaCache[f]);
+        await Promise.all(newFiles.map(f => getTrackMeta(f, path.join(MUSIC_DIR, f))));
+
+        state.library = files.map(f => {
+            const meta = metaCache[f] || { title: f.replace(/\.mp3$/i, ''), artist: 'Permanent Drive' };
+            return {
+                id: crypto.createHash('md5').update(f).digest('hex').slice(0, 12),
+                title: meta.title,
+                artist: meta.artist,
+                path: path.join(MUSIC_DIR, f)
+            };
+        });
+
+        // Refresh queue and stay in sync with current track
         state.queue = [...state.library];
         if (state.currentTrack) {
             const newIdx = state.queue.findIndex(t => t.id === state.currentTrack.id);
             if (newIdx !== -1) state.currentMusicIdx = newIdx;
         }
-        
-        // Only broadcast if not playing, to avoid interfering with current metadata flow
+
         if (!state.isPlaying) broadcastStatus();
-    } catch(e) { console.error('Scan error', e); }
+    } catch(e) {
+        console.error('Scan error', e);
+    }
 }
 
 function broadcastStatus() {
