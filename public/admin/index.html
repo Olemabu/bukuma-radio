@@ -127,8 +127,10 @@ header { display: flex; justify-content: space-between; align-items: center; mar
 .mic-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
 .mic-unit { background: var(--ledge); padding: 15px; border-radius: 12px; border: 2px solid var(--chassis); text-align: center; }
 
-.vu-meter { width: 100%; height: 12px; background: #000; border-radius: 6px; overflow: hidden; margin-top: 10px; position: relative; }
-.vu-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--green); transition: width 0.1s; }
+.vu-meter { width: 100%; height: 12px; background: #000; border-radius: 6px; overflow: hidden; margin-top: 10px; position: relative; border: 1px solid #222; }
+.vu-bar { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--green); transition: width 0.1s linear; }
+.progress-container { margin-top: 15px; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 10px; font-weight: 900; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
 
 .queue-panel { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; max-height: 600px; overflow-y: auto; }
 
@@ -304,7 +306,13 @@ header { display: flex; justify-content: space-between; align-items: center; mar
                  <div id="trackArtist" style="font-size:12px; opacity:0.8">AWAITING SEED...</div>
                </div>
             </div>
-            <div class="vu-meter"><div id="vuBar" class="vu-bar"></div></div>
+            <div class="progress-container">
+                <div class="progress-labels">
+                    <span id="progressTime">00:00 / 00:00</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="vu-meter"><div id="progressBar" class="vu-bar"></div></div>
+            </div>
           
           <div style="display:flex; gap:15px; margin-top:20px; margin-bottom:30px">
             <button class="btn-hardware btn-green" id="btnPlay" onclick="playStation()" title="Shortcut: P">
@@ -352,8 +360,8 @@ header { display: flex; justify-content: space-between; align-items: center; mar
                  <button class="btn-hardware" id="micBtnSolo" style="flex:1" onclick="setMic(2)">SOLO</button>
                  <button class="btn-hardware btn-red" id="micBtnOff" style="flex:1" onclick="setMic(0)">OFF</button>
                </div>
-               <div id="micStatus" style="font-size:10px; font-weight:900; margin-top:10px; color:var(--muted)">READY</div>
-               <div class="vu-meter" style="height:4px; margin-top:8px; background:#111;"><div id="localMicVU" class="vu-bar" style="background:#00ffff; box-shadow:0 0 8px #00ffff; transition: width 0.05s linear;"></div></div>
+                 <div id="micStatus" style="font-size:10px; font-weight:900; margin-top:10px; color:var(--muted)">READY</div>
+                 <div class="vu-meter" style="height:4px; margin-top:8px; background:#111;"><div id="localMicVU" class="vu-bar" style="background:#00ffff; box-shadow:0 0 8px #00ffff; transition: width 0.05s linear;"></div></div>
             </div>
             <div class="mic-unit">
                <div class="card-title">GAIN (<span class="key-hint">↑</span> / <span class="key-hint">↓</span>)</div>
@@ -746,9 +754,18 @@ function updateUI(d) {
             </div>
         `}).join('');
     } else qEl.innerHTML = '<p style="text-align:center; opacity:0.5; padding:20px">Permanent Disk Empty</p>';
-
-    if (d.isPlaying) document.getElementById('vuBar').style.width = (30 + Math.random() * 60) + '%';
-    else document.getElementById('vuBar').style.width = '0%';
+    
+    // Update Progress Bar
+    if (d.currentTrack && d.currentTrack.progress) {
+        const p = d.currentTrack.progress;
+        document.getElementById('progressBar').style.width = p.percent + '%';
+        document.getElementById('progressTime').textContent = `${p.formattedElapsed} / ${p.formattedDuration}`;
+        document.getElementById('progressPercent').textContent = Math.floor(p.percent) + '%';
+    } else {
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressTime').textContent = '00:00 / 00:00';
+        document.getElementById('progressPercent').textContent = '0%';
+    }
     
     // Refresh Playlists and Drive occasionally
     if (Date.now() - (S.lastExtRef || 0) > 30000) {

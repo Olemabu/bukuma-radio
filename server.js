@@ -10,6 +10,10 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: '/ws' });
 
+// ── Lifecycle & Panic Recovery ────────────────────────────────────────────────────────────
+process.on('uncaughtException',  err => console.error('[FATAL] Uncaught Exception:', err));
+process.on('unhandledRejection', err => console.error('[FATAL] Unhandled Rejection:', err));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -50,6 +54,29 @@ let downloadQueue = [];
 const clients = new Set();
 const streamClients = new Set();
 
+// ── Time Tracking State ───────────────────────────────────────────────────────────────
+let trackStartTime = null;
+let trackElapsedAtPause = 0;
+let jingleStartTime = null;
+let totalJingleDuration = 0;
+
+function parseDuration(str) {
+  if (!str || str === 'Unknown') return 0;
+  const parts = str.split(':').map(Number);
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return parts[0] || 0;
+}
+
+function formatDuration(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const mm = m.toString().padStart(2, '0');
+  const ss = s.toString().padStart(2, '0');
+  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+
 // ── Seed tracks ───────────────────────────────────────────────────────────────────────
 function seedQueue() {
   return [
@@ -67,6 +94,16 @@ function seedQueue() {
   }
 
 // ── Persistence helpers ───────────────────────────────────────────────────────────────────
+function safeWrite(file, data) {
+  const tmp = file + '.tmp';
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+    fs.renameSync(tmp, file);
+  } catch (e) {
+    console.error('[FS] safeWrite failed for ' + path.basename(file) + ':', e.message);
+  }
+}
+
 function loadState() {
   try {
     if (fs.existsSync(queueFile)) {
@@ -101,13 +138,11 @@ function loadState() {
 }
 
 function saveState() {
-  try {
-    fs.writeFileSync(stateFile, JSON.stringify({ volume, autoJingles, isPlaying, libraryIndex }, null, 2));
-    fs.writeFileSync(queueFile, JSON.stringify(queue, null, 2));
-  } catch(e) {}
+  safeWrite(stateFile, { volume, autoJingles, isPlaying, libraryIndex });
+  safeWrite(queueFile, queue);
 }
-function savePlaylists() { try { fs.writeFileSync(playlistsFile, JSON.stringify(playlists, null, 2)); } catch(e) {} }
-function saveNews()      { try { fs.writeFileSync(newsFile,      JSON.stringify(news,      null, 2)); } catch(e) {} }
+function savePlaylists() { safeWrite(playlistsFile, playlists); }
+function saveNews()      { safeWrite(newsFile,      news); }
 
 const upload = multer({ dest: path.join(__dirname, 'public/uploads') });
 
@@ -117,10 +152,44 @@ function broadcast(msg) {
   clients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.send(data); });
 }
 function getStatus() {
+  const now = Date.now();
+  let elapsed = 0;
+  let durationSeconds = 0;
+  let percent = 0;
+
+  if (isPlaying && trackStartTime) {
+    let activeElapsed = (now - trackStartTime) / 1000;
+    // If a jingle is currently playing, don't advance the track clock
+    if (activeJingleProcess && jingleStartTime) {
+        activeElapsed = (jingleStartTime - trackStartTime) / 1000;
+    }
+    elapsed = trackElapsedAtPause + activeElapsed - (totalJingleDuration / 1000);
+  } else if (!isPlaying) {
+    elapsed = trackElapsedAtPause;
+  }
+
+  if (currentTrack) {
+    durationSeconds = parseDuration(currentTrack.duration);
+    if (durationSeconds > 0) {
+      percent = Math.min(100, (elapsed / durationSeconds) * 100);
+    }
+  }
+
   return {
     type: 'status', isPlaying, volume,
     queue: queue.map((t, i) => ({ ...t, isNowPlaying: i === libraryIndex && isPlaying })),
-    libraryIndex, currentTrack, autoJingles, timestamp: Date.now()
+    libraryIndex, 
+    currentTrack: currentTrack ? { 
+        ...currentTrack, 
+        progress: {
+            elapsed: Math.floor(elapsed),
+            duration: durationSeconds,
+            percent: Number(percent.toFixed(2)),
+            formattedElapsed: formatDuration(elapsed),
+            formattedDuration: formatDuration(durationSeconds)
+        }
+    } : null, 
+    autoJingles, timestamp: now
   };
 }
 
@@ -139,6 +208,7 @@ function processDownloadQueue() {
   if (!live || live.status === 'ready') { processDownloadQueue(); return; }
   isDownloading = true;
   live.status = 'downloading';
+  live.downloadError = null; // reset previous errors
 
   // Sanitise filename — strip non-alphanumeric, collapse spaces to underscore
   const reNonAlpha = /[^a-z0-9 _-]/gi;
@@ -176,10 +246,14 @@ function processDownloadQueue() {
   ytProc.on('close', code => {
     clearTimeout(killTimer);
     const ok = code === 0 && fs.existsSync(localPath);
-    live.status = ok ? 'ready' : 'error';
-    if (ok) live.localPath = localPath;
-    if (!ok) console.warn('[SCOUT] Failed: ' + live.title + ' code=' + code + ' err=' + ytErr.slice(0,200));
-    else     console.log('[SCOUT] Ready: '  + live.title);
+    if (!ok) {
+      live.status = 'error';
+      live.downloadError = ytErr.slice(0, 200).replace(/\n/g, ' ');
+      console.warn('[SCOUT] Failed: ' + live.title + ' code=' + code + ' err=' + live.downloadError);
+    } else {
+      live.status = 'ready';
+      live.localPath = localPath;
+    }
     saveState(); broadcast(getStatus());
     isDownloading = false; processDownloadQueue();
   });
@@ -208,11 +282,25 @@ function playTrack() {
   if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
   if (isStartingTrack) { console.log('[PLAYER] guard: already starting'); return; }
   if (!isPlaying)      { console.log('[PLAYER] guard: not playing'); return; }
-  if (queue.length === 0) return;
-  if (libraryIndex >= queue.length) libraryIndex = 0;
-
   const track = queue[libraryIndex];
-  if (track.status !== 'ready' || !track.localPath || !fs.existsSync(track.localPath)) {
+  if (!track) {
+    console.warn('[PLAYER] Queue empty in playTrack');
+    isPlaying = false;
+    return;
+  }
+
+  // Kill existing process if any to prevent overlapping audio
+  if (currentProcess) {
+    console.log('[PLAYER] Cleaning up existing process before starting new track');
+    const p = currentProcess;
+    currentProcess = null;
+    p.removeAllListeners();
+    try { p.kill('SIGKILL'); } catch(e) {}
+  }
+
+  const trackReady = track.status === 'ready' && track.localPath && fs.existsSync(track.localPath);
+
+  if (!trackReady) {
     if (track.status === 'pending' || track.status === 'downloading') {
       enqueueDownload(track);
       console.log('[PLAYER] Waiting for: ' + track.title + ' (' + track.status + ')');
@@ -242,6 +330,12 @@ function playTrack() {
 
   isStartingTrack = true;
   currentTrack = { ...track };
+  
+  // Reset local time tracking
+  trackStartTime = Date.now();
+  trackElapsedAtPause = 0;
+  totalJingleDuration = 0;
+
   broadcast({ type: 'nowPlaying', track: currentTrack });
   broadcast(getStatus());
   console.log('[PLAYER] Playing: ' + currentTrack.title);
@@ -267,21 +361,37 @@ function playTrack() {
   currentProcess = proc;
   isStartingTrack = false;
   let bytesOut = 0;
+  let lastDataTime = Date.now();
+
+  // Watchdog: If no data for 20s while supposedly playing, restart track
+  const watchdog = setInterval(() => {
+    if (!isPlaying || currentProcess !== proc) { clearInterval(watchdog); return; }
+    if (Date.now() - lastDataTime > 20000) {
+      console.warn('[WATCHDOG] No data from FFmpeg for 20s, restarting...');
+      clearInterval(watchdog);
+      try { proc.kill('SIGKILL'); } catch(e) {}
+    }
+  }, 5000);
 
   proc.stdout.on('data', chunk => {
     bytesOut += chunk.length;
+    lastDataTime = Date.now();
     const dead = [];
     streamClients.forEach(client => {
       try {
-        const backlog = (client.socket && client.socket.writableLength) || 0;
-        if (backlog > 2 * 1024 * 1024) { dead.push(client); return; }
-        if (!client.writableEnded) client.write(chunk);
+        // More robust back-pressure: if client is too far behind, drop it
+        if (client.writableLength > 512 * 1024) { dead.push(client); return; }
+        if (!client.writableEnded) {
+          const ok = client.write(chunk);
+          if (!ok) { /* potentially track slow clients here */ }
+        }
       } catch(e) { dead.push(client); }
     });
-    dead.forEach(c => { try { c.end(); } catch(e){} streamClients.delete(c); });
+    dead.forEach(c => { try { c.destroy(); } catch(e){} streamClients.delete(c); });
   });
 
   proc.on('close', code => {
+    clearInterval(watchdog);
     if (currentProcess !== proc) return;
     currentProcess = null;
     console.log('[PLAYER] Finished: ' + (currentTrack ? currentTrack.title : '?') +
@@ -301,6 +411,7 @@ function playTrack() {
   });
 
   proc.on('error', err => {
+    clearInterval(watchdog);
     if (currentProcess !== proc) return;
     currentProcess = null; isStartingTrack = false;
     console.error('[PLAYER] FFmpeg error:', err.message);
@@ -325,6 +436,7 @@ function startPlayback() {
 }
 
 function stopPlayback() {
+  trackElapsedAtPause = (Date.now() - trackStartTime) / 1000;
   isPlaying = false;
   if (playNextTimeout) { clearTimeout(playNextTimeout); playNextTimeout = null; }
   if (currentProcess) {
@@ -332,7 +444,8 @@ function stopPlayback() {
     p.removeAllListeners();
     try { p.kill('SIGKILL'); } catch(e) {}
   }
-  isStartingTrack = false; currentTrack = null;
+  isStartingTrack = false;
+  // Don't null currentTrack here so UI can show what was playing in a paused state
   saveState(); broadcast(getStatus());
 }
 
@@ -365,15 +478,44 @@ function dropJingle(jingleFile) {
   let p = path.join(__dirname, 'public/app', jingleFile);
   if (!fs.existsSync(p)) p = path.join(dataDir, 'jingles', jingleFile);
   if (!fs.existsSync(p)) return;
+
+  console.log('[JINGLE] Dropping: ' + jingleFile);
   try { currentProcess.stdout.pause(); } catch(e) {}
+  
+  jingleStartTime = Date.now();
+
   const jArgs = ['-hide_banner', '-loglevel', 'error', '-i', p, '-f', 'mp3', '-b:a', '128k', 'pipe:1'];
   activeJingleProcess = spawn(FFMPEG_PATH, jArgs, { stdio: ['ignore', 'pipe', 'ignore'] });
+
+  const safetyTimeout = setTimeout(() => {
+    if (activeJingleProcess) {
+      console.warn('[JINGLE] Safety timeout reached, forcing music resume');
+      try { activeJingleProcess.kill('SIGKILL'); } catch(e) {}
+    }
+  }, 45000);
+
   activeJingleProcess.stdout.on('data', chunk => {
     streamClients.forEach(c => { try { if (!c.writableEnded) c.write(chunk); } catch(e) {} });
   });
-  activeJingleProcess.on('close', () => {
+
+  const cleanup = () => {
+    if (!activeJingleProcess) return;
+    clearTimeout(safetyTimeout);
+    
+    if (jingleStartTime) {
+        totalJingleDuration += (Date.now() - jingleStartTime);
+        jingleStartTime = null;
+    }
+
     activeJingleProcess = null;
+    console.log('[JINGLE] Finished, resuming music');
     if (currentProcess) { try { currentProcess.stdout.resume(); } catch(e) {} }
+  };
+
+  activeJingleProcess.on('close', cleanup);
+  activeJingleProcess.on('error', err => {
+    console.error('[JINGLE] Process error:', err.message);
+    cleanup();
   });
 }
 
@@ -415,11 +557,12 @@ wss.on('connection', ws => {
           }
           break;
         case 'getStatus': ws.send(JSON.stringify(getStatus())); break;
-        case 'play':    startPlayback(); break;
-        case 'pause':   stopPlayback();  break;
-        case 'skip':    skipTrack();     break;
-        case 'volume':  setVolume(msg.value); break;
+        case 'play':    if (ws.isAdmin) startPlayback(); break;
+        case 'pause':   if (ws.isAdmin) stopPlayback();  break;
+        case 'skip':    if (ws.isAdmin) skipTrack();     break;
+        case 'volume':  if (ws.isAdmin) setVolume(msg.value); break;
         case 'toggleAutoJingles':
+          if (!ws.isAdmin) break;
           autoJingles.start = !autoJingles.start;
           saveState();
           if (autoJingles.start) startAutoJingleLoop();
@@ -427,7 +570,7 @@ wss.on('connection', ws => {
           broadcast(getStatus());
           break;
         case 'addSong':
-          if (msg.song) {
+          if (ws.isAdmin && msg.song) {
             const t = { id: Math.random().toString(36).slice(2), status: 'pending', ...msg.song };
             queue.push(t); saveState(); broadcast(getStatus()); enqueueDownload(t);
             if (!isPlaying) startPlayback();
