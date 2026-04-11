@@ -91,11 +91,17 @@ function fetchYtTitle(videoId) {
         ]);
         let out = '';
         ytProc.stdout.on('data', d => { out += d.toString(); });
+        let errOut = '';
+        ytProc.stderr.on('data', d => { errOut += d.toString(); });
         ytProc.on('close', code => {
             if (code === 0 && out.trim()) {
                 const parts = out.trim().split('|||');
-                resolve({ title: (parts[0] || '').trim(), artist: (parts[1] || '').trim() || 'Unknown Artist' });
+                const title = (parts[0] || '').trim();
+                const artist = (parts[1] || '').trim() || 'Unknown Artist';
+                console.log(`[META] Got title for ${videoId}: "${title}" / "${artist}"`);
+                resolve({ title, artist });
             } else {
+                if (errOut) console.log(`[META] yt-dlp error for ${videoId} (code=${code}): ${errOut.slice(0, 200)}`);
                 resolve(null);
             }
         });
