@@ -130,39 +130,38 @@ function startMaster() {
 }
 
 let trackStartTime = 0;
-
 async function playTrack() {
     if (!state.isPlaying || state.queue.length === 0) return;
-    
     const track = state.queue[state.currentMusicIdx];
     if (!track) return;
-
     console.log(`[ENGINE] Playing: ${track.title}`);
     state.currentTrack = track;
-    
     try {
-        // Get duration
         const metadata = await mm.parseFile(track.path);
         state.duration = metadata.format.duration || 0;
     } catch (e) {
         console.error(`[ENGINE] Metadata error for ${track.path}`, e);
         state.duration = 0;
     }
-
     state.elapsedTime = 0;
-    trackStartTime = Date.now();
-    
     // Flush stale mic data to prevent 'Ghost Voices'
     while (micStream.read()) {}
 
-    broadcastStatus();
-    saveState();
-    
+    // Kill old music proc BEFORE setting trackStartTime so the old exit handler
+    // cannot read a freshly-reset trackStartTime and trigger another advance
     if (musicProc) {
         musicProc.stdout.removeAllListeners('data');
+        musicProc.removeAllListeners('exit');
         musicProc.kill();
         musicProc = null;
     }
+
+    // Capture start time locally so each track's exit handler uses its own value
+    const thisStartTime = Date.now();
+    trackStartTime = thisStartTime;
+
+    broadcastStatus();
+    saveState();
 
     const args = ['-re', '-i', track.path, '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'];
     const thisProc = spawn('ffmpeg', args);
@@ -176,14 +175,11 @@ async function playTrack() {
 
     thisProc.stdout.on('data', chunk => {
         if (!masterProc || !masterProc.stdin || musicProc !== thisProc) return;
-        
         const mixed = Buffer.alloc(chunk.length);
         let musicVol = state.volume / 100;
         if (state.micMode === 'DUCK') musicVol *= 0.15;
         if (state.micMode === 'SOLO') musicVol = 0;
-
         const micChunk = micStream.read(chunk.length);
-
         for (let i = 0; i < chunk.length; i += 2) {
             let mSample = chunk.readInt16LE(i) * musicVol;
             let micSample = 0;
@@ -193,25 +189,26 @@ async function playTrack() {
             let out = Math.max(-32768, Math.min(32767, mSample + micSample));
             mixed.writeInt16LE(out, i);
         }
-        
         if (!masterProc.stdin.write(mixed)) {
             thisProc.stdout.pause();
         }
     });
 
-    thisProc.on('exit', () => {
-        if (musicProc === thisProc) musicProc = null;
-        if (state.isPlaying) {
-            const trackDurationSoFar = (Date.now() - trackStartTime) / 1000;
-            const playDelay = trackDurationSoFar < 3 ? 3000 : 1000;
-            console.log(`[ENGINE] Track ended after ${trackDurationSoFar.toFixed(1)}s. Next in ${playDelay}ms...`);
-            setTimeout(() => {
-                if (state.isPlaying) {
-                    state.currentMusicIdx = (state.currentMusicIdx + 1) % state.queue.length;
-                    playTrack();
-                }
-            }, playDelay);
-        }
+    thisProc.on('exit', (code, signal) => {
+        // Only act if this is still the active music process (not a killed old one)
+        if (musicProc !== thisProc) return;
+        musicProc = null;
+        if (!state.isPlaying) return;
+        // Use local thisStartTime — not the global — to get accurate elapsed time
+        const elapsed = (Date.now() - thisStartTime) / 1000;
+        const playDelay = elapsed < 3 ? 3000 : 1000;
+        console.log(`[ENGINE] Track ended after ${elapsed.toFixed(1)}s (code=${code}). Next in ${playDelay}ms...`);
+        setTimeout(() => {
+            if (state.isPlaying) {
+                state.currentMusicIdx = (state.currentMusicIdx + 1) % state.queue.length;
+                playTrack();
+            }
+        }, playDelay);
     });
 }
 
