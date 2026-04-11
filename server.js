@@ -307,4 +307,5 @@ setInterval(scanLibrary, 30000);
 // Start playback if it was previously playing
 if (state.isPlaying) playTrack();
 
-server.listen(3000, () => console.log('Bukuma Radio Pure Drive online on port 3000'));
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Bukuma Radio Pure Drive online on port ${PORT}`));
