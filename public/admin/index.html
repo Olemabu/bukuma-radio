@@ -92,7 +92,12 @@
                             <div class="mic-mode active" id="modeOFF" onclick="setMic('OFF')">OFF</div>
                             <div class="mic-mode" id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
                             <div class="mic-mode" id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
-                        </div>
+                        
+                        <div style="margin-top:12px;">
+                            <p style="font-size:10px; margin-bottom:5px; opacity:0.5;">MIC DUCK LEVEL (when music plays under mic)</p>
+                            <input type="range" min="0" max="100" value="30" style="width:100%;" oninput="setDuckLevel(this.value)" id="duckSlider">
+                            <div style="display:flex; justify-content:space-between; font-size:9px; opacity:0.4; margin-top:3px;"><span>Quiet</span><span id="duckVal">30%</span><span>Loud</span></div>
+                        </div></div>
                     </div>
                     <div>
                         <div class="section-title">Global Sync Level</div>
@@ -208,27 +213,73 @@
         function renderLibrary(tracks, current) {
             const list = document.getElementById('libraryList');
             if (!tracks || tracks.length === 0) return;
-
             const currentJSON = JSON.stringify(tracks);
             const currentID = current?.id || "";
-
-            // Only re-render if library content or selection changed
             if (currentJSON === lastLibraryJSON && currentID === lastCurrentID) return;
-            
             lastLibraryJSON = currentJSON;
             lastCurrentID = currentID;
-
             list.innerHTML = tracks.map(t => `
-                <div class="track-item ${currentID === t.id ? 'playing' : ''}">
-                    <div style="min-width: 0; flex: 1;">
-                        <div style="font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${t.title}</div>
-                        <div style="font-size: 10px; opacity: 0.5;">${t.artist}</div>
+              <div class="track-item ${currentID === t.id ? 'playing' : ''}" id="ti-${t.id}">
+                <div style="min-width:0; flex:1;">
+                  <div class="track-title" style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.title}</div>
+                  <div class="track-artist" style="font-size:10px; opacity:0.5;">${t.artist}</div>
+                  <div class="rename-form" id="rf-${t.id}" style="display:none; margin-top:6px;">
+                    <input type="text" id="rt-${t.id}" value="${t.title.replace(/"/g,'&quot;')}" placeholder="Track title"
+                      style="width:60%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit;">
+                    <input type="text" id="ra-${t.id}" value="${t.artist.replace(/"/g,'&quot;')}" placeholder="Artist"
+                      style="width:33%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit; margin-left:4px;">
+                    <div style="margin-top:5px; display:flex; gap:6px;">
+                      <button class="glass-button" style="padding:3px 10px; font-size:9px; background:rgba(0,242,254,0.2);" onclick="saveRename('${t.id}')">SAVE</button>
+                      <button class="glass-button" style="padding:3px 10px; font-size:9px;" onclick="cancelRename('${t.id}')">CANCEL</button>
                     </div>
-                    <button class="glass-button" style="padding: 4px 10px; font-size: 9px; margin-left: 10px;" onclick="playNow('${t.id}')">PLAY</button>
+                  </div>
                 </div>
+                <div style="display:flex; gap:6px; align-items:center; margin-left:10px; flex-shrink:0;">
+                  <button class="glass-button" title="Rename track" style="padding:4px 8px; font-size:11px; background:transparent; border:1px solid rgba(255,255,255,0.1);" onclick="toggleRename('${t.id}')">✏️</button>
+                  <button class="glass-button" style="padding:4px 10px; font-size:9px;" onclick="playNow('${t.id}')">PLAY</button>
+                </div>
+              </div>
             `).join('');
         }
 
+        function toggleRename(id) {
+            const rf = document.getElementById('rf-' + id);
+            if (!rf) return;
+            const showing = rf.style.display === 'block';
+            rf.style.display = showing ? 'none' : 'block';
+            if (!showing) setTimeout(() => { const inp = document.getElementById('rt-' + id); if (inp) inp.focus(); }, 50);
+        }
+
+        function cancelRename(id) {
+            const rf = document.getElementById('rf-' + id);
+            if (rf) rf.style.display = 'none';
+        }
+
+        function saveRename(id) {
+            const titleEl = document.getElementById('rt-' + id);
+            const artistEl = document.getElementById('ra-' + id);
+            if (!titleEl) return;
+            const title = titleEl.value.trim();
+            const artist = (artistEl ? artistEl.value.trim() : '') || 'Permanent Drive';
+            if (!title) return;
+            fetch('/api/rename-track', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, title, artist })
+            }).then(r => r.json()).then(res => {
+                if (res.ok) {
+                    const item = document.getElementById('ti-' + id);
+                    if (item) {
+                        item.querySelector('.track-title').textContent = title;
+                        item.querySelector('.track-artist').textContent = artist;
+                    }
+                    cancelRename(id);
+                    lastLibraryJSON = '';
+                } else {
+                    alert('Rename failed: ' + (res.error || 'unknown'));
+                }
+            }).catch(err => alert('Network error: ' + err));
+        }
         function setMic(mode) {
             if (mode !== 'OFF') state.lastMicMode = mode;
             state.micMode = mode;
@@ -278,6 +329,10 @@
         function stopStation() { fetch('/api/stop', { method: 'POST' }); }
         function skipTrack() { fetch('/api/skip', { method: 'POST' }); }
         function setVolume(v) { fetch('/api/volume', { method: 'POST', body: JSON.stringify({ volume: v }), headers: { 'Content-Type': 'application/json' } }); }
+        function setDuckLevel(v) {
+            document.getElementById('duckVal').textContent = v + '%';
+            fetch('/api/mic-duck', { method: 'POST', body: JSON.stringify({ duckLevel: parseInt(v) }), headers: { 'Content-Type': 'application/json' } });
+        }
     </script>
 </body>
 </html>
