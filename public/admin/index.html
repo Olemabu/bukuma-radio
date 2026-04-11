@@ -752,7 +752,7 @@ function updateUI(d) {
     
     // Refresh Playlists and Drive occasionally
     if (Date.now() - (S.lastExtRef || 0) > 30000) {
-        loadDrive();
+        fetchDrive();
         loadPlaylistLibrary();
         loadProgramUI();
         S.lastExtRef = Date.now();
