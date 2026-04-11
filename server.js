@@ -36,6 +36,7 @@ let state = {
     volume: 80,
     micMode: 'OFF', // OFF, DUCK, SOLO
     micGate: 0.05,
+    micDuckLevel: 30, // % of music volume when ducking (0=silent, 100=no duck)
     elapsedTime: 0,
     duration: 0,
     currentMusicIdx: 0,
@@ -268,19 +269,64 @@ async function playTrack() {
     thisProc.stdout.on('data', chunk => {
         if (!masterProc || !masterProc.stdin || musicProc !== thisProc) return;
         const mixed = Buffer.alloc(chunk.length);
-        let musicVol = state.volume / 100;
-        if (state.micMode === 'DUCK') musicVol *= 0.15;
-        if (state.micMode === 'SOLO') musicVol = 0;
-        const micChunk = micStream.read(chunk.length);
+        const baseVol = state.volume / 100;
+
+        // Read mic chunk for this frame
+        const micChunk = (state.micMode !== 'OFF') ? micStream.read(chunk.length) : null;
+
+        // --- Sidechain ducking ---
+        // Compute RMS of mic chunk to measure actual mic level (not just mode on/off)
+        let micRMS = 0;
+        if (micChunk && micChunk.length >= 2) {
+            let sumSq = 0;
+            for (let i = 0; i < micChunk.length; i += 2) {
+                const s = micChunk.readInt16LE(i) / 32768;
+                sumSq += s * s;
+            }
+            micRMS = Math.sqrt(sumSq / (micChunk.length / 2));
+        }
+
+        // Determine target music volume
+        let targetVol;
+        if (state.micMode === 'SOLO') {
+            targetVol = 0;
+        } else if (state.micMode === 'DUCK') {
+            // Smooth sidechain: duck proportional to mic level
+            // When micRMS exceeds gate threshold, reduce music
+            const gate = state.micGate || 0.05;
+            const duckFloor = (state.micDuckLevel !== undefined ? state.micDuckLevel : 30) / 100;
+            if (micRMS > gate) {
+                // How much above gate? Scale duck smoothly 
+                const duckDepth = Math.min(1, (micRMS - gate) / 0.1); // full duck within 0.1 RMS above gate
+                targetVol = baseVol * (1 - duckDepth * (1 - duckFloor));
+            } else {
+                targetVol = baseVol; // mic quiet — full music
+            }
+        } else {
+            targetVol = baseVol;
+        }
+
+        // Apply smoothing to volume (attack/release envelope on duck)
+        // Use a simple one-pole IIR: attack fast (mic comes in quick), release slow
+        const attackCoeff = 0.3;   // fast attack
+        const releaseCoeff = 0.05; // slow release
+        const prevVol = thisProc._smoothVol !== undefined ? thisProc._smoothVol : baseVol;
+        const smoothVol = targetVol < prevVol
+            ? prevVol + attackCoeff * (targetVol - prevVol)   // ducking down
+            : prevVol + releaseCoeff * (targetVol - prevVol); // releasing up
+        thisProc._smoothVol = smoothVol;
+
+        // Mix music + mic
         for (let i = 0; i < chunk.length; i += 2) {
-            let mSample = chunk.readInt16LE(i) * musicVol;
+            let mSample = chunk.readInt16LE(i) * smoothVol;
             let micSample = 0;
-            if (state.micMode !== 'OFF' && micChunk && i < micChunk.length) {
+            if (micChunk && i < micChunk.length) {
                 micSample = micChunk.readInt16LE(i);
             }
-            let out = Math.max(-32768, Math.min(32767, mSample + micSample));
+            const out = Math.max(-32768, Math.min(32767, Math.round(mSample + micSample)));
             mixed.writeInt16LE(out, i);
         }
+
         if (!masterProc.stdin.write(mixed)) {
             thisProc.stdout.pause();
         }
@@ -403,6 +449,14 @@ app.post('/api/rename-track', (req, res) => {
     }
     broadcastStatus();
     res.json({ ok: true });
+});
+app.post('/api/mic-duck', (req, res) => {
+    const level = parseInt(req.body.duckLevel);
+    if (!isNaN(level) && level >= 0 && level <= 100) {
+        state.micDuckLevel = level;
+        broadcastStatus();
+    }
+    res.json({ ok: true, micDuckLevel: state.micDuckLevel });
 });
 
 // --- INIT ---
