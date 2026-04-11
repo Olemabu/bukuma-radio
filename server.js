@@ -386,25 +386,23 @@ app.post('/api/skip', (req, res) => { state.currentMusicIdx = (state.currentMusi
 app.post('/api/mic', (req, res) => { state.micMode = req.body.mode; if(state.micMode !== 'OFF') startMicFilter(); broadcastStatus(); res.json({ok:true}); });
 app.post('/api/volume', (req, res) => { state.volume = req.body.volume; saveState(); broadcastStatus(); res.json({ok:true}); });
 
-app.get('/api/debug-ffprobe', (req, res) => {
-    try {
-        const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
-        if (files.length === 0) return res.json({ error: 'no files' });
-        const f = files[0];
-        const ffp = spawn('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', path.join(MUSIC_DIR, f)]);
-        let out = '';
-        ffp.stdout.on('data', d => { out += d.toString(); });
-        ffp.on('close', () => {
-            try { res.json({ filename: f, ffprobe: JSON.parse(out) }); }
-            catch(e) { res.json({ filename: f, raw: out.slice(0, 500), err: e.message }); }
-        });
-    } catch(e) { res.json({ error: e.message }); }
-});
-
-app.post('/api/clear-meta-cache', (req, res) => {
-    metaCache = {};
+app.post('/api/rename-track', (req, res) => {
+    const { id, title, artist } = req.body;
+    if (!id || !title) return res.status(400).json({ error: 'id and title required' });
+    const track = state.library.find(t => t.id === id);
+    if (!track) return res.status(404).json({ error: 'track not found' });
+    const filename = track.path.split('/').pop();
+    metaCache[filename] = { title: title.trim(), artist: (artist || '').trim() || 'Permanent Drive' };
     saveMetaCache();
-    res.json({ ok: true, msg: 'Cache cleared. Next scanLibrary will re-fetch.' });
+    // Update in-memory library and queue
+    state.library = state.library.map(t => t.id === id ? { ...t, title: title.trim(), artist: (artist || '').trim() || 'Permanent Drive' } : t);
+    state.queue = [...state.library];
+    if (state.currentTrack && state.currentTrack.id === id) {
+        state.currentTrack.title = title.trim();
+        state.currentTrack.artist = (artist || '').trim() || 'Permanent Drive';
+    }
+    broadcastStatus();
+    res.json({ ok: true });
 });
 
 // --- INIT ---
