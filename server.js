@@ -1,4 +1,4 @@
-const express = require('express');
+hconst express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const { exec, spawn } = require('child_process');
@@ -141,8 +141,8 @@ function processDownloadQueue() {
   live.status = 'downloading';
 
   // Sanitise filename — strip non-alphanumeric, collapse spaces to underscore
-  const reNonAlpha = new RegExp('[^a-z0-9 _-]', 'gi');
-  const reSpaces   = new RegExp('[\s]+', 'g');
+  const reNonAlpha = /[^a-z0-9 _-]/gi;
+  const reSpaces   = /\s+/g;
   const cleanTitle = (live.artist + ' - ' + live.title)
     .replace(reNonAlpha, '_').replace(reSpaces, '_');
   const localPath = path.join(downloadsDir, cleanTitle + '.mp3');
@@ -287,7 +287,7 @@ function playTrack() {
     console.log('[PLAYER] Finished: ' + (currentTrack ? currentTrack.title : '?') +
       ' (' + bytesOut + ' bytes, code ' + code + ')');
     if (!isPlaying) return;
-    if (bytesOut < 8192) {
+    if (bytesOut < 512) {
       console.warn('[PLAYER] Short play (' + bytesOut + ' bytes) — marking error');
       const t = queue.find(q => q.id === currentTrack.id);
       if (t) t.status = 'error';
