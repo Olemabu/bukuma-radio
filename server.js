@@ -65,48 +65,109 @@ function saveState() {
     } catch(e) {}
 }
 
-// In-memory metadata cache: filename -> { title, artist }
-const metaCache = {};
+// Persistent metadata cache stored on disk so titles survive restarts
+const META_CACHE_FILE = path.join(DATA_DIR, 'meta_cache.json');
+let metaCache = {};
 
-async function getTrackMeta(filename, filePath) {
-    if (metaCache[filename]) return metaCache[filename];
+function loadMetaCache() {
     try {
-        const meta = await mm.parseFile(filePath, { duration: false });
-        const title = (meta.common.title || '').trim() || filename.replace(/\.mp3$/i, '');
-        const artist = (meta.common.artist || meta.common.albumartist || '').trim() || 'Permanent Drive';
-        metaCache[filename] = { title, artist };
-    } catch(e) {
-        metaCache[filename] = { title: filename.replace(/\.mp3$/i, ''), artist: 'Permanent Drive' };
+        if (fs.existsSync(META_CACHE_FILE)) {
+            metaCache = JSON.parse(fs.readFileSync(META_CACHE_FILE, 'utf8'));
+        }
+    } catch(e) { metaCache = {}; }
+}
+
+function saveMetaCache() {
+    try { fs.writeFileSync(META_CACHE_FILE, JSON.stringify(metaCache)); } catch(e) {}
+}
+
+// Fetch title for a YouTube video ID via yt-dlp (no re-download, metadata only)
+function fetchYtTitle(videoId) {
+    return new Promise(resolve => {
+        const ytProc = spawn('yt-dlp', [
+            '--no-playlist', '--print', '%(title)s|||%(uploader)s',
+            '--no-warnings', '--quiet',
+            `https://www.youtube.com/watch?v=${videoId}`
+        ]);
+        let out = '';
+        ytProc.stdout.on('data', d => { out += d.toString(); });
+        ytProc.on('close', code => {
+            if (code === 0 && out.trim()) {
+                const parts = out.trim().split('|||');
+                resolve({ title: (parts[0] || '').trim(), artist: (parts[1] || '').trim() || 'Unknown Artist' });
+            } else {
+                resolve(null);
+            }
+        });
+        // Timeout after 15 seconds to avoid hanging
+        setTimeout(() => { try { ytProc.kill(); } catch(e) {} resolve(null); }, 15000);
+    });
+}
+
+async function getTrackMeta(filename) {
+    if (metaCache[filename]) return metaCache[filename];
+    // Derive video ID from filename (strip extension)
+    const videoId = filename.replace(/\.mp3$/i, '');
+    // Check if it looks like a YouTube video ID (11 alphanumeric chars)
+    const isYtId = /^[a-zA-Z0-9_-]{10,13}$/.test(videoId);
+    if (isYtId) {
+        const ytMeta = await fetchYtTitle(videoId);
+        if (ytMeta && ytMeta.title) {
+            metaCache[filename] = ytMeta;
+            saveMetaCache();
+            return ytMeta;
+        }
     }
-    return metaCache[filename];
+    // Fallback: use filename as title
+    const fallback = { title: videoId, artist: 'Permanent Drive' };
+    metaCache[filename] = fallback;
+    saveMetaCache();
+    return fallback;
 }
 
 async function scanLibrary() {
     try {
         const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
 
-        // Resolve metadata for any files not yet cached
-        const newFiles = files.filter(f => !metaCache[f]);
-        await Promise.all(newFiles.map(f => getTrackMeta(f, path.join(MUSIC_DIR, f))));
-
+        // Build library immediately with cached/fallback titles (non-blocking for playback)
         state.library = files.map(f => {
-            const meta = metaCache[f] || { title: f.replace(/\.mp3$/i, ''), artist: 'Permanent Drive' };
+            const cached = metaCache[f];
+            const videoId = f.replace(/\.mp3$/i, '');
             return {
                 id: crypto.createHash('md5').update(f).digest('hex').slice(0, 12),
-                title: meta.title,
-                artist: meta.artist,
+                title: cached ? cached.title : videoId,
+                artist: cached ? cached.artist : 'Permanent Drive',
                 path: path.join(MUSIC_DIR, f)
             };
         });
-
-        // Refresh queue and stay in sync with current track
         state.queue = [...state.library];
         if (state.currentTrack) {
             const newIdx = state.queue.findIndex(t => t.id === state.currentTrack.id);
             if (newIdx !== -1) state.currentMusicIdx = newIdx;
         }
-
         if (!state.isPlaying) broadcastStatus();
+
+        // Fetch missing titles in background (batched to avoid rate limits)
+        const missing = files.filter(f => !metaCache[f]);
+        if (missing.length > 0) {
+            console.log(`[META] Fetching titles for ${missing.length} uncached tracks...`);
+            // Process 3 at a time to avoid hammering YouTube
+            for (let i = 0; i < missing.length; i += 3) {
+                const batch = missing.slice(i, i + 3);
+                await Promise.all(batch.map(f => getTrackMeta(f)));
+                // Update library entries with newly fetched titles
+                state.library = state.library.map(t => {
+                    const cached = metaCache[t.path.split('/').pop()];
+                    if (cached) { t.title = cached.title; t.artist = cached.artist; }
+                    return t;
+                });
+                state.queue = [...state.library];
+                broadcastStatus();
+                // Small delay between batches to be gentle on the API
+                await new Promise(r => setTimeout(r, 500));
+            }
+            console.log('[META] Title fetch complete.');
+        }
     } catch(e) {
         console.error('Scan error', e);
     }
@@ -319,21 +380,9 @@ app.post('/api/skip', (req, res) => { state.currentMusicIdx = (state.currentMusi
 app.post('/api/mic', (req, res) => { state.micMode = req.body.mode; if(state.micMode !== 'OFF') startMicFilter(); broadcastStatus(); res.json({ok:true}); });
 app.post('/api/volume', (req, res) => { state.volume = req.body.volume; saveState(); broadcastStatus(); res.json({ok:true}); });
 
-app.get('/api/debug-meta', async (req, res) => {
-    try {
-        const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
-        if (files.length === 0) return res.json({ error: 'no files' });
-        const f = files[0];
-        const filePath = path.join(MUSIC_DIR, f);
-        const meta = await mm.parseFile(filePath);
-        res.json({ filename: f, common: meta.common, native_keys: Object.keys(meta.native || {}) });
-    } catch(e) {
-        res.json({ error: e.message });
-    }
-});
-
 // --- INIT ---
 loadState();
+loadMetaCache();
 startMaster();
 scanLibrary();
 // Periodic scan to detect new files from the drive
