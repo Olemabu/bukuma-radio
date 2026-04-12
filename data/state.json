@@ -1,7 +1,1 @@
-{
-  "volume": 77,
-  "autoJingles": {
-    "start": true,
-    "random": true
-  }
-}
+{"isPlaying":true,"currentMusicIdx":4,"volume":77}

@@ -5,3 +5,6 @@ tmp/
 .env
 data/downloads/
 test_stream.mp3
+data/*.json
+out.pcm
+scratch/

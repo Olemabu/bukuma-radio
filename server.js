@@ -376,13 +376,44 @@ function startMicFilter() {
         '-af', 'agate=threshold=0.03:range=0.1,compand=attacks=0.1:decays=1:points=-90/-90|-45/-30|-20/-10|0/-3,volume=2.5',
         '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
     ];
-    micFilterProc = spawn('ffmpeg', args);
-    micFilterProc.stdout.pipe(micStream, { end: false });
     
-    micFilterProc.on('exit', () => {
-        console.log('[MIXER] Mic Filter Closed.');
+    try {
+        micFilterProc = spawn('ffmpeg', args);
+        
+        // Prevent server crash if FFmpeg stdin is closed or process dies
+        micFilterProc.stdin.on('error', err => {
+            console.error('[MIXER] Mic Filter Stdin Error:', err.message);
+            stopMicFilter();
+        });
+
+        micFilterProc.stderr.on('data', d => {
+            const msg = d.toString();
+            if (msg.toLowerCase().includes('error') || msg.toLowerCase().includes('fatal')) {
+                console.error(`[MIXER-FF-ERR] ${msg.trim()}`);
+            }
+        });
+
+        micFilterProc.stdout.pipe(micStream, { end: false });
+        
+        micFilterProc.on('exit', (code) => {
+            console.log(`[MIXER] Mic Filter Closed (code=${code}).`);
+            micFilterProc = null;
+        });
+    } catch (e) {
+        console.error('[MIXER] Failed to spawn Mic Filter:', e);
         micFilterProc = null;
-    });
+    }
+}
+
+function stopMicFilter() {
+    if (micFilterProc) {
+        console.log('[MIXER] Terminating Mic Filter Chain...');
+        try {
+            micFilterProc.stdin.end();
+            micFilterProc.kill('SIGKILL'); // Force kill for fast cleanup
+        } catch (e) {}
+        micFilterProc = null;
+    }
 }
 
 // --- API & WEBSOCKET ---
@@ -392,15 +423,27 @@ wss.on('connection', ws => {
 
     ws.on('message', data => {
         if (Buffer.isBuffer(data)) {
-            // Incoming Raw PCM from Admin Mic
-            if (micFilterProc) micFilterProc.stdin.write(data);
+            // Incoming Raw PCM from Admin Mic - ensure pipe is healthy before writing
+            if (micFilterProc && micFilterProc.stdin && micFilterProc.stdin.writable) {
+                micFilterProc.stdin.write(data);
+            }
         } else {
             try {
                 const msg = JSON.parse(data);
                 if (msg.type === 'feedback') {
                     // Update global stats from listener feedback
-                    state.listenerStats.vu = msg.vu;
-                    state.listenerStats.latency = Date.now() - msg.timestamp;
+                    // Smoothing check
+                    const newVU = msg.vu || 0;
+                    const oldVU = state.listenerStats.vu || 0;
+                    state.listenerStats.vu = (oldVU * 0.3) + (newVU * 0.7); // 70% new value for responsiveness
+                    
+                    // RTT Latency: Date.now() - captured refTime (the time the packet left the server)
+                    if (msg.refTime) {
+                        state.listenerStats.latency = Date.now() - msg.refTime;
+                    } else if (msg.timestamp) {
+                        state.listenerStats.latency = Date.now() - msg.timestamp;
+                    }
+                    
                     // Trigger status broadcast to update Admin UI with feedback
                     broadcastStatus();
                 }
@@ -442,7 +485,16 @@ app.post('/api/play-id', (req, res) => {
 });
 app.post('/api/stop', (req, res) => { state.isPlaying = false; if(musicProc) musicProc.kill(); state.currentTrack = null; saveState(); broadcastStatus(); res.json({ok:true}); });
 app.post('/api/skip', (req, res) => { state.currentMusicIdx = (state.currentMusicIdx+1)%state.queue.length; playTrack(); saveState(); res.json({ok:true}); });
-app.post('/api/mic', (req, res) => { state.micMode = req.body.mode; if(state.micMode !== 'OFF') startMicFilter(); broadcastStatus(); res.json({ok:true}); });
+app.post('/api/mic', (req, res) => { 
+    state.micMode = req.body.mode; 
+    if (state.micMode !== 'OFF') {
+        startMicFilter(); 
+    } else {
+        stopMicFilter();
+    }
+    broadcastStatus(); 
+    res.json({ok:true}); 
+});
 app.post('/api/volume', (req, res) => { state.volume = req.body.volume; saveState(); broadcastStatus(); res.json({ok:true}); });
 
 app.post('/api/rename-track', (req, res) => {

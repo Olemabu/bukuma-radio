@@ -3,147 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Station Master — Agum Bukuma Radio</title>
-    <link rel="stylesheet" href="/css/glass.css">
+    <title>Station Master Command Deck — Agum Bukuma Radio</title>
+    <link rel="stylesheet" href="/css/glass.css?v=2.1">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <script>
+        // Force unregister Service Workers to break through cache
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
     <style>
-        body { font-family: 'Outfit', sans-serif; background: #020617; overflow: auto; min-width: 1000px; }
-        .dashboard { padding: 40px; display: grid; grid-template-columns: 1fr 350px; gap: 30px; max-width: 1400px; margin: 0 auto; }
+        body { font-family: 'Outfit', sans-serif; background: #020617; overflow: auto; min-width: 1200px; margin: 0; color: #fff; }
         
-        .section-title { font-size: 11px; font-weight: 900; letter-spacing: 3px; opacity: 0.5; margin-bottom: 20px; text-transform: uppercase; }
+        /* Expert Grid System */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: auto 1fr;
+            gap: 24px;
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .header-bar {
+            grid-column: span 12;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+        }
+
+        .main-deck {
+            grid-column: span 8;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .side-deck {
+            grid-column: span 4;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-height: calc(100vh - 150px);
+        }
+
+        /* Component Styles */
+        .section-title { font-size: 10px; font-weight: 900; letter-spacing: 2px; opacity: 0.4; margin-bottom: 15px; text-transform: uppercase; }
         
-        .console-main { display: flex; flex-direction: column; gap: 30px; }
-        .master-controls { display: flex; gap: 20px; align-items: center; }
+        .monitor-card { position: relative; padding: 40px; }
+        .monitor-status { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
         
-        .transport-btn { width: 80px; height: 80px; border-radius: 20px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; }
+        .tactical-console {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 24px;
+        }
+
+        .transport-btn { width: 70px; height: 70px; border-radius: 18px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
         
-        .mic-switch-container { display: flex; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 40px; gap: 10px; width: fit-content; border: 1px solid rgba(255,255,255,0.05); }
-        .mic-mode { padding: 12px 25px; border-radius: 30px; cursor: pointer; font-size: 12px; font-weight: 800; transition: all 0.3s; opacity: 0.5; }
+        .mixer-panel { padding: 25px; }
+        
+        .mic-switch-container { display: flex; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 40px; gap: 5px; width: fit-content; border: 1px solid rgba(255,255,255,0.05); }
+        .mic-mode { padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 11px; font-weight: 800; transition: all 0.3s; opacity: 0.4; }
         .mic-mode.active { background: var(--glass-accent); color: #000; opacity: 1; box-shadow: 0 0 20px rgba(0,242,254,0.4); }
         
-        .vu-strip { height: 10px; background: rgba(0,0,0,0.4); border-radius: 5px; overflow: hidden; position: relative; margin-top: 20px; }
+        .vu-strip { height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; overflow: hidden; position: relative; }
         .vu-fill { height: 100%; width: 0%; background: linear-gradient(to right, #00f2fe, #ff3d00); transition: width 0.1s linear; }
 
-        .library-panel { max-height: 700px; overflow-y: auto; }
-        .track-item { padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
-        .track-item:hover { background: rgba(255,255,255,0.05); }
-        .track-item.playing { border-color: var(--glass-accent); background: rgba(0,242,254,0.15); box-shadow: 0 0 15px rgba(0,242,254,0.1); }
-        .track-item.playing .track-title { color: var(--glass-accent); }
+        .library-panel { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        .library-scroll { flex: 1; overflow-y: auto; padding-right: 10px; }
+        
+        .track-item { padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; background: rgba(255,255,255,0.02); }
+        .track-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+        .track-item.playing { border-color: var(--glass-accent); background: rgba(0,242,254,0.1); }
 
-        /* Modal & Progress */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .glass-modal { width: 400px; padding: 30px; text-align: center; }
-        .progress-container { height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; margin: 20px 0; border: 1px solid rgba(255,255,255,0.05); }
-        .progress-fill { height: 100%; width: 0%; background: linear-gradient(to right, #00f2fe, #4facfe); transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(0,242,254,0.5); }
+        .metric-pill { background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px; }
+
+        /* Scrollbar Redesign */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .glass-modal { width: 400px; padding: 40px; text-align: center; border-radius: 30px; }
     </style>
 </head>
 <body>
-    <div class="dashboard">
-        <div class="console-main">
-            <div class="glass-card" style="position: relative;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
+    <div class="dashboard-container">
+        <!-- GLOBAL HEADER -->
+        <header class="header-bar">
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div id="airTag" class="on-air-tag" style="padding: 6px 15px; font-size: 10px; border-radius: 30px;">OFFLINE</div>
+                <h1 style="margin: 0; font-size: 1.5rem; font-weight: 900; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">BUKUMA STATION MASTER</h1>
+            </div>
+            <div style="display: flex; gap: 30px; align-items: center;">
+                <div class="metric-pill">
+                    <span style="font-size: 10px; opacity: 0.5;">LATENCY</span>
+                    <span id="latencyVal" style="font-family: monospace; font-weight: 800; color: var(--glass-accent);">0ms</span>
+                </div>
+                <div id="currentTime" style="font-family: monospace; font-size: 1.1rem; opacity: 0.5;">00:00:00</div>
+            </div>
+        </header>
+
+        <!-- MAIN CONSOLE -->
+        <main class="main-deck">
+            <!-- PRIMARY MONITOR -->
+            <section class="glass-card monitor-card">
+                <div class="section-title">ENGINE TELEMETRY / NOW BROADCASTING</div>
+                <div class="monitor-status">
                     <div style="flex: 1;">
-                        <div id="airTag" class="on-air-tag" style="margin-bottom: 5px; font-size: 10px;">OFFLINE</div>
-                        <h1 class="station-name" style="font-size: 2.2rem; margin: 0; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 10px 20px rgba(0,242,254,0.2);">AGUM BUKUMA RADIO</h1>
+                        <div id="trackTitle" style="font-size: 3.5rem; font-weight: 900; line-height: 1; letter-spacing: -2px;">STATION IDLE</div>
+                        <div id="trackArtist" style="font-size: 1.4rem; opacity: 0.5; margin-top: 10px; font-weight: 300;">AWAITING SIGNAL...</div>
                     </div>
-                    <div id="currentTime" style="font-size: 1.2rem; font-family: 'Courier New', monospace; opacity: 0.3; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 10px;">00:00:00</div>
-                </div>
-                
-                <div style="margin-top: 10px;">
-                    <p class="section-title" style="margin-bottom: 5px; opacity: 0.4;">NOW BROADCASTING FROM DISK</p>
-                    <div id="trackTitle" style="font-size: 2.8rem; font-weight: 900; color: #fff; line-height: 1; letter-spacing: -1px;">STATION IDLE</div>
-                    <div id="trackArtist" style="font-size: 1.4rem; opacity: 0.6; margin-top: 8px; font-weight: 300;">AWAITING SIGNAL...</div>
-                </div>
-
-                <!-- Admin Progress Bar / Seeker -->
-        <div style="margin-top: 25px;">
-            <div style="position: relative; height: 22px; display: flex; align-items: center;">
-                <!-- background track -->
-                <div style="position:absolute; left:0; right:0; height:6px; background:rgba(0,0,0,0.3); border-radius:3px; pointer-events:none;"></div>
-                <!-- filled portion -->
-                <div id="progFill" style="position:absolute; left:0; height:6px; width:0%; background:var(--glass-accent); box-shadow:0 0 10px var(--glass-accent); border-radius:3px; pointer-events:none; transition:width 0.25s linear;"></div>
-                <!-- seeker handle -->
-                <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1"
-                    style="position:absolute; left:0; right:0; width:100%; height:100%; opacity:0; cursor:pointer; margin:0;"
-                    oninput="onSeekInput(this.value)"
-                    onmousedown="seekDragging=true"
-                    ontouchstart="seekDragging=true"
-                    onmouseup="onSeekCommit(this.value)"
-                    ontouchend="onSeekCommit(this.value)">
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 10px; font-family: monospace; opacity: 0.5; margin-top: 4px;">
-                <span id="progStart">0:00</span>
-                <span id="progEnd">0:00</span>
-            </div>
-        </div>
-        <div class="vu-strip" style="height: 14px; margin-top: 20px;"><div id="masterVU" class="vu-fill"></div></div>
-            </div>
-
-            <div class="master-controls">
-                <button class="transport-btn glass-button" onclick="playStation()" id="playBtn">▶</button>
-                <button class="transport-btn glass-button" onclick="stopStation()" style="background: rgba(255, 61, 0, 0.4);">⬛</button>
-                <button class="transport-btn glass-button" onclick="skipTrack()" style="background: rgba(255,255,255,0.1);">⏭</button>
-                
-                <div style="margin-left: auto; text-align: right;">
-                    <div class="section-title">Remote Listener Status</div>
-                    <div class="glass-card" style="padding: 10px 20px; display: flex; align-items: center; gap: 20px; border-radius: 40px; margin-top: 5px;">
-                        <div style="text-align: left;">
-                            <div style="font-size: 10px; opacity: 0.5;">LATENCY</div>
-                            <div id="latencyVal" style="font-weight: 800; font-family: monospace; font-size: 14px; color: var(--glass-accent);">0ms</div>
+                    <div style="text-align: right; min-width: 150px;">
+                        <div class="section-title" style="margin-bottom: 5px;">MASTER LOAD</div>
+                        <div class="vu-strip" style="height: 40px; width: 12px; display: inline-block; vertical-align: bottom;">
+                            <div id="masterVU" class="vu-fill" style="width: 100%; height: 0%; transition: height 0.1s linear; background: linear-gradient(to top, #00f2fe, #ff3d00);"></div>
                         </div>
-                        <div style="flex: 1; min-width: 100px;">
-                            <div style="font-size: 10px; opacity: 0.5; margin-bottom: 4px;">REMOTE VU</div>
-                            <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden;">
-                                <div id="remoteVU" style="height: 100%; width: 0%; background: #2ed573; transition: width 0.1s linear;"></div>
+                    </div>
+                </div>
+
+                <!-- Progress / Seeker -->
+                <div style="margin-top: 30px;">
+                    <div style="position: relative; height: 30px; display: flex; align-items: center;">
+                        <div style="position:absolute; left:0; right:0; height:8px; background:rgba(0,0,0,0.3); border-radius:4px;"></div>
+                        <div id="progFill" style="position:absolute; left:0; height:8px; width:0%; background:var(--glass-accent); box-shadow:0 0 20px rgba(0,242,254,0.4); border-radius:4px; transition:width 0.25s linear;"></div>
+                        <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1"
+                            style="position:absolute; left:0; right:0; width:100%; height:100%; opacity:0; cursor:pointer;"
+                            oninput="onSeekInput(this.value)" onmousedown="seekDragging=true" onmouseup="onSeekCommit(this.value)">
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; font-family: monospace; opacity: 0.4; margin-top: 8px;">
+                        <span id="progStart">0:00</span>
+                        <span id="progEnd">0:00</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TACTICAL CONSOLE -->
+            <div class="tactical-console">
+                <!-- TRANSPORT -->
+                <section class="glass-card" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                    <button class="transport-btn glass-button" onclick="playStation()" id="playBtn">▶</button>
+                    <button class="transport-btn glass-button" onclick="stopStation()" style="background: rgba(255, 61, 0, 0.4);">⬛</button>
+                    <button class="transport-btn glass-button" onclick="skipTrack()" style="background: rgba(255,255,255,0.05);">⏭</button>
+                </section>
+
+                <!-- MIXER -->
+                <section class="glass-card mixer-panel">
+                    <div class="section-title">PRO MIXER (MIC/MASTER)</div>
+                    <div style="display: flex; gap: 30px; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div class="mic-switch-container">
+                                <div class="mic-mode active" id="modeOFF" onclick="setMic('OFF')">OFF</div>
+                                <div class="mic-mode" id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
+                                <div class="mic-mode" id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
+                            </div>
+                            <div style="margin-top: 20px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 8px;">
+                                    <span style="opacity: 0.5;">MIC INPUT</span>
+                                    <span id="duckVal" style="color: var(--glass-accent);">30%</span>
+                                </div>
+                                <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
+                                    <div id="micVU" style="height: 100%; width: 0%; background: #2ed573; transition: width 0.05s linear;"></div>
+                                </div>
+                                <input type="range" min="0" max="100" value="30" style="width: 100%;" oninput="setDuckLevel(this.value)" id="duckSlider">
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-card">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                    <div>
-                        <div>
-                    <div class="section-title">Microphone Mixer</div>
-                    <div class="mic-switch-container" style="padding: 5px; background: rgba(0,0,0,0.2); border-radius: 40px; display: flex; border: 1px solid rgba(255,255,255,0.05);">
-                        <div class="mic-mode active" id="modeOFF" onclick="setMic('OFF')">OFF</div>
-                        <div class="mic-mode" id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
-                        <div class="mic-mode" id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
-                    </div>
-                    <div style="margin-top:12px;">
-                        <p style="font-size:10px; margin-bottom:5px; opacity:0.5;">DUCK LEVEL — music volume under mic (0=silent, 100=no duck)</p>
-                        <input type="range" min="0" max="100" value="30" style="width:100%;" oninput="setDuckLevel(this.value)" id="duckSlider">
-                        <div style="display:flex; justify-content:space-between; font-size:9px; opacity:0.4; margin-top:3px;"><span>Silent</span><span id="duckVal">30%</span><span>Full</span></div>
-                    </div>
-                    <div style="margin-top:12px;">
-                        <p style="font-size:10px; margin-bottom:5px; opacity:0.5;">MIC VU</p>
-                        <div style="height:8px; background:rgba(0,0,0,0.3); border-radius:4px; overflow:hidden;">
-                            <div id="micVU" style="height:100%; width:0%; background:linear-gradient(to right,#2ed573,#ffa502,#ff4757); transition:width 0.05s linear;"></div>
+                        <div style="width: 100px;">
+                            <div class="section-title" style="margin-bottom: 10px;">VOLUME</div>
+                            <input type="range" style="width: 100px; transform: rotate(-90deg) translate(-40px, -45px); margin: 0;" value="80" oninput="setVolume(this.value)">
                         </div>
                     </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- SIDE DECK -->
+        <aside class="side-deck">
+            <!-- REMOTE FEEDBACK -->
+            <section class="glass-card" style="padding: 24px;">
+                <div class="section-title">LISTENER EXPERIENCE / REMOTE VU</div>
+                <div style="height: 40px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="remoteVU" style="height: 100%; width: 0%; background: linear-gradient(to right, #2ed573, #7bed9f); transition: width 0.1s linear;"></div>
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; opacity: 0.5; pointer-events: none;">LIVE FEEDBACK STREAM</div>
                 </div>
-                <div class="section-title">Global Sync Level</div>
-                        <p style="font-size: 12px; margin-bottom: 10px; opacity: 0.5;">MASTER BROADCAST GAIN</p>
-                        <input type="range" style="width: 100%;" value="80" oninput="setVolume(this.value)">
+            </section>
+
+            <!-- LIBRARY -->
+            <section class="glass-card library-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
+                    <div class="section-title" style="margin: 0;">DISK LIBRARY</div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="file" id="trackUpload" multiple accept="audio/mpeg" style="display:none;" onchange="handleFileUpload(this)">
+                        <button class="glass-button" id="uploadBtn" style="padding: 6px 15px; font-size: 10px;" onclick="document.getElementById('trackUpload').click()">\u2b06\ufe0f UPLOAD</button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="library-panel glass-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <div class="section-title" style="margin: 0;">Permanent Drive Library</div>
-                <div style="display: flex; gap: 8px;">
-                    <input type="file" id="trackUpload" multiple accept="audio/mpeg" style="display:none;" onchange="handleFileUpload(this)">
-                    <button class="glass-button" id="uploadBtn" style="padding: 5px 12px; font-size: 10px; background: rgba(0,242,254,0.1); border-color: rgba(0,242,254,0.3);" onclick="document.getElementById('trackUpload').click()">\u2b06\ufe0f UPLOAD</button>
-                    <button class="glass-button" style="padding: 5px 12px; font-size: 10px;" onclick="savePlaylist()">SAVE SET</button>
+                <div id="libraryList" class="library-scroll">
+                    <p style="opacity: 0.3; text-align: center; padding: 40px;">Scanning disk...</p>
                 </div>
-            </div>
-            <div id="libraryList">
-                <p style="opacity: 0.3; text-align: center; padding: 40px;">Scanning disk...</p>
-            </div>
-        </div>
+            </section>
+        </aside>
     </div>
 
     <!-- Upload Modal -->

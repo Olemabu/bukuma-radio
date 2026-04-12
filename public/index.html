@@ -81,9 +81,7 @@
         const playBtn = document.getElementById('playBtn');
         const playIcon = document.getElementById('playIcon');
         let isPlaying = false;
-        let ws = null;
-        let analyzer = null;
-        let audioCtx = null;
+        let lastServerTime = 0;
 
         function initWS() {
             const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -92,6 +90,7 @@
             ws.onmessage = e => {
                 const data = JSON.parse(e.data);
                 if (data.type === 'status') {
+                    if (data.timestamp) lastServerTime = data.timestamp;
                     updateUI(data);
                 }
             };
@@ -140,7 +139,10 @@
             const dataArray = new Uint8Array(bufferLength);
 
             function sendFeedback() {
-                if (!isPlaying || !ws || ws.readyState !== WebSocket.OPEN) return requestAnimationFrame(sendFeedback);
+                if (!isPlaying || !ws || ws.readyState !== WebSocket.OPEN) {
+                    return setTimeout(sendFeedback, 1000); // Check again in 1s
+                }
+                
                 analyzer.getByteFrequencyData(dataArray);
                 let sum = 0;
                 for(let i = 0; i < bufferLength; i++) sum += dataArray[i];
@@ -149,9 +151,10 @@
                 ws.send(JSON.stringify({
                     type: 'feedback',
                     vu: avg / 255 * 100,
-                    timestamp: Date.now()
+                    refTime: lastServerTime // Send back last known server time for RTT calc
                 }));
-                requestAnimationFrame(sendFeedback);
+                
+                setTimeout(sendFeedback, 200); // Throttled to 5 times per second
             }
             sendFeedback();
         }
