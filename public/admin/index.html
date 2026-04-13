@@ -1,601 +1,506 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Station Master Command Deck — Agum Bukuma Radio</title>
-    <link rel="stylesheet" href="/css/glass.css?v=2.1">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
-    <script>
-        // Force unregister Service Workers to break through cache
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
-    </script>
-    <style>
-        body { font-family: 'Outfit', sans-serif; background: #020617; overflow: auto; min-width: 1200px; margin: 0; color: #fff; }
-        
-        /* Expert Grid System */
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            grid-template-rows: auto 1fr;
-            gap: 24px;
-            padding: 30px;
-            max-width: 1600px;
-            margin: 0 auto;
-            height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .header-bar {
-            grid-column: span 12;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-        }
-
-        .main-deck {
-            grid-column: span 8;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .side-deck {
-            grid-column: span 4;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-            max-height: calc(100vh - 150px);
-        }
-
-        /* Component Styles */
-        .section-title { font-size: 10px; font-weight: 900; letter-spacing: 2px; opacity: 0.4; margin-bottom: 15px; text-transform: uppercase; }
-        
-        .monitor-card { position: relative; padding: 40px; }
-        .monitor-status { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
-        
-        .tactical-console {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 24px;
-        }
-
-        .transport-btn { width: 70px; height: 70px; border-radius: 18px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
-        
-        .mixer-panel { padding: 25px; }
-        
-        .mic-switch-container { display: flex; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 40px; gap: 5px; width: fit-content; border: 1px solid rgba(255,255,255,0.05); }
-        .mic-mode { padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 11px; font-weight: 800; transition: all 0.3s; opacity: 0.4; }
-        .mic-mode.active { background: var(--glass-accent); color: #000; opacity: 1; box-shadow: 0 0 20px rgba(0,242,254,0.4); }
-        
-        .vu-strip { height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; overflow: hidden; position: relative; }
-        .vu-fill { height: 100%; width: 0%; background: linear-gradient(to right, #00f2fe, #ff3d00); transition: width 0.1s linear; }
-
-        .library-panel { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-        .library-scroll { flex: 1; overflow-y: auto; padding-right: 10px; }
-        
-        .track-item { padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; background: rgba(255,255,255,0.02); }
-        .track-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
-        .track-item.playing { border-color: var(--glass-accent); background: rgba(0,242,254,0.1); }
-
-        .metric-pill { background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px; }
-
-        /* Scrollbar Redesign */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .glass-modal { width: 400px; padding: 40px; text-align: center; border-radius: 30px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Station Master Command Deck — Agum Bukuma Radio</title>
+  <link rel="stylesheet" href="/css/glass.css?v=2.1">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (let r of registrations) r.unregister();
+      });
+    }
+  </script>
+  <style>
+    body { font-family: 'Outfit', sans-serif; background: #020617; overflow: auto; min-width: 1200px; margin: 0; color: #fff; }
+    .dashboard-container { display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: auto 1fr; gap: 24px; padding: 30px; max-width: 1600px; margin: 0 auto; height: 100vh; box-sizing: border-box; }
+    .header-bar { grid-column: span 12; display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; }
+    .main-deck { grid-column: span 8; display: flex; flex-direction: column; gap: 24px; }
+    .side-deck { grid-column: span 4; display: flex; flex-direction: column; gap: 24px; max-height: calc(100vh - 150px); }
+    .section-title { font-size: 10px; font-weight: 900; letter-spacing: 2px; opacity: 0.4; margin-bottom: 15px; text-transform: uppercase; }
+    .monitor-card { position: relative; padding: 40px; }
+    .monitor-status { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+    .tactical-console { display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; }
+    .transport-btn { width: 70px; height: 70px; border-radius: 18px; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+    .mixer-panel { padding: 25px; }
+    .mic-switch-container { display: flex; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 40px; gap: 5px; width: fit-content; border: 1px solid rgba(255,255,255,0.05); }
+    .mic-mode { padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 11px; font-weight: 800; transition: all 0.3s; opacity: 0.4; }
+    .mic-mode.active { background: var(--glass-accent); color: #000; opacity: 1; box-shadow: 0 0 20px rgba(0,242,254,0.4); }
+    .vu-strip { height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; overflow: hidden; position: relative; }
+    .vu-fill { height: 100%; width: 0%; background: linear-gradient(to right, #00f2fe, #ff3d00); transition: width 0.1s linear; }
+    .library-panel { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .library-scroll { flex: 1; overflow-y: auto; padding-right: 10px; }
+    .track-item { padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.03); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; background: rgba(255,255,255,0.02); }
+    .track-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1); }
+    .track-item.playing { border-color: var(--glass-accent); background: rgba(0,242,254,0.1); }
+    .metric-pill { background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; } ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .glass-modal { width: 400px; padding: 40px; text-align: center; border-radius: 30px; }
+    .mic-error { display: none; margin-top: 8px; padding: 6px 12px; background: rgba(255,61,0,0.2); border: 1px solid rgba(255,61,0,0.4); border-radius: 8px; font-size: 10px; color: #ff3d00; font-weight: 700; }
+    .feedback-label { font-size: 10px; font-family: monospace; opacity: 0.5; margin-top: 4px; display: flex; justify-content: space-between; }
+  </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- GLOBAL HEADER -->
-        <header class="header-bar">
-            <div style="display: flex; align-items: center; gap: 20px;">
-                <div id="airTag" class="on-air-tag" style="padding: 6px 15px; font-size: 10px; border-radius: 30px;">OFFLINE</div>
-                <h1 style="margin: 0; font-size: 1.5rem; font-weight: 900; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px;">BUKUMA STATION MASTER</h1>
-            </div>
-            <div style="display: flex; gap: 30px; align-items: center;">
-                <div class="metric-pill">
-                    <span style="font-size: 10px; opacity: 0.5;">LATENCY</span>
-                    <span id="latencyVal" style="font-family: monospace; font-weight: 800; color: var(--glass-accent);">0ms</span>
-                </div>
-                <div id="currentTime" style="font-family: monospace; font-size: 1.1rem; opacity: 0.5;">00:00:00</div>
-            </div>
-        </header>
+<div class="dashboard-container">
 
-        <!-- MAIN CONSOLE -->
-        <main class="main-deck">
-            <!-- PRIMARY MONITOR -->
-            <section class="glass-card monitor-card">
-                <div class="section-title">ENGINE TELEMETRY / NOW BROADCASTING</div>
-                <div class="monitor-status">
-                    <div style="flex: 1;">
-                        <div id="trackTitle" style="font-size: 3.5rem; font-weight: 900; line-height: 1; letter-spacing: -2px;">STATION IDLE</div>
-                        <div id="trackArtist" style="font-size: 1.4rem; opacity: 0.5; margin-top: 10px; font-weight: 300;">AWAITING SIGNAL...</div>
-                    </div>
-                    <div style="text-align: right; min-width: 150px;">
-                        <div class="section-title" style="margin-bottom: 5px;">MASTER LOAD</div>
-                        <div class="vu-strip" style="height: 40px; width: 12px; display: inline-block; vertical-align: bottom;">
-                            <div id="masterVU" class="vu-fill" style="width: 100%; height: 0%; transition: height 0.1s linear; background: linear-gradient(to top, #00f2fe, #ff3d00);"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Progress / Seeker -->
-                <div style="margin-top: 30px;">
-                    <div style="position: relative; height: 30px; display: flex; align-items: center;">
-                        <div style="position:absolute; left:0; right:0; height:8px; background:rgba(0,0,0,0.3); border-radius:4px;"></div>
-                        <div id="progFill" style="position:absolute; left:0; height:8px; width:0%; background:var(--glass-accent); box-shadow:0 0 20px rgba(0,242,254,0.4); border-radius:4px; transition:width 0.25s linear;"></div>
-                        <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1"
-                            style="position:absolute; left:0; right:0; width:100%; height:100%; opacity:0; cursor:pointer;"
-                            oninput="onSeekInput(this.value)" onmousedown="seekDragging=true" onmouseup="onSeekCommit(this.value)">
-                    </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; font-family: monospace; opacity: 0.4; margin-top: 8px;">
-                        <span id="progStart">0:00</span>
-                        <span id="progEnd">0:00</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TACTICAL CONSOLE -->
-            <div class="tactical-console">
-                <!-- TRANSPORT -->
-                <section class="glass-card" style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-                    <button class="transport-btn glass-button" onclick="playStation()" id="playBtn">▶</button>
-                    <button class="transport-btn glass-button" onclick="stopStation()" style="background: rgba(255, 61, 0, 0.4);">⬛</button>
-                    <button class="transport-btn glass-button" onclick="skipTrack()" style="background: rgba(255,255,255,0.05);">⏭</button>
-                </section>
-
-                <!-- MIXER -->
-                <section class="glass-card mixer-panel">
-                    <div class="section-title">PRO MIXER (MIC/MASTER)</div>
-                    <div style="display: flex; gap: 30px; align-items: flex-start;">
-                        <div style="flex: 1;">
-                            <div class="mic-switch-container">
-                                <div class="mic-mode active" id="modeOFF" onclick="setMic('OFF')">OFF</div>
-                                <div class="mic-mode" id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
-                                <div class="mic-mode" id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
-                            </div>
-                            <div style="margin-top: 20px;">
-                                <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 8px;">
-                                    <span style="opacity: 0.5;">MIC INPUT</span>
-                                    <span id="duckVal" style="color: var(--glass-accent);">30%</span>
-                                </div>
-                                <div style="height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; margin-bottom: 10px;">
-                                    <div id="micVU" style="height: 100%; width: 0%; background: #2ed573; transition: width 0.05s linear;"></div>
-                                </div>
-                                <input type="range" min="0" max="100" value="30" style="width: 100%;" oninput="setDuckLevel(this.value)" id="duckSlider">
-                            </div>
-                        </div>
-                        <div style="width: 100px;">
-                            <div class="section-title" style="margin-bottom: 10px;">VOLUME</div>
-                            <input type="range" style="width: 100px; transform: rotate(-90deg) translate(-40px, -45px); margin: 0;" value="80" oninput="setVolume(this.value)">
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </main>
-
-        <!-- SIDE DECK -->
-        <aside class="side-deck">
-            <!-- REMOTE FEEDBACK -->
-            <section class="glass-card" style="padding: 24px;">
-                <div class="section-title">LISTENER EXPERIENCE / REMOTE VU</div>
-                <div style="height: 40px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);">
-                    <div id="remoteVU" style="height: 100%; width: 0%; background: linear-gradient(to right, #2ed573, #7bed9f); transition: width 0.1s linear;"></div>
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; opacity: 0.5; pointer-events: none;">LIVE FEEDBACK STREAM</div>
-                </div>
-            </section>
-
-            <!-- LIBRARY -->
-            <section class="glass-card library-panel">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px;">
-                    <div class="section-title" style="margin: 0;">DISK LIBRARY</div>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="file" id="trackUpload" multiple accept="audio/mpeg" style="display:none;" onchange="handleFileUpload(this)">
-                        <button class="glass-button" id="uploadBtn" style="padding: 6px 15px; font-size: 10px;" onclick="document.getElementById('trackUpload').click()">\u2b06\ufe0f UPLOAD</button>
-                    </div>
-                </div>
-                <div id="libraryList" class="library-scroll">
-                    <p style="opacity: 0.3; text-align: center; padding: 40px;">Scanning disk...</p>
-                </div>
-            </section>
-        </aside>
+  <!-- GLOBAL HEADER -->
+  <header class="header-bar">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <div id="airTag" class="on-air-tag" style="padding:6px 15px;font-size:10px;border-radius:30px;">OFFLINE</div>
+      <h1 style="margin:0;font-size:1.5rem;font-weight:900;background:linear-gradient(to right,#00f2fe,#4facfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px;">BUKUMA STATION MASTER</h1>
     </div>
+    <div style="display:flex;gap:30px;align-items:center;">
+      <div class="metric-pill">
+        <span style="font-size:10px;opacity:0.5;">LATENCY</span>
+        <span id="latencyVal" style="font-family:monospace;font-weight:800;color:var(--glass-accent);">--</span>
+      </div>
+      <div id="currentTime" style="font-family:monospace;font-size:1.1rem;opacity:0.5;">00:00:00</div>
+    </div>
+  </header>
 
-    <!-- Upload Modal -->
-    <div id="uploadModal" class="modal-overlay">
-        <div class="glass-card glass-modal">
-            <h2 id="modalTitle" style="margin-top: 0; color: var(--glass-accent);">UPLOADING...</h2>
-            <p id="modalMsg" style="opacity: 0.7; font-size: 14px;">Please wait while we sync your tracks</p>
-            <div id="modalProgress" class="progress-container">
-                <div id="modalProgressFill" class="progress-fill"></div>
-            </div>
-            <div id="modalSub" style="font-size: 12px; font-family: monospace; opacity: 0.5;">0%</div>
+  <!-- MAIN CONSOLE -->
+  <main class="main-deck">
+
+    <!-- PRIMARY MONITOR -->
+    <section class="glass-card monitor-card">
+      <div class="section-title">ENGINE TELEMETRY / NOW BROADCASTING</div>
+      <div class="monitor-status">
+        <div style="flex:1;">
+          <div id="trackTitle" style="font-size:3.5rem;font-weight:900;line-height:1;letter-spacing:-2px;">STATION IDLE</div>
+          <div id="trackArtist" style="font-size:1.4rem;opacity:0.5;margin-top:10px;font-weight:300;">AWAITING SIGNAL...</div>
         </div>
+        <div style="text-align:right;min-width:150px;">
+          <div class="section-title" style="margin-bottom:5px;">MASTER LOAD</div>
+          <div class="vu-strip" style="height:40px;width:12px;display:inline-block;vertical-align:bottom;">
+            <div id="masterVU" class="vu-fill" style="width:100%;height:0%;transition:height 0.1s linear;background:linear-gradient(to top,#00f2fe,#ff3d00);"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:30px;">
+        <div style="position:relative;height:30px;display:flex;align-items:center;">
+          <div style="position:absolute;left:0;right:0;height:8px;background:rgba(0,0,0,0.3);border-radius:4px;"></div>
+          <div id="progFill" style="position:absolute;left:0;height:8px;width:0%;background:var(--glass-accent);box-shadow:0 0 20px rgba(0,242,254,0.4);border-radius:4px;transition:width 0.25s linear;"></div>
+          <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1" style="position:absolute;left:0;right:0;width:100%;height:100%;opacity:0;cursor:pointer;" oninput="onSeekInput(this.value)" onmousedown="seekDragging=true" onmouseup="onSeekCommit(this.value)">
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-family:monospace;opacity:0.4;margin-top:8px;">
+          <span id="progStart">0:00</span><span id="progEnd">0:00</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- TACTICAL CONSOLE -->
+    <div class="tactical-console">
+      <section class="glass-card" style="display:flex;align-items:center;justify-content:center;gap:20px;">
+        <button class="transport-btn glass-button" onclick="playStation()" id="playBtn">&#9654;</button>
+        <button class="transport-btn glass-button" onclick="stopStation()" style="background:rgba(255,61,0,0.4);">&#11035;</button>
+        <button class="transport-btn glass-button" onclick="skipTrack()" style="background:rgba(255,255,255,0.05);">&#9197;</button>
+      </section>
+
+      <section class="glass-card mixer-panel">
+        <div class="section-title">PRO MIXER (MIC/MASTER)</div>
+        <div style="display:flex;gap:30px;align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="mic-switch-container">
+              <div class="mic-mode active" id="modeOFF"  onclick="setMic('OFF')">OFF</div>
+              <div class="mic-mode"        id="modeDUCK" onclick="setMic('DUCK')">DUCK</div>
+              <div class="mic-mode"        id="modeSOLO" onclick="setMic('SOLO')">SOLO</div>
+            </div>
+            <div id="micError" class="mic-error">&#9888; Mic access denied. Check browser permissions.</div>
+            <div style="margin-top:20px;">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:8px;">
+                <span style="opacity:0.5;">MIC INPUT</span>
+                <span id="micVUPct" style="color:var(--glass-accent);">0%</span>
+              </div>
+              <div style="height:6px;background:rgba(0,0,0,0.3);border-radius:3px;overflow:hidden;margin-bottom:10px;">
+                <div id="micVU" style="height:100%;width:0%;background:#2ed573;transition:width 0.05s linear;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;">
+                <span style="opacity:0.5;">DUCK FLOOR</span>
+                <span id="duckVal" style="color:var(--glass-accent);">30%</span>
+              </div>
+              <input type="range" min="0" max="100" value="30" style="width:100%;" oninput="setDuckLevel(this.value)" id="duckSlider">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:10px;margin-bottom:4px;">
+                <span style="opacity:0.5;">MIC GATE</span>
+                <span id="gateVal" style="color:var(--glass-accent);">5%</span>
+              </div>
+              <input type="range" min="1" max="30" value="5" style="width:100%;" oninput="setGateLevel(this.value)" id="gateSlider">
+            </div>
+          </div>
+          <div style="width:100px;">
+            <div class="section-title" style="margin-bottom:10px;">VOLUME</div>
+            <input type="range" style="width:100px;transform:rotate(-90deg) translate(-40px,-45px);margin:0;" value="80" oninput="setVolume(this.value)">
+          </div>
+        </div>
+      </section>
     </div>
+  </main>
 
-    <script>
-        let state = { micMode: 'OFF', lastMicMode: 'DUCK' };
+  <!-- SIDE DECK -->
+  <aside class="side-deck">
+    <section class="glass-card" style="padding:24px;">
+      <div class="section-title">LISTENER EXPERIENCE / REMOTE VU</div>
+      <div style="height:40px;background:rgba(0,0,0,0.3);border-radius:10px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,0.05);">
+        <div id="remoteVU" style="height:100%;width:0%;background:linear-gradient(to right,#2ed573,#7bed9f);transition:width 0.15s linear;"></div>
+        <div style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;opacity:0.5;pointer-events:none;">LIVE FEEDBACK STREAM</div>
+      </div>
+      <div class="feedback-label">
+        <span>VU: <span id="remoteVUPct">0%</span></span>
+        <span>Latency: <span id="latencyDetail">--ms</span></span>
+        <span id="feedbackAge" style="color:#ff3d00;display:none;">STALE</span>
+      </div>
+    </section>
 
-        function updateTime() {
-            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+    <section class="glass-card library-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding:0 5px;">
+        <div class="section-title" style="margin:0;">DISK LIBRARY</div>
+        <div style="display:flex;gap:10px;">
+          <input type="file" id="trackUpload" multiple accept="audio/mpeg" style="display:none;" onchange="handleFileUpload(this)">
+          <button class="glass-button" style="padding:6px 15px;font-size:10px;" onclick="document.getElementById('trackUpload').click()">&#11014;&#65039; UPLOAD</button>
+        </div>
+      </div>
+      <div id="libraryList" class="library-scroll">
+        <p style="opacity:0.3;text-align:center;padding:40px;">Scanning disk...</p>
+      </div>
+    </section>
+  </aside>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="modal-overlay">
+  <div class="glass-card glass-modal">
+    <h2 id="modalTitle" style="margin-top:0;color:var(--glass-accent);">UPLOADING...</h2>
+    <p id="modalMsg" style="opacity:0.7;font-size:14px;">Please wait while we sync your tracks</p>
+    <div id="modalProgress" class="progress-container"><div id="modalProgressFill" class="progress-fill"></div></div>
+    <div id="modalSub" style="font-size:12px;font-family:monospace;opacity:0.5;">0%</div>
+  </div>
+</div>
+
+<!-- Mic AudioWorklet processor (inline as blob URL at runtime) -->
+<script id="workletSrc" type="text/plain">
+class MicProcessor extends AudioWorkletProcessor {
+  constructor() { super(); this._buf = []; this._bufLen = 0; this._chunkSize = 4096; }
+  process(inputs) {
+    const ch = inputs[0] && inputs[0][0];
+    if (!ch) return true;
+    for (let i = 0; i < ch.length; i++) this._buf.push(ch[i]);
+    this._bufLen += ch.length;
+    while (this._bufLen >= this._chunkSize) {
+      const slice = this._buf.splice(0, this._chunkSize);
+      this._bufLen -= this._chunkSize;
+      let sumSq = 0;
+      const pcm = new Int16Array(this._chunkSize);
+      for (let i = 0; i < this._chunkSize; i++) {
+        const s = Math.max(-1, Math.min(1, slice[i]));
+        pcm[i] = s * 0x7FFF;
+        sumSq += s * s;
+      }
+      const rms = Math.sqrt(sumSq / this._chunkSize);
+      this.port.postMessage({ pcm: pcm.buffer, rms }, [pcm.buffer]);
+    }
+    return true;
+  }
+}
+registerProcessor('mic-processor', MicProcessor);
+</script>
+
+<script>
+'use strict';
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const state = { micMode: 'OFF', lastMicMode: 'DUCK' };
+let seekDragging = false, seekCurrentDuration = 0;
+let lastLibraryJSON = '', lastCurrentID = '';
+
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+setInterval(() => { document.getElementById('currentTime').textContent = new Date().toLocaleTimeString(); }, 1000);
+function formatTime(s) { return Math.floor(s/60) + ':' + Math.floor(s%60).toString().padStart(2,'0'); }
+
+// ─── FEEDBACK STALENESS WATCHDOG ─────────────────────────────────────────────
+let _lastFeedbackAt = 0;
+setInterval(() => {
+  const staleEl = document.getElementById('feedbackAge');
+  if (staleEl) staleEl.style.display = (_lastFeedbackAt > 0 && Date.now() - _lastFeedbackAt > 5000) ? '' : 'none';
+}, 1000);
+
+// ─── STATUS WEBSOCKET (shared — also carries mic PCM) ────────────────────────
+let statusWs = null;
+
+function initStatusWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  statusWs = new WebSocket(proto + '://' + location.host + '/ws');
+
+  statusWs.onmessage = e => {
+    let data; try { data = JSON.parse(e.data); } catch { return; }
+
+    if (data.type === 'status') {
+      const airTag = document.getElementById('airTag');
+      airTag.textContent = data.isPlaying ? 'ON AIR' : 'OFFLINE';
+      airTag.style.background = data.isPlaying ? 'rgba(0,242,254,0.2)' : 'rgba(255,61,0,0.2)';
+      airTag.style.color = data.isPlaying ? 'var(--glass-accent)' : '#ff3d00';
+      document.getElementById('trackTitle').textContent  = data.currentTrack?.title  || 'STATION IDLE';
+      document.getElementById('trackArtist').textContent = data.currentTrack?.artist || 'AWAITING SIGNAL...';
+
+      const playBtn = document.getElementById('playBtn');
+      if (data.isPlaying) {
+        playBtn.innerHTML = '&#9646;&#9646;'; playBtn.onclick = stopStation;
+        playBtn.style.background = 'var(--glass-accent)'; playBtn.style.color = '#000';
+      } else {
+        playBtn.innerHTML = '&#9654;'; playBtn.onclick = playStation;
+        playBtn.style.background = ''; playBtn.style.color = '';
+      }
+
+      if (data.duration > 0) {
+        const perc = (data.elapsedTime / data.duration) * 100;
+        if (!seekDragging) { document.getElementById('progFill').style.width = perc + '%'; document.getElementById('seekBar').value = perc; }
+        document.getElementById('progStart').textContent = formatTime(data.elapsedTime);
+        document.getElementById('progEnd').textContent   = formatTime(data.duration);
+        seekCurrentDuration = data.duration;
+      }
+
+      // ── FEEDBACK VU + LATENCY (fixed) ────────────────────────────────────
+      if (data.listenerStats) {
+        const vuPct    = Math.round(Math.min(100, Math.max(0, data.listenerStats.vu || 0)));
+        const latencyMs = Math.round(data.listenerStats.latency || 0);
+
+        document.getElementById('remoteVU').style.width = vuPct + '%';
+        document.getElementById('remoteVUPct').textContent = vuPct + '%';
+
+        const latEl     = document.getElementById('latencyVal');
+        const latDetail = document.getElementById('latencyDetail');
+        if (latencyMs > 0) {
+          const txt = latencyMs + 'ms';
+          latEl.textContent = txt; latDetail.textContent = txt;
+          latEl.style.color = latencyMs < 300 ? 'var(--glass-accent)' : latencyMs < 800 ? '#ffa502' : '#ff3d00';
+          _lastFeedbackAt = Date.now();
         }
-        setInterval(updateTime, 1000);
+      }
 
-        initStatusWS();
+      renderLibrary(data.library, data.currentTrack);
+    }
 
-        function initStatusWS() {
-            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-            const statusWs = new WebSocket(`${proto}://${location.host}/ws`);
-            
-            statusWs.onmessage = e => {
-                const data = JSON.parse(e.data);
-                if (data.type === 'status') {
-                    // Update Station Info
-                    const airTag = document.getElementById('airTag');
-                    airTag.textContent = data.isPlaying ? 'ON AIR' : 'OFFLINE';
-                    airTag.style.background = data.isPlaying ? 'rgba(0, 242, 254, 0.2)' : 'rgba(255, 61, 0, 0.2)';
-                    airTag.style.color = data.isPlaying ? 'var(--glass-accent)' : '#ff3d00';
-                    
-                    document.getElementById('trackTitle').textContent = data.currentTrack?.title || 'STATION IDLE';
-                    document.getElementById('trackArtist').textContent = data.currentTrack?.artist || 'AWAITING SIGNAL...';
-                    
-                    // Master Button Logic
-                    const playBtn = document.getElementById('playBtn');
-                    if (data.isPlaying) {
-                        playBtn.innerHTML = '⏸';
-                        playBtn.onclick = stopStation;
-                        playBtn.style.background = 'var(--glass-accent)';
-                        playBtn.style.color = '#000';
-                    } else {
-                        playBtn.innerHTML = '▶';
-                        playBtn.onclick = playStation;
-                        playBtn.style.background = '';
-                        playBtn.style.color = '';
-                    }
+    if (data.type === 'vu') {
+      const v = document.getElementById('masterVU');
+      if (v) v.style.height = data.vuLevel + '%';
+    }
+  };
 
-                    // Progress Bar / Seeker Logic
-                if (data.duration > 0) {
-                    const perc = (data.elapsedTime / data.duration) * 100;
-                    if (!seekDragging) {
-                        document.getElementById('progFill').style.width = perc + '%';
-                        document.getElementById('seekBar').value = perc;
-                    }
-                    document.getElementById('progStart').textContent = formatTime(data.elapsedTime);
-                    document.getElementById('progEnd').textContent = formatTime(data.duration);
-                    seekCurrentDuration = data.duration;
-                }
-                        // Update Remote Status
-                    if (data.listenerStats) {
-                        document.getElementById('latencyVal').textContent = Math.round(data.listenerStats.latency || 0) + 'ms';
-                        document.getElementById('remoteVU').style.width = (data.listenerStats.vu || 0) + '%';
-                    }
+  statusWs.onclose = () => { statusWs = null; setTimeout(initStatusWS, 2000); };
+}
+initStatusWS();
 
-                    // Render Library if it has changed
-                    renderLibrary(data.library, data.currentTrack);
-                }
-                if (data.type === 'vu') {
-                    const vuBar = document.getElementById('masterVU');
-                    if (vuBar) vuBar.style.width = data.vuLevel + '%';
-                }
-            };
-            
-            function formatTime(s) {
-                const m = Math.floor(s / 60);
-                const sec = Math.floor(s % 60);
-                return `${m}:${sec.toString().padStart(2, '0')}`;
-            }
-            
-            statusWs.onclose = () => setTimeout(initStatusWS, 2000);
+// ─── SEEK ─────────────────────────────────────────────────────────────────────
+function onSeekInput(pct) {
+  document.getElementById('progFill').style.width = pct + '%';
+  if (seekCurrentDuration > 0) document.getElementById('progStart').textContent = formatTime(seekCurrentDuration * pct / 100);
+}
+function onSeekCommit(pct) {
+  seekDragging = false;
+  if (seekCurrentDuration <= 0) return;
+  fetch('/api/seek', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ seconds: seekCurrentDuration * pct / 100 }) }).catch(console.error);
+}
+
+// ─── KEYBOARD SHORTCUT ────────────────────────────────────────────────────────
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && e.target === document.body) {
+    e.preventDefault();
+    setMic(state.micMode === 'OFF' ? state.lastMicMode : 'OFF');
+  }
+});
+
+// ─── MIC CONTROLLER ───────────────────────────────────────────────────────────
+let micAudio = null;
+
+function setMic(mode) {
+  if (mode !== 'OFF') state.lastMicMode = mode;
+  state.micMode = mode;
+  document.querySelectorAll('.mic-mode').forEach(m => m.classList.remove('active'));
+  document.getElementById('mode' + mode).classList.add('active');
+  fetch('/api/mic', { method:'POST', body: JSON.stringify({ mode }), headers:{'Content-Type':'application/json'} });
+  if (mode !== 'OFF') startMic(); else stopMic();
+}
+
+async function startMic() {
+  if (micAudio) stopMic();
+  document.getElementById('micError').style.display = 'none';
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }
+    });
+  } catch(err) {
+    console.error('[MIC] getUserMedia failed:', err);
+    document.getElementById('micError').style.display = 'block';
+    state.micMode = 'OFF';
+    document.querySelectorAll('.mic-mode').forEach(m => m.classList.remove('active'));
+    document.getElementById('modeOFF').classList.add('active');
+    fetch('/api/mic', { method:'POST', body: JSON.stringify({ mode:'OFF' }), headers:{'Content-Type':'application/json'} });
+    return;
+  }
+
+  const audioCtx = new AudioContext();
+  const workletCode = document.getElementById('workletSrc').textContent;
+  const blob = new Blob([workletCode], { type: 'application/javascript' });
+  const workletURL = URL.createObjectURL(blob);
+  try { await audioCtx.audioWorklet.addModule(workletURL); } finally { URL.revokeObjectURL(workletURL); }
+
+  const source = audioCtx.createMediaStreamSource(stream);
+  const workletNode = new AudioWorkletNode(audioCtx, 'mic-processor');
+  let feedbackCounter = 0;
+
+  workletNode.port.onmessage = evt => {
+    const { pcm, rms } = evt.data;
+    const vuPct = Math.min(100, Math.round(rms * 400));
+    const micVUBar = document.getElementById('micVU');
+    const micVUPct = document.getElementById('micVUPct');
+    if (micVUBar) micVUBar.style.width = vuPct + '%';
+    if (micVUPct) micVUPct.textContent = vuPct + '%';
+    if (statusWs && statusWs.readyState === WebSocket.OPEN) {
+      statusWs.send(pcm);
+      feedbackCounter++;
+      if (feedbackCounter % 20 === 0)
+        statusWs.send(JSON.stringify({ type: 'feedback', vu: vuPct, timestamp: Date.now() }));
+    }
+  };
+
+  source.connect(workletNode);
+  // Do NOT connect to destination — prevents echo
+  micAudio = { stream, audioCtx, workletNode, source };
+}
+
+function stopMic() {
+  if (!micAudio) return;
+  try {
+    micAudio.source.disconnect();
+    micAudio.workletNode.disconnect();
+    micAudio.workletNode.port.close();
+    micAudio.stream.getTracks().forEach(t => t.stop());
+    micAudio.audioCtx.close();
+  } catch(e) { console.warn('[MIC] stopMic error:', e); }
+  micAudio = null;
+  const micVUBar = document.getElementById('micVU');
+  const micVUPct = document.getElementById('micVUPct');
+  if (micVUBar) micVUBar.style.width = '0%';
+  if (micVUPct) micVUPct.textContent = '0%';
+}
+
+// ─── TRANSPORT ────────────────────────────────────────────────────────────────
+function playStation() { fetch('/api/play',  { method:'POST' }); }
+function stopStation() { fetch('/api/stop',  { method:'POST' }); }
+function skipTrack()   { fetch('/api/skip',  { method:'POST' }); }
+function setVolume(v)  { fetch('/api/volume',   { method:'POST', body: JSON.stringify({ volume: v }),              headers:{'Content-Type':'application/json'} }); }
+function setDuckLevel(v) {
+  document.getElementById('duckVal').textContent = v + '%';
+  fetch('/api/mic-duck', { method:'POST', body: JSON.stringify({ duckLevel: parseInt(v) }), headers:{'Content-Type':'application/json'} });
+}
+function setGateLevel(v) {
+  document.getElementById('gateVal').textContent = v + '%';
+  fetch('/api/mic-gate', { method:'POST', body: JSON.stringify({ gate: parseFloat(v) / 100 }), headers:{'Content-Type':'application/json'} });
+}
+function playNow(id) {
+  const btn = document.querySelector('#ti-' + id + ' .play-btn');
+  const oldText = btn.innerHTML;
+  btn.innerHTML = 'WAIT...'; btn.disabled = true;
+  fetch('/api/play-id', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id }) })
+    .then(() => setTimeout(() => { btn.innerHTML = oldText; btn.disabled = false; }, 1000))
+    .catch(() => { alert('Connection Error'); btn.innerHTML = oldText; btn.disabled = false; });
+}
+
+// ─── LIBRARY ──────────────────────────────────────────────────────────────────
+function renderLibrary(tracks, current) {
+  const list = document.getElementById('libraryList');
+  if (!tracks || tracks.length === 0) return;
+  const currentID = current?.id || '';
+  const newJSON = JSON.stringify(tracks.map(t => ({ id:t.id, title:t.title, artist:t.artist })));
+  if (newJSON !== lastLibraryJSON) {
+    lastLibraryJSON = newJSON;
+    const existingIds = new Set([...list.querySelectorAll('.track-item')].map(el => el.id.replace('ti-','')));
+    const newIds = new Set(tracks.map(t => t.id));
+    existingIds.forEach(id => { if (!newIds.has(id)) { const el = document.getElementById('ti-'+id); if (el) el.remove(); } });
+    tracks.forEach((t, i) => {
+      let item = document.getElementById('ti-' + t.id);
+      if (!item) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = buildTrackHTML(t, currentID);
+        item = tmp.firstElementChild;
+        const sib = list.children[i];
+        if (sib) list.insertBefore(item, sib); else list.appendChild(item);
+      } else {
+        const te = item.querySelector('.track-title'),  ae = item.querySelector('.track-artist');
+        if (te && te.textContent !== t.title) te.textContent = t.title;
+        if (ae && ae.textContent !== t.artist) ae.textContent = t.artist;
+        const rf = item.querySelector('.rename-form');
+        if (rf && rf.style.display !== 'block') {
+          const ti = item.querySelector('.rename-title-input'), ai = item.querySelector('.rename-artist-input');
+          if (ti) ti.value = t.title; if (ai) ai.value = t.artist;
         }
+      }
+    });
+  }
+  if (currentID !== lastCurrentID) {
+    lastCurrentID = currentID;
+    list.querySelectorAll('.track-item').forEach(el => el.classList.toggle('playing', el.id === 'ti-' + currentID));
+  }
+}
+function buildTrackHTML(t, currentID) {
+  const playing = currentID === t.id ? 'playing' : '';
+  const te = t.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const ae = t.artist.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return '<div class="track-item '+playing+'" id="ti-'+t.id+'">'
+    +'<div style="min-width:0;flex:1;">'
+    +'<div class="track-title" style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+te+'</div>'
+    +'<div class="track-artist" style="font-size:10px;opacity:0.5;">'+ae+'</div>'
+    +'<div class="rename-form" id="rf-'+t.id+'" style="display:none;margin-top:6px;">'
+    +'<input type="text" class="rename-title-input" id="rt-'+t.id+'" value="'+te+'" placeholder="Track title" style="width:60%;background:rgba(0,0,0,0.4);border:1px solid rgba(0,242,254,0.3);color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-family:inherit;">'
+    +'<input type="text" class="rename-artist-input" id="ra-'+t.id+'" value="'+ae+'" placeholder="Artist" style="width:33%;background:rgba(0,0,0,0.4);border:1px solid rgba(0,242,254,0.3);color:#fff;padding:4px 8px;border-radius:6px;font-size:11px;font-family:inherit;margin-left:4px;">'
+    +'<div style="margin-top:5px;display:flex;gap:6px;">'
+    +'<button class="glass-button" style="padding:3px 10px;font-size:9px;background:rgba(0,242,254,0.2);" onclick="saveRename(''+t.id+'')">SAVE</button>'
+    +'<button class="glass-button" style="padding:3px 10px;font-size:9px;" onclick="cancelRename(''+t.id+'')">CANCEL</button>'
+    +'</div></div></div>'
+    +'<div style="display:flex;gap:6px;align-items:center;margin-left:10px;flex-shrink:0;">'
+    +'<button class="glass-button" title="Rename track" style="padding:4px 8px;font-size:11px;background:transparent;border:1px solid rgba(255,255,255,0.1);" onclick="toggleRename(''+t.id+'')">&#9998;&#65039;</button>'
+    +'<button class="glass-button play-btn" style="padding:4px 10px;font-size:9px;" onclick="playNow(''+t.id+'')">PLAY</button>'
+    +'</div></div>';
+}
+function toggleRename(id) {
+  const rf = document.getElementById('rf-'+id); if (!rf) return;
+  const showing = rf.style.display==='block'; rf.style.display = showing?'none':'block';
+  if (!showing) setTimeout(()=>{ const inp=document.getElementById('rt-'+id); if(inp)inp.focus(); },50);
+}
+function cancelRename(id) { const rf=document.getElementById('rf-'+id); if(rf)rf.style.display='none'; }
+function saveRename(id) {
+  const t=document.getElementById('rt-'+id), a=document.getElementById('ra-'+id);
+  if(!t) return;
+  const title=(t.value||'').trim(), artist=(a?a.value.trim():'')||'Permanent Drive';
+  if(!title) return;
+  fetch('/api/rename-track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,title,artist})})
+    .then(r=>r.json()).then(res=>{
+      if(res.ok){const item=document.getElementById('ti-'+id);if(item){item.querySelector('.track-title').textContent=title;item.querySelector('.track-artist').textContent=artist;}cancelRename(id);lastLibraryJSON='';}
+      else alert('Rename failed: '+(res.error||'unknown'));
+    }).catch(err=>alert('Network error: '+err));
+}
 
-        function playNow(id) {
-            const btn = document.querySelector(`#ti-${id} .play-btn`);
-            const oldText = btn.innerHTML;
-            btn.innerHTML = 'WAIT...';
-            btn.disabled = true;
-
-            fetch('/api/play-id', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id })
-            }).then(() => {
-                setTimeout(() => {
-                    btn.innerHTML = oldText;
-                    btn.disabled = false;
-                }, 1000);
-            }).catch(e => {
-                alert('Connection Error');
-                btn.innerHTML = oldText;
-                btn.disabled = false;
-            });
-        }
-
-        // Keyboard Shortcuts
-        window.addEventListener('keydown', e => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                if (state.micMode === 'OFF') {
-                    setMic(state.lastMicMode);
-                } else {
-                    setMic('OFF');
-                }
-            }
-        });
-
-        let lastLibraryJSON = "";
-        let lastCurrentID = "";
-        let seekDragging = false;
-        let seekCurrentDuration = 0;
-
-        function onSeekInput(pct) {
-            // While dragging: update the fill bar visually but don't seek yet
-            document.getElementById('progFill').style.width = pct + '%';
-            if (seekCurrentDuration > 0) {
-                document.getElementById('progStart').textContent = formatTime(seekCurrentDuration * pct / 100);
-            }
-        }
-
-        function onSeekCommit(pct) {
-            seekDragging = false;
-            if (seekCurrentDuration <= 0) return;
-            const seconds = seekCurrentDuration * pct / 100;
-            fetch('/api/seek', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ seconds })
-            }).catch(err => console.error('Seek error:', err));
-        }
-
-
-        function renderLibrary(tracks, current) {
-            const list = document.getElementById('libraryList');
-            if (!tracks || tracks.length === 0) return;
-            const currentID = current?.id || "";
-
-            const newJSON = JSON.stringify(tracks.map(t => ({ id: t.id, title: t.title, artist: t.artist })));
-
-            if (newJSON !== lastLibraryJSON) {
-                lastLibraryJSON = newJSON;
-                const existingIds = new Set([...list.querySelectorAll('.track-item')].map(el => el.id.replace('ti-', '')));
-                const newIds = new Set(tracks.map(t => t.id));
-
-                existingIds.forEach(id => {
-                    if (!newIds.has(id)) { const el = document.getElementById('ti-' + id); if (el) el.remove(); }
-                });
-
-                tracks.forEach((t, i) => {
-                    let item = document.getElementById('ti-' + t.id);
-                    if (!item) {
-                        const tmp = document.createElement('div');
-                        tmp.innerHTML = buildTrackHTML(t, currentID);
-                        item = tmp.firstElementChild;
-                        const sibling = list.children[i];
-                        if (sibling) list.insertBefore(item, sibling); else list.appendChild(item);
-                    } else {
-                        const titleEl = item.querySelector('.track-title');
-                        const artistEl = item.querySelector('.track-artist');
-                        if (titleEl && titleEl.textContent !== t.title) titleEl.textContent = t.title;
-                        if (artistEl && artistEl.textContent !== t.artist) artistEl.textContent = t.artist;
-                        const rf = item.querySelector('.rename-form');
-                        if (rf && rf.style.display !== 'block') {
-                            const ti = item.querySelector('.rename-title-input');
-                            const ai = item.querySelector('.rename-artist-input');
-                            if (ti) ti.value = t.title;
-                            if (ai) ai.value = t.artist;
-                        }
-                    }
-                });
-            }
-
-            if (currentID !== lastCurrentID) {
-                lastCurrentID = currentID;
-                list.querySelectorAll('.track-item').forEach(el => {
-                    el.classList.toggle('playing', el.id === 'ti-' + currentID);
-                });
-            }
-        }
-
-        function buildTrackHTML(t, currentID) {
-            const playing = currentID === t.id ? 'playing' : '';
-            const te = t.title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const ae = t.artist.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return '<div class="track-item ' + playing + '" id="ti-' + t.id + '">' +
-              '<div style="min-width:0; flex:1;">' +
-              '<div class="track-title" style="font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + te + '</div>' +
-              '<div class="track-artist" style="font-size:10px; opacity:0.5;">' + ae + '</div>' +
-              '<div class="rename-form" id="rf-' + t.id + '" style="display:none; margin-top:6px;">' +
-              '<input type="text" class="rename-title-input" id="rt-' + t.id + '" value="' + te + '" placeholder="Track title"' +
-              ' style="width:60%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit;">' +
-              '<input type="text" class="rename-artist-input" id="ra-' + t.id + '" value="' + ae + '" placeholder="Artist"' +
-              ' style="width:33%; background:rgba(0,0,0,0.4); border:1px solid rgba(0,242,254,0.3); color:#fff; padding:4px 8px; border-radius:6px; font-size:11px; font-family:inherit; margin-left:4px;">' +
-              '<div style="margin-top:5px; display:flex; gap:6px;">' +
-              '<button class="glass-button" style="padding:3px 10px; font-size:9px; background:rgba(0,242,254,0.2);" onclick="saveRename(\'' + t.id + '\')">SAVE</button>' +
-              '<button class="glass-button" style="padding:3px 10px; font-size:9px;" onclick="cancelRename(\'' + t.id + '\')">CANCEL</button>' +
-              '</div></div></div>' +
-              '<div style="display:flex; gap:6px; align-items:center; margin-left:10px; flex-shrink:0;">' +
-              '<button class="glass-button" title="Rename track" style="padding:4px 8px; font-size:11px; background:transparent; border:1px solid rgba(255,255,255,0.1);" onclick="toggleRename(\'' + t.id + '\')">\u270F\uFE0F</button>' +
-              '<button class="glass-button play-btn" style="padding:4px 10px; font-size:9px;" onclick="playNow(\'' + t.id + '\')">PLAY</button>' +
-              '</div></div>';
-        }
-        function toggleRename(id) {
-            const rf = document.getElementById('rf-' + id);
-            if (!rf) return;
-            const showing = rf.style.display === 'block';
-            rf.style.display = showing ? 'none' : 'block';
-            if (!showing) setTimeout(() => { const inp = document.getElementById('rt-' + id); if (inp) inp.focus(); }, 50);
-        }
-
-        function cancelRename(id) {
-            const rf = document.getElementById('rf-' + id);
-            if (rf) rf.style.display = 'none';
-        }
-
-        function saveRename(id) {
-            const titleEl = document.getElementById('rt-' + id);
-            const artistEl = document.getElementById('ra-' + id);
-            if (!titleEl) return;
-            const title = titleEl.value.trim();
-            const artist = (artistEl ? artistEl.value.trim() : '') || 'Permanent Drive';
-            if (!title) return;
-            fetch('/api/rename-track', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, title, artist })
-            }).then(r => r.json()).then(res => {
-                if (res.ok) {
-                    const item = document.getElementById('ti-' + id);
-                    if (item) {
-                        item.querySelector('.track-title').textContent = title;
-                        item.querySelector('.track-artist').textContent = artist;
-                    }
-                    cancelRename(id);
-                    lastLibraryJSON = '';
-                } else {
-                    alert('Rename failed: ' + (res.error || 'unknown'));
-                }
-            }).catch(err => alert('Network error: ' + err));
-        }
-        function setMic(mode) {
-            if (mode !== 'OFF') state.lastMicMode = mode;
-            state.micMode = mode;
-            document.querySelectorAll('.mic-mode').forEach(m => m.classList.remove('active'));
-            document.getElementById('mode' + mode).classList.add('active');
-            fetch('/api/mic', { method: 'POST', body: JSON.stringify({ mode }), headers: { 'Content-Type': 'application/json' } });
-            
-            if (mode !== 'OFF') startMic(); else stopMic();
-        }
-
-        let micAudio = null;
-        let ws = null;
-
-        async function startMic() {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const audioCtx = new AudioContext({ sampleRate: 22050 });
-            const source = audioCtx.createMediaStreamSource(stream);
-            const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-            
-            const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-            ws = new WebSocket(`${proto}://${location.host}/ws`);
-            
-            processor.onaudioprocess = e => {
-            const input = e.inputBuffer.getChannelData(0);
-            const pcm = new Int16Array(input.length);
-            let sumSq = 0;
-            for (let i = 0; i < input.length; i++) {
-                const s = Math.max(-1, Math.min(1, input[i]));
-                pcm[i] = s * 0x7FFF;
-                sumSq += s * s;
-            }
-            // Update mic VU meter in admin UI
-            const rms = Math.sqrt(sumSq / input.length);
-            const vuPct = Math.min(100, Math.round(rms * 400));
-            const micVUBar = document.getElementById('micVU');
-            if (micVUBar) micVUBar.style.width = vuPct + '%';
-            // Send PCM to server
-            if (ws.readyState === WebSocket.OPEN) ws.send(pcm.buffer);
-            // Send feedback ping every ~20 chunks for latency measurement
-            if (!processor._feedbackCounter) processor._feedbackCounter = 0;
-            processor._feedbackCounter++;
-            if (processor._feedbackCounter % 20 === 0 && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ type: 'feedback', vu: vuPct, timestamp: Date.now() }));
-            }
-        };
-            
-            source.connect(processor);
-            processor.connect(audioCtx.destination);
-            micAudio = { stream, audioCtx, processor };
-        }
-
-        function stopMic() {
-            if (micAudio) {
-                micAudio.stream.getTracks().forEach(t => t.stop());
-                micAudio.audioCtx.close();
-                ws.close();
-                micAudio = null;
-            }
-        }
-
-        function playStation() { fetch('/api/play', { method: 'POST' }); }
-        function stopStation() { fetch('/api/stop', { method: 'POST' }); }
-        function skipTrack() { fetch('/api/skip', { method: 'POST' }); }
-        function setVolume(v) { fetch('/api/volume', { method: 'POST', body: JSON.stringify({ volume: v }), headers: { 'Content-Type': 'application/json' } }); }
-        function setDuckLevel(v) {
-            document.getElementById('duckVal').textContent = v + '%';
-            fetch('/api/mic-duck', { method: 'POST', body: JSON.stringify({ duckLevel: parseInt(v) }), headers: { 'Content-Type': 'application/json' } });
-        }
-
-        async function handleFileUpload(input) {
-            if (!input.files || input.files.length === 0) return;
-            
-            const modal = document.getElementById('uploadModal');
-            const fill = document.getElementById('modalProgressFill');
-            const title = document.getElementById('modalTitle');
-            const msg = document.getElementById('modalMsg');
-            const sub = document.getElementById('modalSub');
-            
-            modal.style.display = 'flex';
-            title.innerText = 'UPLOADING...';
-            msg.innerText = `Syncing ${input.files.length} tracks to Permanent Drive`;
-            fill.style.width = '0%';
-            sub.innerText = '0%';
-
-            const formData = new FormData();
-            for (let i = 0; i < input.files.length; i++) {
-                formData.append('tracks', input.files[i]);
-            }
-
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', '/api/upload', true);
-
-            xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                    const pct = Math.round((e.loaded / e.total) * 100);
-                    fill.style.width = pct + '%';
-                    sub.innerText = pct + '%';
-                }
-            };
-
-            xhr.onload = () => {
-                if (xhr.status === 200) {
-                    title.innerText = 'SUCCESS!';
-                    msg.innerText = 'Library database updated.';
-                    fill.style.width = '100%';
-                    sub.innerText = '100%';
-                    
-                    setTimeout(() => {
-                        modal.style.display = 'none';
-                        input.value = '';
-                    }, 2000);
-                } else {
-                    alert('Upload failed: ' + xhr.statusText);
-                    modal.style.display = 'none';
-                }
-            };
-
-            xhr.onerror = () => {
-                alert('Network error during upload');
-                modal.style.display = 'none';
-            };
-
-            xhr.send(formData);
-        }
-    </script>
+// ─── FILE UPLOAD ──────────────────────────────────────────────────────────────
+async function handleFileUpload(input) {
+  if (!input.files || input.files.length===0) return;
+  const modal=document.getElementById('uploadModal'),fill=document.getElementById('modalProgressFill'),
+        title=document.getElementById('modalTitle'),msg=document.getElementById('modalMsg'),sub=document.getElementById('modalSub');
+  modal.style.display='flex'; title.innerText='UPLOADING...';
+  msg.innerText='Syncing '+input.files.length+' tracks to Permanent Drive';
+  fill.style.width='0%'; sub.innerText='0%';
+  const fd=new FormData();
+  for(let i=0;i<input.files.length;i++) fd.append('tracks',input.files[i]);
+  const xhr=new XMLHttpRequest(); xhr.open('POST','/api/upload',true);
+  xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);fill.style.width=p+'%';sub.innerText=p+'%';}};
+  xhr.onload=()=>{
+    if(xhr.status===200){title.innerText='SUCCESS!';msg.innerText='Library database updated.';fill.style.width='100%';sub.innerText='100%';setTimeout(()=>{modal.style.display='none';input.value='';},2000);}
+    else{alert('Upload failed: '+xhr.statusText);modal.style.display='none';}
+  };
+  xhr.onerror=()=>{alert('Network error during upload');modal.style.display='none';};
+  xhr.send(fd);
+}
+</script>
 </body>
 </html>
