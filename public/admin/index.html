@@ -41,6 +41,18 @@
     .glass-modal { width: 400px; padding: 40px; text-align: center; border-radius: 30px; }
     .mic-error { display: none; margin-top: 8px; padding: 6px 12px; background: rgba(255,61,0,0.2); border: 1px solid rgba(255,61,0,0.4); border-radius: 8px; font-size: 10px; color: #ff3d00; font-weight: 700; }
     .feedback-label { font-size: 10px; font-family: monospace; opacity: 0.5; margin-top: 4px; display: flex; justify-content: space-between; }
+    /* On-Air title display */
+    .on-air-title-wrap { position: relative; cursor: default; }
+    .on-air-title-wrap.mic-active { cursor: pointer; }
+    .on-air-title-wrap.mic-active:hover .title-edit-hint { opacity: 1; }
+    .title-edit-hint { position: absolute; top: -18px; left: 0; font-size: 9px; font-weight: 900; letter-spacing: 2px; opacity: 0; color: var(--glass-accent); transition: opacity 0.2s; pointer-events: none; text-transform: uppercase; }
+    #trackTitle.live-on-air { background: linear-gradient(to right, #ff3d00, #ff9500, #ff3d00); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: liveShimmer 2s linear infinite; }
+    @keyframes liveShimmer { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+    #trackTitle.live-on-air.custom-msg { background: linear-gradient(to right, #00f2fe, #4facfe); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: liveShimmer 3s linear infinite; }
+    .on-air-edit-box { display: none; margin-top: 8px; }
+    .on-air-edit-box.visible { display: flex; gap: 8px; align-items: center; }
+    .on-air-edit-input { flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,242,254,0.4); color: #fff; padding: 8px 14px; border-radius: 10px; font-size: 1rem; font-family: inherit; font-weight: 700; outline: none; }
+    .on-air-edit-input::placeholder { opacity: 0.3; font-weight: 400; }
   </style>
 </head>
 <body>
@@ -240,8 +252,7 @@ function initStatusWS() {
       airTag.textContent = data.isPlaying ? 'ON AIR' : 'OFFLINE';
       airTag.style.background = data.isPlaying ? 'rgba(0,242,254,0.2)' : 'rgba(255,61,0,0.2)';
       airTag.style.color = data.isPlaying ? 'var(--glass-accent)' : '#ff3d00';
-      document.getElementById('trackTitle').textContent  = data.currentTrack?.title  || 'STATION IDLE';
-      document.getElementById('trackArtist').textContent = data.currentTrack?.artist || 'AWAITING SIGNAL...';
+      updateOnAirDisplay(data);
 
       const playBtn = document.getElementById('playBtn');
       if (data.isPlaying) {
@@ -310,6 +321,65 @@ window.addEventListener('keydown', e => {
   }
 });
 
+// ─── ON-AIR DISPLAY LOGIC ───────────────────────────────────────────────────────
+let _lastStatusData = null;
+let _serverOnAirMsg = '';
+
+function updateOnAirDisplay(data) {
+  if (data) _lastStatusData = data;
+  const d = _lastStatusData;
+  const titleEl   = document.getElementById('trackTitle');
+  const artistEl  = document.getElementById('trackArtist');
+  const titleWrap = document.getElementById('titleWrap');
+  const editBox   = document.getElementById('onAirEditBox');
+  const micOn = (state.micMode === 'SOLO' || state.micMode === 'DUCK');
+  if (d && d.onAirMessage !== undefined) _serverOnAirMsg = d.onAirMessage || '';
+  if (micOn) {
+    titleWrap.classList.add('mic-active');
+    editBox.classList.add('visible');
+    const inp = document.getElementById('onAirInput');
+    if (document.activeElement !== inp) inp.value = _serverOnAirMsg;
+    if (_serverOnAirMsg) {
+      titleEl.textContent = _serverOnAirMsg;
+      titleEl.className = 'live-on-air custom-msg';
+      artistEl.textContent = '● LIVE';
+    } else {
+      titleEl.textContent = 'LIVE ON AIR';
+      titleEl.className = 'live-on-air';
+      artistEl.textContent = '● BROADCASTING';
+    }
+  } else {
+    titleWrap.classList.remove('mic-active');
+    editBox.classList.remove('visible');
+    titleEl.className = '';
+    titleEl.style.removeProperty('-webkit-text-fill-color');
+    if (d) {
+      titleEl.textContent  = d.currentTrack?.title  || 'STATION IDLE';
+      artistEl.textContent = d.currentTrack?.artist || 'AWAITING SIGNAL...';
+    }
+  }
+}
+
+function onTitleClick() {
+  if (state.micMode === 'OFF') return;
+  const inp = document.getElementById('onAirInput');
+  inp.focus(); inp.select();
+}
+
+function setOnAirMessage() {
+  const val = (document.getElementById('onAirInput').value || '').trim();
+  fetch('/api/on-air-message', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: val }) }).catch(console.error);
+}
+function clearOnAirMessage() {
+  document.getElementById('onAirInput').value = '';
+  fetch('/api/on-air-message', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: '' }) }).catch(console.error);
+}
+
+setTimeout(() => {
+  const inp = document.getElementById('onAirInput');
+  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') setOnAirMessage(); });
+}, 0);
+
 // ─── MIC CONTROLLER ───────────────────────────────────────────────────────────
 let micAudio = null;
 
@@ -320,6 +390,7 @@ function setMic(mode) {
   document.getElementById('mode' + mode).classList.add('active');
   fetch('/api/mic', { method:'POST', body: JSON.stringify({ mode }), headers:{'Content-Type':'application/json'} });
   if (mode !== 'OFF') startMic(); else stopMic();
+  updateOnAirDisplay(null);
 }
 
 async function startMic() {
