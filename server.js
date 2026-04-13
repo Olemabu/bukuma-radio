@@ -49,6 +49,7 @@ let state = {
   micMode:       'OFF',   // OFF | DUCK | SOLO
   micGate:       0.05,    // RMS gate threshold (0.01–0.30)
   micDuckLevel:  30,      // % of music volume when ducking (0 = mute, 100 = no duck)
+  onAirMessage:  '',       // custom on-air display text (empty = use track title)
   elapsedTime:   0,
   duration:      0,
   currentMusicIdx: 0,
@@ -487,6 +488,14 @@ app.post('/api/mic-gate', (req, res) => {
     console.log(`[MIXER] Gate threshold set to ${gate.toFixed(3)}`);
   }
   res.json({ ok: true, micGate: state.micGate });
+});
+
+// NEW: Custom on-air display message — broadcast to all listeners + admin
+app.post('/api/on-air-message', (req, res) => {
+  const msg = (req.body.message || '').toString().trim().slice(0, 120);
+  state.onAirMessage = msg;
+  broadcastStatus();
+  res.json({ ok: true, onAirMessage: state.onAirMessage });
 });
 
 app.post('/api/rename-track', (req, res) => {
