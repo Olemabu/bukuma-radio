@@ -81,8 +81,16 @@
       <div class="section-title">ENGINE TELEMETRY / NOW BROADCASTING</div>
       <div class="monitor-status">
         <div style="flex:1;">
-          <div id="trackTitle" style="font-size:3.5rem;font-weight:900;line-height:1;letter-spacing:-2px;">STATION IDLE</div>
-          <div id="trackArtist" style="font-size:1.4rem;opacity:0.5;margin-top:10px;font-weight:300;">AWAITING SIGNAL...</div>
+          <div id="titleWrap" class="on-air-title-wrap" onclick="onTitleClick()">
+            <div class="title-edit-hint">&#9998; CLICK TO EDIT MESSAGE</div>
+            <div id="trackTitle" style="font-size:3.5rem;font-weight:900;line-height:1;letter-spacing:-2px;">STATION IDLE</div>
+            <div id="trackArtist" style="font-size:1.4rem;opacity:0.5;margin-top:10px;font-weight:300;">AWAITING SIGNAL...</div>
+          </div>
+          <div id="onAirEditBox" class="on-air-edit-box">
+            <input id="onAirInput" class="on-air-edit-input" type="text" placeholder="Custom on-air message...">
+            <button class="glass-button" style="padding:8px 16px;font-size:10px;" onclick="setOnAirMessage()">SET</button>
+            <button class="glass-button" style="padding:8px 12px;font-size:10px;background:rgba(255,61,0,0.2);" onclick="clearOnAirMessage()">&#10005;</button>
+          </div>
         </div>
         <div style="text-align:right;min-width:150px;">
           <div class="section-title" style="margin-bottom:5px;">MASTER LOAD</div>
