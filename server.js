@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ─── PATHS ───────────────────────────────────────────────────────────────────
-const DATA_DIR   = '/data';                     
+const DATA_DIR   = path.join(__dirname, 'data');
 const MUSIC_DIR  = path.join(DATA_DIR, 'downloads');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
