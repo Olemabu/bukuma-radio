@@ -554,23 +554,37 @@ function saveRename(id) {
 }
 
 // ─── FILE UPLOAD ──────────────────────────────────────────────────────────────
-async function handleFileUpload(input) {
-  if (!input.files || input.files.length===0) return;
-  const modal=document.getElementById('uploadModal'),fill=document.getElementById('modalProgressFill'),
-        title=document.getElementById('modalTitle'),msg=document.getElementById('modalMsg'),sub=document.getElementById('modalSub');
-  modal.style.display='flex'; title.innerText='UPLOADING...';
-  msg.innerText='Syncing '+input.files.length+' tracks to Permanent Drive';
-  fill.style.width='0%'; sub.innerText='0%';
-  const fd=new FormData();
-  for(let i=0;i<input.files.length;i++) fd.append('tracks',input.files[i]);
-  const xhr=new XMLHttpRequest(); xhr.open('POST','/api/upload',true);
-  xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);fill.style.width=p+'%';sub.innerText=p+'%';}};
-  xhr.onload=()=>{
-    if(xhr.status===200){title.innerText='SUCCESS!';msg.innerText='Library database updated.';fill.style.width='100%';sub.innerText='100%';setTimeout(()=>{modal.style.display='none';input.value='';},2000);}
-    else{alert('Upload failed: '+xhr.statusText);modal.style.display='none';}
-  };
-  xhr.onerror=()=>{alert('Network error during upload');modal.style.display='none';};
-  xhr.send(fd);
+function handleFileUpload(input) {
+  if (!input.files || input.files.length === 0) return;
+
+  const formData = new FormData();
+  for (let file of input.files) {
+    formData.append('tracks', file);
+  }
+
+  const modal = document.getElementById('uploadModal');
+  modal.style.display = 'flex';
+  document.getElementById('modalTitle').textContent = 'UPLOADING...';
+  document.getElementById('modalMsg').textContent = 'Syncing ' + input.files.length + ' tracks to Permanent Drive';
+  document.getElementById('modalProgressFill').style.width = '0%';
+  document.getElementById('modalSub').textContent = '0%';
+
+  fetch('/api/upload', {
+    method: 'POST',
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('modalTitle').textContent = 'UPLOAD COMPLETE';
+    document.getElementById('modalMsg').textContent = data.count + ' tracks synced';
+    document.getElementById('modalProgressFill').style.width = '100%';
+    document.getElementById('modalSub').textContent = '100%';
+    setTimeout(() => { modal.style.display = 'none'; input.value = ''; }, 2000);
+  })
+  .catch(err => {
+    document.getElementById('modalTitle').textContent = 'UPLOAD FAILED';
+    document.getElementById('modalMsg').textContent = err.message;
+  });
 }
 </script>
 </body>
