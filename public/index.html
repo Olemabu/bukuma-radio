@@ -37,7 +37,7 @@
     <div class="container">
         <div class="station-header">
             <h1 class="station-name">AGUM BUKUMA</h1>
-            <p style="opacity: 0.5; letter-spacing: 4px; font-weight: 300;">PURE DRIVE STATION</p>
+            <p style="opacity: 0.5; letter-spacing: 4px; font-weight: 300;">COMMUNITY RADIO</p>
         </div>
 
         <div class="glass-card portal-card">
@@ -98,8 +98,18 @@
         }
 
         function updateUI(data) {
-            document.getElementById('trackTitle').textContent = data.currentTrack?.title || 'AGUM BUKUMA RADIO';
-            document.getElementById('trackArtist').textContent = data.currentTrack?.artist || 'STATION LIVE';
+            // Show DJ on-air message if mic is live, otherwise track info
+    const micOn = (data.micMode === 'SOLO' || data.micMode === 'DUCK');
+    if (micOn && data.onAirMessage) {
+      document.getElementById('trackTitle').textContent = data.onAirMessage;
+      document.getElementById('trackArtist').textContent = '● LIVE';
+    } else if (micOn) {
+      document.getElementById('trackTitle').textContent = 'LIVE ON AIR';
+      document.getElementById('trackArtist').textContent = '● BROADCASTING';
+    } else {
+      document.getElementById('trackTitle').textContent = data.currentTrack?.title || 'AGUM BUKUMA RADIO';
+      document.getElementById('trackArtist').textContent = data.currentTrack?.artist || 'STATION LIVE';
+    }
             
             const airTag = document.getElementById('airTag');
             airTag.textContent = data.isPlaying ? 'ON-AIR' : 'OFFLINE';
