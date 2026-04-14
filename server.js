@@ -23,7 +23,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ─── PATHS ───────────────────────────────────────────────────────────────────
-const DATA_DIR   = path.join(__dirname, 'data');
+const DATA_DIR   = '/data';                     
 const MUSIC_DIR  = path.join(DATA_DIR, 'downloads');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
@@ -113,14 +113,12 @@ function fetchYtTitle(videoId) {
 
 async function getTrackMeta(filename) {
   if (metaCache[filename]) return metaCache[filename];
-  const videoId = filename.replace(/\.mp3$/i, '');
-  const isYtId  = /^[a-zA-Z0-9_-]{10,13}$/.test(videoId);
-  if (isYtId) {
-    const ytMeta = await fetchYtTitle(videoId);
-    if (ytMeta && ytMeta.title) { metaCache[filename] = ytMeta; saveMetaCache(); return ytMeta; }
-  }
-  const fallback = { title: videoId, artist: 'Permanent Drive' };
-  metaCache[filename] = fallback; saveMetaCache(); return fallback;
+  // For uploaded MP3s: use filename as title — no yt-dlp calls (avoid 15s hangs)
+  const title = filename.replace(new RegExp('\\.mp3$', 'i'), '').replace(new RegExp('[_+-]', 'g'), ' ');
+  const meta  = { title, artist: 'Community Radio' };
+  metaCache[filename] = meta;
+  saveMetaCache();
+  return meta;
 }
 
 async function scanLibrary() {
@@ -132,7 +130,7 @@ async function scanLibrary() {
       return {
         id:     crypto.createHash('md5').update(f).digest('hex').slice(0, 12),
         title:  cached ? cached.title  : videoId,
-        artist: cached ? cached.artist : 'Permanent Drive',
+        artist: cached ? cached.artist : 'Community Radio',
         path:   path.join(MUSIC_DIR, f)
       };
     });
@@ -504,13 +502,13 @@ app.post('/api/rename-track', (req, res) => {
   const track = state.library.find(t => t.id === id);
   if (!track) return res.status(404).json({ error: 'track not found' });
   const filename = track.path.split('/').pop();
-  metaCache[filename] = { title: title.trim(), artist: (artist || '').trim() || 'Permanent Drive' };
+  metaCache[filename] = { title: title.trim(), artist: (artist || '').trim() || 'Community Radio' };
   saveMetaCache();
-  state.library = state.library.map(t => t.id === id ? { ...t, title: title.trim(), artist: (artist || '').trim() || 'Permanent Drive' } : t);
+  state.library = state.library.map(t => t.id === id ? { ...t, title: title.trim(), artist: (artist || '').trim() || 'Community Radio' } : t);
   state.queue   = [...state.library];
   if (state.currentTrack && state.currentTrack.id === id) {
     state.currentTrack.title  = title.trim();
-    state.currentTrack.artist = (artist || '').trim() || 'Permanent Drive';
+    state.currentTrack.artist = (artist || '').trim() || 'Community Radio';
   }
   broadcastStatus();
   res.json({ ok: true });
