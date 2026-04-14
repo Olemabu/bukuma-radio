@@ -30,6 +30,8 @@ let localPlaylist = [];
 let localIndex    = 0;
 let ws = null;
 let lastRadioTrack  = { title: 'AWAITING SIGNAL...', artist: 'Radio Mode' };
+let lastMicMode      = 'OFF';
+let lastOnAirMessage = '';
 let serverIsPlaying = true; // optimistic: assume server is on-air until told otherwise
 let currentStreamUrl = '';
 let wsRetryDelay = 3000;
@@ -54,7 +56,9 @@ function connectWS() {
         lastRadioTrack = {
           title:  track ? track.title  : 'STATION IDLE',
           artist: track ? track.artist : 'Awaiting Signal'
-        };
+        };        lastMicMode      = d.micMode      || 'OFF';
+        lastOnAirMessage = d.onAirMessage || '';
+
 
         // Update server playing state (used to know if stream is live)
         if (typeof d.isPlaying === 'boolean') serverIsPlaying = d.isPlaying;
@@ -80,9 +84,19 @@ function connectWS() {
 // ── UI ───────────────────────────────────────────────────────────────────────────────────
 function updateUI() {
   if (appMode === 'radio') {
-    DE.title.textContent  = lastRadioTrack.title;
-    DE.artist.textContent = lastRadioTrack.artist;
+    const micOn = (lastMicMode === 'SOLO' || lastMicMode === 'DUCK');
+    if (micOn && lastOnAirMessage) {
+      DE.title.textContent  = lastOnAirMessage;
+      DE.artist.textContent = '● LIVE';
+    } else if (micOn) {
+      DE.title.textContent  = 'LIVE ON AIR';
+      DE.artist.textContent = '● BROADCASTING';
+    } else {
+      DE.title.textContent  = lastRadioTrack.title;
+      DE.artist.textContent = lastRadioTrack.artist;
+    }
     DE.dialTitle.innerHTML = 'Agum Bukuma<br>Radio';
+  }
   } else {
     if (!localPlaylist.length) {
       DE.title.textContent  = 'No Music Loaded';
