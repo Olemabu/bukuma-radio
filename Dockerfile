@@ -15,9 +15,9 @@ RUN npm install --production
 
 COPY . .
 
-# Create the persistent-volume mount point.
-# Railway will mount a volume at /data — uploads survive redeploys.
-RUN mkdir -p /data/downloads /data/jingles /data/playlists /data/schedule
+# Railway persistent volume is mounted at /app/data
+# These dirs are created as a fallback (volume mount will overlay /app/data at runtime)
+RUN mkdir -p /app/data/downloads /app/data/jingles /app/data/playlists /app/data/schedule
 
 EXPOSE 3000
 CMD ["node", "server.js"]
