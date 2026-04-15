@@ -23,9 +23,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ─── PATHS ───────────────────────────────────────────────────────────────────
-const DATA_DIR = '/app/data';
+// Use /data for Railway volumes, or local ./data for development
+const DATA_DIR = fs.existsSync('/data') ? '/data' : path.join(__dirname, 'data');
 const MUSIC_DIR  = path.join(DATA_DIR, 'downloads');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
 
 // ─── MULTER ──────────────────────────────────────────────────────────────────
@@ -192,7 +194,13 @@ function startMaster() {
     '-f', 'mp3', '-b:a', '192k', '-ar', '44100', '-ac', '2',
     '-content_type', 'audio/mpeg', 'pipe:1'
   ]);
-  masterProc.stderr.on('data', d => console.log(`[MASTER-FF] ${d}`));
+  masterProc.stderr.on('data', d => {
+    const msg = d.toString();
+    if (msg.toLowerCase().includes('error')) console.error(`[MASTER-ERR] ${msg.trim()}`);
+  });
+  masterProc.stdin.on('error', err => {
+    console.error('[MASTER-STDIN] Pipe Error (likely closed):', err.message);
+  });
   masterProc.stdout.on('data', chunk => {
     streamClients.forEach(res => { try { res.write(chunk); } catch(e) { streamClients.delete(res); } });
   });
@@ -396,9 +404,17 @@ function startHeartbeat() {
       finalBuffer.writeInt16LE(out, i);
     }
 
-    if (!masterProc.stdin.write(finalBuffer)) {
-        // Handle backpressure if needed, but masterProc is usually consuming
+    if (!masterProc.stdin.writable) return;
+    
+    try {
+      masterProc.stdin.write(finalBuffer);
+    } catch (e) {
+      console.error('[HEARTBEAT] Mixer Flush Error:', e.message);
     }
+  });
+
+  heartbeatProc.on('error', err => {
+    console.error('[HEARTBEAT] Process Spawn Error:', err.message);
   });
 
   heartbeatProc.on('exit', () => {
