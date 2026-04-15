@@ -132,11 +132,10 @@ async function getTrackMeta(filename) {
   metaCache[filename] = meta;
   saveMetaCache();
   return meta;
-}
-
-    // 1. Scan Music Library
-    const mFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
-    state.library = mFiles.map(f => {
+async function scanLibrary() {
+  try {
+    const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
+    state.library = files.map(f => {
       const cached = metaCache[f];
       return {
         id:     crypto.createHash('md5').update('mus_'+f).digest('hex').slice(0, 12),
