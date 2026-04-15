@@ -53,7 +53,9 @@ let state = {
   elapsedTime:   0,
   duration:      0,
   currentMusicIdx: 0,
-  listenerStats: { vu: 0, latency: 0 }
+  listenerStats: { vu: 0, latency: 0 },
+  newsLibrary:   [],       // tracking our mastered news items
+  overlayActive: false     // true when a news item or stinger is playing
 };
 
 // ─── PERSIST STATE ───────────────────────────────────────────────────────────
@@ -140,6 +142,15 @@ async function scanLibrary() {
       if (idx !== -1) state.currentMusicIdx = idx;
     }
     if (!state.isPlaying) broadcastStatus();
+
+    // Scan for news items too
+    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().includes('news'));
+    state.newsLibrary = newsFiles.map(f => ({
+      id: crypto.createHash('md5').update('news_'+f).digest('hex').slice(0, 12),
+      title: f.replace(/\.mp3$/i, '').replace(/_/g, ' '),
+      path: path.join(MUSIC_DIR, f)
+    }));
+
     const missing = files.filter(f => !metaCache[f]);
     if (missing.length > 0) {
       console.log(`[META] Fetching titles for ${missing.length} uncached tracks...`);
@@ -192,6 +203,35 @@ function startMaster() {
 let musicProc     = null;
 let trackStartTime = 0;
 
+// ─── ENGINE: OVERLAY PLAYER ──────────────────────────────────────────────────
+let overlayProc = null;
+let activeOverlayStream = new PassThrough();
+
+function startOverlay(filePath) {
+  if (overlayProc) { try { overlayProc.kill(); } catch(e) {} }
+  console.log(`[ENGINE] Starting Overlay: ${filePath}`);
+  activeOverlayStream = new PassThrough();
+  
+  overlayProc = spawn('ffmpeg', [
+    '-re', '-i', filePath,
+    '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
+  ]);
+  
+  overlayProc.stdout.on('data', chunk => {
+    activeOverlayStream.write(chunk);
+  });
+  
+  overlayProc.on('exit', () => {
+    console.log('[ENGINE] Overlay Finished.');
+    overlayProc = null;
+    state.overlayActive = false;
+    broadcastStatus();
+  });
+  
+  state.overlayActive = true;
+  broadcastStatus();
+}
+
 async function playTrack() {
   if (!state.isPlaying || state.queue.length === 0) return;
   const track = state.queue[state.currentMusicIdx];
@@ -232,27 +272,30 @@ async function playTrack() {
     const mixed    = Buffer.alloc(chunk.length);
     const baseVol  = state.volume / 100;
     const micChunk = (state.micMode !== 'OFF') ? activeMicStream.read(chunk.length) : null;
+    const overlayChunk = (state.overlayActive) ? activeOverlayStream.read(chunk.length) : null;
 
-    // Compute mic RMS for sidechain ducking
-    let micRMS = 0;
-    if (micChunk && micChunk.length >= 2) {
+    // Compute RMS for sidechain ducking (Mic or Overlay triggers it)
+    let triggerRMS = 0;
+    const activeTrigger = (micChunk && micChunk.length >= 2) ? micChunk : (overlayChunk && overlayChunk.length >= 2 ? overlayChunk : null);
+    
+    if (activeTrigger) {
       let sumSq = 0;
-      for (let i = 0; i < micChunk.length; i += 2) {
-        const s = micChunk.readInt16LE(i) / 32768;
+      for (let i = 0; i < activeTrigger.length; i += 2) {
+        const s = activeTrigger.readInt16LE(i) / 32768;
         sumSq += s * s;
       }
-      micRMS = Math.sqrt(sumSq / (micChunk.length / 2));
+      triggerRMS = Math.sqrt(sumSq / (activeTrigger.length / 2));
     }
 
     // Determine target music volume
     let targetVol;
     if (state.micMode === 'SOLO') {
       targetVol = 0;
-    } else if (state.micMode === 'DUCK') {
+    } else if (state.micMode === 'DUCK' || state.overlayActive) {
       const gate      = state.micGate || 0.05;
       const duckFloor = (state.micDuckLevel !== undefined ? state.micDuckLevel : 30) / 100;
-      if (micRMS > gate) {
-        const duckDepth = Math.min(1, (micRMS - gate) / 0.1);
+      if (triggerRMS > gate || state.overlayActive) { // Overlay forces ducking
+        const duckDepth = state.overlayActive ? 1 : Math.min(1, (triggerRMS - gate) / 0.1);
         targetVol = baseVol * (1 - duckDepth * (1 - duckFloor));
       } else {
         targetVol = baseVol;
@@ -270,12 +313,15 @@ async function playTrack() {
       : prevVol + releaseCoeff * (targetVol - prevVol);
     thisProc._smoothVol = smoothVol;
 
-    // Mix music + mic
+    // Mix music + mic + overlay
     for (let i = 0; i < chunk.length; i += 2) {
       let mSample  = chunk.readInt16LE(i) * smoothVol;
       let micSample = 0;
       if (micChunk && i < micChunk.length) micSample = micChunk.readInt16LE(i);
-      const out = Math.max(-32768, Math.min(32767, Math.round(mSample + micSample)));
+      let overSample = 0;
+      if (overlayChunk && i < overlayChunk.length) overSample = overlayChunk.readInt16LE(i);
+      
+      const out = Math.max(-32768, Math.min(32767, Math.round(mSample + micSample + overSample)));
       mixed.writeInt16LE(out, i);
     }
 
@@ -577,6 +623,34 @@ app.post('/api/upload', upload.array('tracks'), async (req, res) => {
   console.log(`[API] Uploaded ${req.files ? req.files.length : 0} tracks.`);
   await scanLibrary();
   res.json({ ok: true, count: req.files ? req.files.length : 0 });
+});
+
+// ─── NEWS & PLAYLISTS ────────────────────────────────────────────────────────
+app.post('/api/news/broadcast', (req, res) => {
+  const { id } = req.body;
+  const item = state.newsLibrary.find(n => n.id === id);
+  if (!item) return res.status(404).json({ error: 'News item not found' });
+  startOverlay(item.path);
+  res.json({ ok: true });
+});
+
+app.post('/api/playlists/create', (req, res) => {
+  const { name, trackIds } = req.body;
+  if (!name || !trackIds) return res.status(400).json({ error: 'name and trackIds required' });
+  
+  let playlists = [];
+  try { if (fs.existsSync(path.join(DATA_DIR, 'playlists.json'))) playlists = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'playlists.json'))); } catch(e) {}
+  
+  const tracks = state.library.filter(t => trackIds.includes(t.id));
+  const newPlaylist = {
+    id: 'pl_' + Date.now(),
+    name,
+    tracks
+  };
+  
+  playlists.push(newPlaylist);
+  fs.writeFileSync(path.join(DATA_DIR, 'playlists.json'), JSON.stringify(playlists, null, 2));
+  res.json({ ok: true, playlist: newPlaylist });
 });
 
 // ─── INIT ────────────────────────────────────────────────────────────────────

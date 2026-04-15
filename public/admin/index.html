@@ -811,11 +811,25 @@
       </div>
     </div>
 
+    <!-- News Center [NEW] -->
+    <div class="card">
+      <div class="card-title">News Center</div>
+      <div id="newsList" class="track-list" style="max-height: 180px;">
+        <!-- News items will be rendered here -->
+        <div style="text-align:center; padding: 20px 0; color: var(--text-dim); font-size: 11px;">
+          Scanning for news items…
+        </div>
+      </div>
+    </div>
+
     <!-- Disk Library -->
-    <div class="card" style="flex: 1;">
+    <div class="card" style="flex: 1; display: flex; flex-direction: column;">
       <div class="library-header">
         <div class="card-title" style="margin-bottom:0;">Disk Library</div>
-        <span class="library-count" id="libCount">0 tracks</span>
+        <div style="display:flex; gap: 8px; align-items:center;">
+          <button class="btn btn-sm btn-skip" onclick="openPlaylistModal()">+ PLAYLIST</button>
+          <span class="library-count" id="libCount">0 tracks</span>
+        </div>
       </div>
 
       <!-- Upload Zone -->
@@ -849,6 +863,29 @@
       <div class="upload-progress-fill" id="uploadProgressFill"></div>
     </div>
     <div class="upload-status-text" id="uploadStatusText">Preparing…</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CREATE PLAYLIST MODAL [NEW]
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="playlistModal">
+  <div class="modal-box" style="width: 500px;">
+    <div class="modal-title">📂 Create New Playlist</div>
+    <div class="modal-field">
+      <label>Playlist Name</label>
+      <input type="text" id="plName" placeholder="e.g. Morning Groove" maxlength="80" />
+    </div>
+    <div class="modal-field">
+      <label>Select Tracks (from library)</label>
+      <div id="plTrackSelector" class="track-list" style="max-height: 300px; border: 1px solid var(--border); padding: 5px; border-radius: 8px;">
+        <!-- Tracks will be listed with checkboxes -->
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-play" onclick="savePlaylist()">CREATE PLAYLIST</button>
+      <button class="btn" onclick="closePlaylistModal()">CANCEL</button>
+    </div>
   </div>
 </div>
 
@@ -988,6 +1025,12 @@ function updateOnAirDisplay(data) {
   // Library
   if (data.library) {
     renderLibrary(data.library, data.currentTrack);
+    renderPlaylistSelector(data.library);
+  }
+
+  // News Library [NEW]
+  if (data.newsLibrary) {
+    renderNewsLibrary(data.newsLibrary, data.overlayActive);
   }
 }
 
@@ -1330,6 +1373,74 @@ function escHtml(str) {
 
 function escAttr(str) {
   return String(str).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+// ── News Library Render [NEW] ────────────────────────────────────────────────
+function renderNewsLibrary(newsLibrary, overlayActive) {
+  const list = document.getElementById('newsList');
+  if (!newsLibrary.length) {
+    list.innerHTML = '<div style="text-align:center; padding: 20px 0; color: var(--text-dim); font-size: 11px;">No processed news items</div>';
+    return;
+  }
+  list.innerHTML = newsLibrary.map(item => `
+    <div class="track-item" style="padding: 8px 10px;">
+      <div class="track-meta">
+        <div class="t-title" style="font-size:11px;">${escHtml(item.title)}</div>
+        <div class="t-artist" style="font-size:9px; color:var(--accent);">Ready for Broadcast</div>
+      </div>
+      <button class="btn btn-sm btn-play" onclick="broadcastNews('${item.id}')" ${overlayActive ? 'disabled style="opacity:0.5"' : ''}>
+        ${overlayActive ? 'ON AIR' : '📢 BROADCAST'}
+      </button>
+    </div>
+  `).join('');
+}
+
+function broadcastNews(id) {
+  fetch('/api/news/broadcast', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  }).catch(console.error);
+}
+
+// ── Playlist Management [NEW] ────────────────────────────────────────────────
+function openPlaylistModal() {
+  document.getElementById('playlistModal').classList.add('open');
+}
+
+function closePlaylistModal() {
+  document.getElementById('playlistModal').classList.remove('open');
+}
+
+function renderPlaylistSelector(library) {
+  const container = document.getElementById('plTrackSelector');
+  if (!container) return;
+  container.innerHTML = library.map(t => `
+    <div style="display:flex; align-items:center; gap:10px; padding:6px; border-bottom:1px solid rgba(255,255,255,0.05);">
+      <input type="checkbox" class="pl-track-check" value="${t.id}" style="width:16px; height:16px;">
+      <div style="font-size:11px;">${escHtml(t.title)} - <span style="color:var(--text-dim)">${escHtml(t.artist)}</span></div>
+    </div>
+  `).join('');
+}
+
+function savePlaylist() {
+  const name = document.getElementById('plName').value.trim();
+  const checks = document.querySelectorAll('.pl-track-check:checked');
+  const trackIds = Array.from(checks).map(c => c.value);
+
+  if (!name) return alert('Enter a playlist name');
+  if (!trackIds.length) return alert('Select at least one track');
+
+  fetch('/api/playlists/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, trackIds })
+  }).then(r => r.json()).then(res => {
+    if (res.ok) {
+      alert('Playlist created!');
+      closePlaylistModal();
+    }
+  }).catch(console.error);
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
