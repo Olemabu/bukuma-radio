@@ -819,13 +819,19 @@
       </div>
       
       <!-- Recording Suite [NEW] -->
-      <div style="background:rgba(255,0,0,0.05); border:1px solid rgba(255,71,87,0.2); border-radius:12px; padding:15px; margin-bottom:15px; display:flex; align-items:center; gap:15px;">
-        <div id="recordIndicator" class="dot" style="width:12px; height:12px; background:var(--danger); border-radius:50%; opacity:0.2;"></div>
-        <div style="flex:1;">
-          <div style="font-size:11px; font-weight:700; color:var(--danger); letter-spacing:1px; margin-bottom:2px;">NEWS RECORDER</div>
-          <div style="font-size:10px; color:var(--text-dim);" id="recordStatus">Mic ready…</div>
+      <div style="background:rgba(255,0,0,0.05); border:1px solid rgba(255,71,87,0.2); border-radius:12px; padding:15px; margin-bottom:15px; display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:center; gap:15px;">
+          <div id="recordIndicator" class="dot" style="width:12px; height:12px; background:var(--danger); border-radius:50%; opacity:0.2;"></div>
+          <div style="flex:1;">
+            <div style="font-size:11px; font-weight:700; color:var(--danger); letter-spacing:1px; margin-bottom:2px;">NEWS RECORDER</div>
+            <div style="font-size:10px; color:var(--text-dim);" id="recordStatus">Mic ready…</div>
+          </div>
+          <button class="btn btn-sm btn-danger" id="recordNewsBtn" onclick="toggleNewsRecording()">⏺ RECORD REPORT</button>
         </div>
-        <button class="btn btn-sm btn-danger" id="recordNewsBtn" onclick="toggleNewsRecording()">⏺ RECORD REPORT</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm btn-skip" style="flex:1; font-size:9px;" onclick="document.getElementById('newsUploadInput').click()">📤 UPLOAD ARCHIVED NEWS</button>
+          <input type="file" id="newsUploadInput" style="display:none" accept=".mp3,audio/*" onchange="handleNewsUpload(this)" multiple>
+        </div>
       </div>
 
       <div id="newsList" class="track-list" style="max-height: 180px; margin-bottom: 15px;">
@@ -1435,6 +1441,28 @@ function escAttr(str) {
 }
 
 // ── News Library Render [NEW] ────────────────────────────────────────────────
+function handleNewsUpload(input) {
+  if (!input.files || input.files.length === 0) return;
+  const files = Array.from(input.files);
+  const formData = new FormData();
+  files.forEach(f => formData.append('tracks', f));
+
+  // Use the new ?type=news flag
+  showUploadModal();
+  updateUploadStatus(`Uploading ${files.length} news items…`, 0);
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/upload?type=news', true);
+  xhr.upload.onprogress = e => { if (e.lengthComputable) updateUploadStatus(`Uploading…`, (e.loaded / e.total) * 100); };
+  xhr.onload = () => {
+    hideUploadModal();
+    input.value = '';
+    // Server will broadcast update
+  };
+  xhr.onerror = () => { hideUploadModal(); alert('Upload failed.'); };
+  xhr.send(formData);
+}
+
 function renderNewsLibrary(newsLibrary, overlayActive) {
   const list = document.getElementById('newsList');
   if (!newsLibrary.length) {

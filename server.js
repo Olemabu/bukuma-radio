@@ -22,15 +22,17 @@ const wss = new WebSocket.Server({ server, path: '/ws' });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-// ─── PATHS ───────────────────────────────────────────────────────────────────
 // Prioritize /data for Railway volumes, but fallback to local ./data
 let DATA_DIR = path.join(__dirname, 'data');
 if (fs.existsSync('/data')) DATA_DIR = '/data';
 
 const MUSIC_DIR  = path.join(DATA_DIR, 'downloads');
+const NEWS_DIR   = path.join(DATA_DIR, 'news');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
+
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR, { recursive: true });
+if (!fs.existsSync(NEWS_DIR))  fs.mkdirSync(NEWS_DIR, { recursive: true });
 
 // ─── MULTER ──────────────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -132,42 +134,37 @@ async function getTrackMeta(filename) {
   return meta;
 }
 
-async function scanLibrary() {
-  try {
-    const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
-    state.library = files.map(f => {
-      const cached  = metaCache[f];
-      const videoId = f.replace(/\.mp3$/i, '');
+    // 1. Scan Music Library
+    const mFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
+    state.library = mFiles.map(f => {
+      const cached = metaCache[f];
       return {
-        id:     crypto.createHash('md5').update(f).digest('hex').slice(0, 12),
-        title:  cached ? cached.title  : videoId,
+        id:     crypto.createHash('md5').update('mus_'+f).digest('hex').slice(0, 12),
+        title:  cached ? cached.title  : f.replace(/\.mp3$/i, ''),
         artist: cached ? cached.artist : 'Community Radio',
         path:   path.join(MUSIC_DIR, f)
       };
     });
+
+    // 2. Scan News Library (Dedicated Folder)
+    const nFiles = fs.readdirSync(NEWS_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
+    state.newsLibrary = nFiles.map(f => {
+      const cached = metaCache[f];
+      return {
+        id:     crypto.createHash('md5').update('nws_'+f).digest('hex').slice(0, 12),
+        title:  cached ? cached.title  : f.replace(/\.mp3$/i, '').replace(/_/g, ' '),
+        artist: cached ? cached.artist : 'Bukuma News',
+        path:   path.join(NEWS_DIR, f)
+      };
+    });
+
     state.queue = [...state.library];
     if (state.currentTrack) {
       const idx = state.queue.findIndex(t => t.id === state.currentTrack.id);
       if (idx !== -1) state.currentMusicIdx = idx;
     }
-    if (!state.isPlaying) broadcastStatus();
-
-    // Scan for news items too (consistent IDs for playback stability)
-    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => 
-      f.toLowerCase().includes('news') || 
-      f.toLowerCase().includes('report') || 
-      f.toLowerCase().includes('final')
-    );
-    state.newsLibrary = newsFiles.map(f => ({
-      id: crypto.createHash('md5').update('news_v1_'+f).digest('hex').slice(0, 12),
-      title: f.replace(/\.mp3$/i, '').replace(/_/g, ' '),
-      path: path.join(MUSIC_DIR, f)
-    }));
-
-    // Always broadcast status when library changes so UI stays in sync
+    
     broadcastStatus();
-
-    const missing = files.filter(f => !metaCache[f]);
     if (missing.length > 0) {
       console.log(`[META] Fetching titles for ${missing.length} uncached tracks...`);
       for (let i = 0; i < missing.length; i += 3) {
@@ -281,7 +278,7 @@ function stopNewsRecording() {
 
   // Master the recording: RAW (48k mono) -> MP3 (Broadcast Chain)
   const outFilename = `news_report_${Date.now()}.mp3`;
-  const outPath     = path.join(MUSIC_DIR, outFilename);
+  const outPath     = path.join(NEWS_DIR, outFilename);
   
   const args = [
     '-f', 's16le', '-ar', '48000', '-ac', '1', '-i', rawPath,
@@ -726,7 +723,14 @@ app.post('/api/delete-track', (req, res) => {
 });
 
 app.post('/api/upload', upload.array('tracks'), async (req, res) => {
-  console.log(`[API] Uploaded ${req.files ? req.files.length : 0} tracks.`);
+  const isNews = req.query.type === 'news';
+  if (isNews && req.files) {
+    // Move files to NEWS_DIR
+    req.files.forEach(f => {
+      const newsPath = path.join(NEWS_DIR, f.filename);
+      fs.renameSync(f.path, newsPath);
+    });
+  }
   await scanLibrary();
   res.json({ ok: true, count: req.files ? req.files.length : 0 });
 });
