@@ -23,8 +23,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 // ─── PATHS ───────────────────────────────────────────────────────────────────
-// Use /data for Railway volumes, or local ./data for development
-const DATA_DIR = fs.existsSync('/data') ? '/data' : path.join(__dirname, 'data');
+// Prioritize /data for Railway volumes, but fallback to local ./data
+let DATA_DIR = path.join(__dirname, 'data');
+if (fs.existsSync('/data')) DATA_DIR = '/data';
+
 const MUSIC_DIR  = path.join(DATA_DIR, 'downloads');
 const STATE_FILE = path.join(DATA_DIR, 'state.json');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -150,13 +152,20 @@ async function scanLibrary() {
     }
     if (!state.isPlaying) broadcastStatus();
 
-    // Scan for news items too (including the new Final one)
-    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().includes('news') || f.toLowerCase().includes('report') || f.toLowerCase().includes('final'));
+    // Scan for news items too (consistent IDs for playback stability)
+    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => 
+      f.toLowerCase().includes('news') || 
+      f.toLowerCase().includes('report') || 
+      f.toLowerCase().includes('final')
+    );
     state.newsLibrary = newsFiles.map(f => ({
-      id: crypto.createHash('md5').update('news_'+f).digest('hex').slice(0, 12),
+      id: crypto.createHash('md5').update('news_v1_'+f).digest('hex').slice(0, 12),
       title: f.replace(/\.mp3$/i, '').replace(/_/g, ' '),
       path: path.join(MUSIC_DIR, f)
     }));
+
+    // Always broadcast status when library changes so UI stays in sync
+    broadcastStatus();
 
     const missing = files.filter(f => !metaCache[f]);
     if (missing.length > 0) {
