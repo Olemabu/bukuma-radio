@@ -55,7 +55,9 @@ let state = {
   currentMusicIdx: 0,
   listenerStats: { vu: 0, latency: 0 },
   newsLibrary:   [],       // tracking our mastered news items
-  overlayActive: false     // true when a news item or stinger is playing
+  overlayActive: false,    // true when a news item or stinger is playing
+  isRecording:   false,    // true when capturing mic to a news item
+  schedule:      []        // list of { time: "HH:mm", newsId: string }
 };
 
 // ─── PERSIST STATE ───────────────────────────────────────────────────────────
@@ -66,6 +68,7 @@ function loadState() {
       state.isPlaying      = saved.isPlaying      || false;
       state.currentMusicIdx = saved.currentMusicIdx || 0;
       state.volume         = saved.volume         || 80;
+      state.schedule       = saved.schedule       || [];
     }
   } catch(e) {}
 }
@@ -74,7 +77,8 @@ function saveState() {
     fs.writeFileSync(STATE_FILE, JSON.stringify({
       isPlaying:       state.isPlaying,
       currentMusicIdx: state.currentMusicIdx,
-      volume:          state.volume
+      volume:          state.volume,
+      schedule:        state.schedule
     }));
   } catch(e) {}
 }
@@ -143,8 +147,8 @@ async function scanLibrary() {
     }
     if (!state.isPlaying) broadcastStatus();
 
-    // Scan for news items too
-    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().includes('news'));
+    // Scan for news items too (including the new Final one)
+    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().includes('news') || f.toLowerCase().includes('report'));
     state.newsLibrary = newsFiles.map(f => ({
       id: crypto.createHash('md5').update('news_'+f).digest('hex').slice(0, 12),
       title: f.replace(/\.mp3$/i, '').replace(/_/g, ' '),
@@ -229,6 +233,52 @@ function startOverlay(filePath) {
   });
   
   state.overlayActive = true;
+  broadcastStatus();
+}
+
+// ─── ENGINE: NEWS RECORDER ───────────────────────────────────────────────────
+let newsRecordStream = null;
+const RECORDINGS_DIR = path.join(DATA_DIR, 'recordings');
+if (!fs.existsSync(RECORDINGS_DIR)) fs.mkdirSync(RECORDINGS_DIR, { recursive: true });
+
+function startNewsRecording() {
+  const filename = `report_${Date.now()}.raw`;
+  const filePath = path.join(RECORDINGS_DIR, filename);
+  console.log(`[RECORDER] Starting capture: ${filename}`);
+  newsRecordStream = fs.createWriteStream(filePath);
+  state.isRecording = true;
+  broadcastStatus();
+}
+
+function stopNewsRecording() {
+  if (!newsRecordStream) return;
+  const rawPath = newsRecordStream.path;
+  newsRecordStream.end();
+  newsRecordStream = null;
+  state.isRecording = false;
+  console.log(`[RECORDER] Capture stopped. Mastering...`);
+
+  // Master the recording: RAW (48k mono) -> MP3 (Broadcast Chain)
+  const outFilename = `news_report_${Date.now()}.mp3`;
+  const outPath     = path.join(MUSIC_DIR, outFilename);
+  
+  const args = [
+    '-f', 's16le', '-ar', '48000', '-ac', '1', '-i', rawPath,
+    '-af', 'agate=threshold=0.03:range=0.1,compand=attacks=0.1:decays=1:points=-90/-90|-45/-30|-20/-10|0/-3,loudnorm=I=-16:TP=-1.5:LRA=11',
+    '-y', outPath
+  ];
+  
+  const proc = spawn('ffmpeg', args);
+  proc.on('close', code => {
+    if (code === 0) {
+      console.log(`[RECORDER] News item mastered: ${outFilename}`);
+      scanLibrary(); // refresh newsLibrary
+    } else {
+      console.error(`[RECORDER] Mastering failed with code ${code}`);
+    }
+    try { fs.unlinkSync(rawPath); } catch(e) {} // cleanup raw
+  });
+  
   broadcastStatus();
 }
 
@@ -417,6 +467,10 @@ wss.on('connection', ws => {
       ws._isAdmin = true;
       if (micFilterProc && micFilterProc.stdin && micFilterProc.stdin.writable) {
         micFilterProc.stdin.write(data);
+      }
+      // If recording news, write the raw PCM to the file stream
+      if (state.isRecording && newsRecordStream && newsRecordStream.writable) {
+        newsRecordStream.write(data);
       }
     } else {
       try {
@@ -652,6 +706,52 @@ app.post('/api/playlists/create', (req, res) => {
   fs.writeFileSync(path.join(DATA_DIR, 'playlists.json'), JSON.stringify(playlists, null, 2));
   res.json({ ok: true, playlist: newPlaylist });
 });
+
+app.post('/api/news/record/start', (req, res) => {
+  startNewsRecording();
+  res.json({ ok: true });
+});
+
+app.post('/api/news/record/stop', (req, res) => {
+  stopNewsRecording();
+  res.json({ ok: true });
+});
+
+app.get('/api/news/schedule', (req, res) => res.json(state.schedule));
+
+app.post('/api/news/schedule', (req, res) => {
+  const { newsId, time } = req.body; // time as "HH:mm"
+  if (!newsId || !time) return res.status(400).json({ error: 'newsId and time required' });
+  state.schedule.push({ id: 'sch_'+Date.now(), newsId, time });
+  saveState();
+  res.json({ ok: true });
+});
+
+app.post('/api/news/schedule/clear', (req, res) => {
+  state.schedule = [];
+  saveState();
+  res.json({ ok: true });
+});
+
+// ─── TICKER: SCHEDULER ───────────────────────────────────────────────────────
+setInterval(() => {
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  
+  const due = state.schedule.filter(s => s.time === timeStr);
+  if (due.length > 0) {
+    // Only trigger if not already overlaying
+    if (!state.overlayActive) {
+      const item = state.newsLibrary.find(n => n.id === due[0].newsId);
+      if (item) {
+        console.log(`[SCHEDULER] Triggering scheduled news: ${item.title}`);
+        startOverlay(item.path);
+        // Remove from schedule or mark played? For now, we'll keep it (daily repeat)
+        // or clear it if it's a one-time thing. Let's keep it for daily for now.
+      }
+    }
+  }
+}, 30000); // Check every 30s
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 loadState();

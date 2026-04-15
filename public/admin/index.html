@@ -811,13 +811,35 @@
       </div>
     </div>
 
-    <!-- News Center [NEW] -->
+    <!-- News Center [EXPANDED] -->
     <div class="card">
-      <div class="card-title">News Center</div>
-      <div id="newsList" class="track-list" style="max-height: 180px;">
+      <div class="library-header">
+        <div class="card-title" style="margin-bottom:0;">News Center</div>
+        <div class="header-right" style="font-size: 10px; opacity:0.7;" id="scheduleTicker">Checking schedule…</div>
+      </div>
+      
+      <!-- Recording Suite [NEW] -->
+      <div style="background:rgba(255,0,0,0.05); border:1px solid rgba(255,71,87,0.2); border-radius:12px; padding:15px; margin-bottom:15px; display:flex; align-items:center; gap:15px;">
+        <div id="recordIndicator" class="dot" style="width:12px; height:12px; background:var(--danger); border-radius:50%; opacity:0.2;"></div>
+        <div style="flex:1;">
+          <div style="font-size:11px; font-weight:700; color:var(--danger); letter-spacing:1px; margin-bottom:2px;">NEWS RECORDER</div>
+          <div style="font-size:10px; color:var(--text-dim);" id="recordStatus">Mic ready…</div>
+        </div>
+        <button class="btn btn-sm btn-danger" id="recordNewsBtn" onclick="toggleNewsRecording()">⏺ RECORD REPORT</button>
+      </div>
+
+      <div id="newsList" class="track-list" style="max-height: 180px; margin-bottom: 15px;">
         <!-- News items will be rendered here -->
-        <div style="text-align:center; padding: 20px 0; color: var(--text-dim); font-size: 11px;">
-          Scanning for news items…
+      </div>
+
+      <!-- Schedule Console [NEW] -->
+      <div style="border-top:1px solid var(--border); padding-top:15px;">
+        <div class="card-title" style="font-size:9px;">Upcoming Broadcasts</div>
+        <div id="scheduleList" style="font-size:10px; color:var(--text-dim); display:flex; flex-direction:column; gap:4px;">
+          <div style="padding:10px; text-align:center; opacity:0.5;">No items scheduled</div>
+        </div>
+        <div style="margin-top:10px; text-align:right;">
+          <button class="btn btn-sm" onclick="clearSchedule()" style="font-size:9px; padding:4px 8px;">✕ CLEAR ALL</button>
         </div>
       </div>
     </div>
@@ -1028,9 +1050,37 @@ function updateOnAirDisplay(data) {
     renderPlaylistSelector(data.library);
   }
 
-  // News Library [NEW]
+  // News Library
   if (data.newsLibrary) {
     renderNewsLibrary(data.newsLibrary, data.overlayActive);
+  }
+
+  // News Recorder [NEW]
+  updateRecorderUI(data.isRecording);
+
+  // News Schedule [NEW]
+  if (data.schedule) {
+    renderSchedule(data.schedule);
+  }
+}
+
+function updateRecorderUI(isRecording) {
+  const btn = document.getElementById('recordNewsBtn');
+  const ind = document.getElementById('recordIndicator');
+  const lbl = document.getElementById('recordStatus');
+  
+  if (isRecording) {
+    btn.textContent = '⏹ STOP & MASTER';
+    btn.classList.add('btn-active');
+    ind.style.opacity = '1';
+    ind.style.animation = 'pulse 1s infinite';
+    lbl.textContent = 'RECORDING LIVE REPORT...';
+  } else {
+    btn.textContent = '⏺ RECORD REPORT';
+    btn.classList.remove('btn-active');
+    ind.style.opacity = '0.2';
+    ind.style.animation = 'none';
+    lbl.textContent = 'Mic ready for news…';
   }
 }
 
@@ -1388,11 +1438,60 @@ function renderNewsLibrary(newsLibrary, overlayActive) {
         <div class="t-title" style="font-size:11px;">${escHtml(item.title)}</div>
         <div class="t-artist" style="font-size:9px; color:var(--accent);">Ready for Broadcast</div>
       </div>
-      <button class="btn btn-sm btn-play" onclick="broadcastNews('${item.id}')" ${overlayActive ? 'disabled style="opacity:0.5"' : ''}>
-        ${overlayActive ? 'ON AIR' : '📢 BROADCAST'}
-      </button>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-sm" onclick="promptScheduleNews('${item.id}', '${escAttr(item.title)}')" title="Schedule">🕓</button>
+        <button class="btn btn-sm btn-play" onclick="broadcastNews('${item.id}')" ${overlayActive ? 'disabled style="opacity:0.5"' : ''}>
+          ${overlayActive ? 'ON AIR' : '📢 BROADCAST'}
+        </button>
+      </div>
     </div>
   `).join('');
+}
+
+function toggleNewsRecording() {
+  if (!serverState.isRecording) {
+    // Start mic capture if not live (recorder handles PCM internally)
+    if (!micStream) startMic();
+    fetch('/api/news/record/start', { method: 'POST' }).catch(console.error);
+  } else {
+    fetch('/api/news/record/stop', { method: 'POST' }).catch(console.error);
+  }
+}
+
+function promptScheduleNews(newsId, title) {
+  const time = prompt(`Schedule "${title}" for what time? (Format HH:mm, 24h)`, '12:00');
+  if (time && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(time)) {
+    fetch('/api/news/schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newsId, time })
+    }).catch(console.error);
+  } else if (time) {
+    alert('Invalid time format. Please use HH:mm.');
+  }
+}
+
+function renderSchedule(schedule) {
+  const list = document.getElementById('scheduleList');
+  if (!schedule || !schedule.length) {
+    list.innerHTML = '<div style="padding:10px; text-align:center; opacity:0.5;">No items scheduled</div>';
+    return;
+  }
+  list.innerHTML = schedule.map(s => {
+    const newsItem = serverState.newsLibrary.find(n => n.id === s.newsId);
+    return `
+      <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:6px; border-left:2px solid var(--accent3);">
+        <span style="font-weight:700; color:var(--text);">${s.time}</span>
+        <span style="flex:1; margin-left:10px;">${newsItem ? escHtml(newsItem.title) : 'Unknown News'}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function clearSchedule() {
+  if (confirm('Clear all scheduled broadcasts?')) {
+    fetch('/api/news/schedule/clear', { method: 'POST' }).catch(console.error);
+  }
 }
 
 function broadcastNews(id) {
