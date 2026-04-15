@@ -148,7 +148,7 @@ async function scanLibrary() {
     if (!state.isPlaying) broadcastStatus();
 
     // Scan for news items too (including the new Final one)
-    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().includes('news') || f.toLowerCase().includes('report'));
+    const newsFiles = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().includes('news') || f.toLowerCase().includes('report') || f.toLowerCase().includes('final'));
     state.newsLibrary = newsFiles.map(f => ({
       id: crypto.createHash('md5').update('news_'+f).digest('hex').slice(0, 12),
       title: f.replace(/\.mp3$/i, '').replace(/_/g, ' '),
@@ -418,7 +418,7 @@ function startMicFilter() {
   // Output: 44100 Hz stereo to feed the master mixer directly.
   const args = [
     '-f', 's16le', '-ar', '48000', '-ac', '1', '-i', 'pipe:0',
-    '-af', 'agate=threshold=0.03:range=0.1,compand=attacks=0.1:decays=1:points=-90/-90|-45/-30|-20/-10|0/-3,volume=2.5',
+    '-af', 'agate=threshold=0.03:range=0.1,bass=g=4:f=100,treble=g=3:f=5000,compand=attacks=0.1:decays=1:points=-90/-90|-45/-30|-20/-10|0/-3,loudnorm=I=-16:TP=-1.5,volume=1.8',
     '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
   ];
 
