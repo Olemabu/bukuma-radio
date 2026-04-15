@@ -56,8 +56,9 @@ let state = {
   listenerStats: { vu: 0, latency: 0 },
   newsLibrary:   [],       // tracking our mastered news items
   overlayActive: false,    // true when a news item or stinger is playing
+  overlayTitle:  '',       // title of current overlay
   isRecording:   false,    // true when capturing mic to a news item
-  schedule:      []        // list of { time: "HH:mm", newsId: string }
+  schedule:      []        // list of { id, newsId, time, dayOfWeek }
 };
 
 // ─── PERSIST STATE ───────────────────────────────────────────────────────────
@@ -229,9 +230,12 @@ function startOverlay(filePath) {
     console.log('[ENGINE] Overlay Finished.');
     overlayProc = null;
     state.overlayActive = false;
+    state.overlayTitle = '';
     broadcastStatus();
   });
   
+  const item = state.newsLibrary.find(n => n.path === filePath);
+  state.overlayTitle = item ? item.title : 'News Broadcast';
   state.overlayActive = true;
   broadcastStatus();
 }
@@ -317,17 +321,36 @@ async function playTrack() {
     console.log(`[MUSIC-FF] ${msg.trim()}`);
   });
 
-  thisProc.stdout.on('data', chunk => {
-    if (!masterProc || !masterProc.stdin || musicProc !== thisProc) return;
-    const mixed    = Buffer.alloc(chunk.length);
-    const baseVol  = state.volume / 100;
-    const micChunk = (state.micMode !== 'OFF') ? activeMicStream.read(chunk.length) : null;
-    const overlayChunk = (state.overlayActive) ? activeOverlayStream.read(chunk.length) : null;
+  // Data processing moved to heartbeatProc.stdout handler
+}
 
-    // Compute RMS for sidechain ducking (Mic or Overlay triggers it)
-    let triggerRMS = 0;
-    const activeTrigger = (micChunk && micChunk.length >= 2) ? micChunk : (overlayChunk && overlayChunk.length >= 2 ? overlayChunk : null);
+// ─── ENGINE: CONTINUOUS HEARTBEAT & MIXER ────────────────────────────────────
+let heartbeatProc = null;
+
+function startHeartbeat() {
+  if (heartbeatProc) return;
+  console.log('[ENGINE] Starting Continuous Heartbeat Mixer...');
+  
+  // FFmpeg null source generates master 44.1kHz stereo signal 24/7.
+  heartbeatProc = spawn('ffmpeg', [
+    '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo',
+    '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
+  ]);
+
+  heartbeatProc.stdout.on('data', chunk => {
+    if (!masterProc || !masterProc.stdin) return;
     
+    // The heartbeat is our master clock.
+    const finalBuffer = Buffer.alloc(chunk.length);
+    
+    // Pull audio directly from source streams
+    const mChunk = (musicProc && musicProc.stdout.readable) ? musicProc.stdout.read(chunk.length) : null;
+    const micChunk = (state.micMode !== 'OFF') ? activeMicStream.read(chunk.length) : null;
+    const overChunk = (state.overlayActive) ? activeOverlayStream.read(chunk.length) : null;
+
+    // Sidechain Logic (Ducking)
+    let triggerRMS = 0;
+    const activeTrigger = (micChunk && micChunk.length >= 2) ? micChunk : (overChunk && overChunk.length >= 2 ? overChunk : null);
     if (activeTrigger) {
       let sumSq = 0;
       for (let i = 0; i < activeTrigger.length; i += 2) {
@@ -337,46 +360,52 @@ async function playTrack() {
       triggerRMS = Math.sqrt(sumSq / (activeTrigger.length / 2));
     }
 
-    // Determine target music volume
     let targetVol;
+    const baseVol = state.volume / 100;
+    const isPaused = !state.isPlaying;
+
     if (state.micMode === 'SOLO') {
       targetVol = 0;
     } else if (state.micMode === 'DUCK' || state.overlayActive) {
-      const gate      = state.micGate || 0.05;
+      const gate = state.micGate || 0.05;
       const duckFloor = (state.micDuckLevel !== undefined ? state.micDuckLevel : 30) / 100;
-      if (triggerRMS > gate || state.overlayActive) { // Overlay forces ducking
+      
+      if (triggerRMS > gate || state.overlayActive) {
         const duckDepth = state.overlayActive ? 1 : Math.min(1, (triggerRMS - gate) / 0.1);
-        targetVol = baseVol * (1 - duckDepth * (1 - duckFloor));
+        targetVol = isPaused ? 0 : baseVol * (1 - duckDepth * (1 - duckFloor));
       } else {
-        targetVol = baseVol;
+        targetVol = isPaused ? 0 : baseVol;
       }
     } else {
-      targetVol = baseVol;
+      targetVol = isPaused ? 0 : baseVol;
     }
 
-    // Smooth volume (fast attack, slow release)
-    const attackCoeff  = 0.3;
-    const releaseCoeff = 0.05;
-    const prevVol  = thisProc._smoothVol !== undefined ? thisProc._smoothVol : baseVol;
-    const smoothVol = targetVol < prevVol
-      ? prevVol + attackCoeff  * (targetVol - prevVol)
-      : prevVol + releaseCoeff * (targetVol - prevVol);
-    thisProc._smoothVol = smoothVol;
+    // Smooth volume transition
+    const attackCoeff = 0.3, releaseCoeff = 0.05;
+    const prevVol = heartbeatProc._smoothVol !== undefined ? heartbeatProc._smoothVol : baseVol;
+    const smoothVol = (targetVol > prevVol) ? prevVol + attackCoeff * (targetVol - prevVol) : prevVol + releaseCoeff * (targetVol - prevVol);
+    heartbeatProc._smoothVol = smoothVol;
 
-    // Mix music + mic + overlay
+    // Mixing Loop
     for (let i = 0; i < chunk.length; i += 2) {
-      let mSample  = chunk.readInt16LE(i) * smoothVol;
-      let micSample = 0;
-      if (micChunk && i < micChunk.length) micSample = micChunk.readInt16LE(i);
-      let overSample = 0;
-      if (overlayChunk && i < overlayChunk.length) overSample = overlayChunk.readInt16LE(i);
-      
+      let mSample = (mChunk && i < mChunk.length) ? mChunk.readInt16LE(i) * smoothVol : 0;
+      let micSample = (micChunk && i < micChunk.length) ? micChunk.readInt16LE(i) : 0;
+      let overSample = (overChunk && i < overChunk.length) ? overChunk.readInt16LE(i) : 0;
+
       const out = Math.max(-32768, Math.min(32767, Math.round(mSample + micSample + overSample)));
-      mixed.writeInt16LE(out, i);
+      finalBuffer.writeInt16LE(out, i);
     }
 
-    if (!masterProc.stdin.write(mixed)) thisProc.stdout.pause();
+    if (!masterProc.stdin.write(finalBuffer)) {
+        // Handle backpressure if needed, but masterProc is usually consuming
+    }
   });
+
+  heartbeatProc.on('exit', () => {
+    heartbeatProc = null;
+    setTimeout(startHeartbeat, 1000);
+  });
+}
 
   thisProc.on('exit', (code, signal) => {
     if (musicProc !== thisProc) return;
@@ -720,9 +749,9 @@ app.post('/api/news/record/stop', (req, res) => {
 app.get('/api/news/schedule', (req, res) => res.json(state.schedule));
 
 app.post('/api/news/schedule', (req, res) => {
-  const { newsId, time } = req.body; // time as "HH:mm"
-  if (!newsId || !time) return res.status(400).json({ error: 'newsId and time required' });
-  state.schedule.push({ id: 'sch_'+Date.now(), newsId, time });
+  const { newsId, time, day } = req.body; // time as "HH:mm", day as "mon"|"tue"|...
+  if (!newsId || !time || !day) return res.status(400).json({ error: 'newsId, time, and day required' });
+  state.schedule.push({ id: 'sch_'+Date.now(), newsId, time, dayOfWeek: day });
   saveState();
   res.json({ ok: true });
 });
@@ -736,27 +765,27 @@ app.post('/api/news/schedule/clear', (req, res) => {
 // ─── TICKER: SCHEDULER ───────────────────────────────────────────────────────
 setInterval(() => {
   const now = new Date();
+  const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const dayStr = days[now.getDay()];
   const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   
-  const due = state.schedule.filter(s => s.time === timeStr);
+  const due = state.schedule.filter(s => s.time === timeStr && s.dayOfWeek === dayStr);
   if (due.length > 0) {
-    // Only trigger if not already overlaying
     if (!state.overlayActive) {
       const item = state.newsLibrary.find(n => n.id === due[0].newsId);
       if (item) {
         console.log(`[SCHEDULER] Triggering scheduled news: ${item.title}`);
         startOverlay(item.path);
-        // Remove from schedule or mark played? For now, we'll keep it (daily repeat)
-        // or clear it if it's a one-time thing. Let's keep it for daily for now.
       }
     }
   }
-}, 30000); // Check every 30s
+}, 30000); 
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
 loadState();
 loadMetaCache();
 startMaster();
+startHeartbeat(); // Start the heartbeat mixer
 scanLibrary();
 setInterval(scanLibrary, 30000);
 if (state.isPlaying) playTrack();

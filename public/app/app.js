@@ -29,9 +29,9 @@ let isPlaying  = false;
 let localPlaylist = [];
 let localIndex    = 0;
 let ws = null;
-let lastRadioTrack  = { title: 'AWAITING SIGNAL...', artist: 'Radio Mode' };
-let lastMicMode      = 'OFF';
 let lastOnAirMessage = '';
+let lastOverlayActive = false;
+let lastOverlayTitle  = '';
 let serverIsPlaying = true; // optimistic: assume server is on-air until told otherwise
 let currentStreamUrl = '';
 let wsRetryDelay = 3000;
@@ -58,6 +58,8 @@ function connectWS() {
           artist: track ? track.artist : 'Awaiting Signal'
         };        lastMicMode      = d.micMode      || 'OFF';
         lastOnAirMessage = d.onAirMessage || '';
+        lastOverlayActive = d.overlayActive || false;
+        lastOverlayTitle  = d.overlayTitle  || '';
 
 
         // Update server playing state (used to know if stream is live)
@@ -85,7 +87,10 @@ function connectWS() {
 function updateUI() {
   if (appMode === 'radio') {
     const micOn = (lastMicMode === 'SOLO' || lastMicMode === 'DUCK');
-    if (micOn && lastOnAirMessage) {
+    if (lastOverlayActive) {
+      DE.title.textContent  = lastOverlayTitle || 'NEWS BROADCAST';
+      DE.artist.textContent = '● BUKUMA NEWS';
+    } else if (micOn && lastOnAirMessage) {
       DE.title.textContent  = lastOnAirMessage;
       DE.artist.textContent = '● LIVE';
     } else if (micOn) {
