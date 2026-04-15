@@ -132,6 +132,8 @@ async function getTrackMeta(filename) {
   metaCache[filename] = meta;
   saveMetaCache();
   return meta;
+}
+
 async function scanLibrary() {
   try {
     const files = fs.readdirSync(MUSIC_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
