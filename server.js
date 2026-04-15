@@ -147,6 +147,8 @@ async function scanLibrary() {
       };
     });
 
+    const missing = files.filter(f => !metaCache[f]);
+
     // 2. Scan News Library (Dedicated Folder)
     const nFiles = fs.readdirSync(NEWS_DIR).filter(f => f.toLowerCase().endsWith('.mp3'));
     state.newsLibrary = nFiles.map(f => {
