@@ -330,6 +330,20 @@ async function playTrack() {
   });
 
   // Data processing moved to heartbeatProc.stdout handler
+  thisProc.on('exit', (code, signal) => {
+    if (musicProc !== thisProc) return;
+    musicProc = null;
+    if (!state.isPlaying) return;
+    const elapsed   = (Date.now() - thisStartTime) / 1000;
+    const playDelay = elapsed < 3 ? 3000 : 1000;
+    console.log(`[ENGINE] Track ended after ${elapsed.toFixed(1)}s. Next in ${playDelay}ms...`);
+    setTimeout(() => {
+      if (state.isPlaying) {
+        state.currentMusicIdx = (state.currentMusicIdx + 1) % state.queue.length;
+        playTrack();
+      }
+    }, playDelay);
+  });
 }
 
 // ─── ENGINE: CONTINUOUS HEARTBEAT & MIXER ────────────────────────────────────
@@ -420,22 +434,6 @@ function startHeartbeat() {
   heartbeatProc.on('exit', () => {
     heartbeatProc = null;
     setTimeout(startHeartbeat, 1000);
-  });
-}
-
-  thisProc.on('exit', (code, signal) => {
-    if (musicProc !== thisProc) return;
-    musicProc = null;
-    if (!state.isPlaying) return;
-    const elapsed   = (Date.now() - thisStartTime) / 1000;
-    const playDelay = elapsed < 3 ? 3000 : 1000;
-    console.log(`[ENGINE] Track ended after ${elapsed.toFixed(1)}s. Next in ${playDelay}ms...`);
-    setTimeout(() => {
-      if (state.isPlaying) {
-        state.currentMusicIdx = (state.currentMusicIdx + 1) % state.queue.length;
-        playTrack();
-      }
-    }, playDelay);
   });
 }
 
