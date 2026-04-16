@@ -833,13 +833,24 @@ setInterval(() => {
 }, 30000); 
 
 // ─── INIT ────────────────────────────────────────────────────────────────────
-loadState();
-loadMetaCache();
-startMaster();
-startHeartbeat(); // Start the heartbeat mixer
-scanLibrary();
-setInterval(scanLibrary, 30000);
-if (state.isPlaying) playTrack();
+(async () => {
+  loadState();
+  loadMetaCache();
+  startMaster();
+  startHeartbeat(); // Start the heartbeat mixer
+  
+  // Await the first scan so state.queue is populated before we try to play
+  await scanLibrary();
+  
+  if (state.isPlaying) {
+    console.log('[INIT] Resuming broadcast...');
+    playTrack();
+  } else {
+    console.log('[INIT] Station is idle (waiting for play command).');
+  }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Bukuma Radio Engine v2 online on port ${PORT}`));
+  setInterval(scanLibrary, 60000); // reduced refresh rate to save CPU
+
+  const PORT = process.env.PORT || 3000;
+  server.listen(PORT, () => console.log(`Bukuma Radio Engine v2 online on port ${PORT}`));
+})();
