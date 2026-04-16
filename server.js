@@ -173,20 +173,29 @@ async function scanLibrary() {
     }
     
     broadcastStatus();
+
+    // Background scan for metadata (non-blocking)
     if (missing.length > 0) {
-      console.log(`[META] Fetching titles for ${missing.length} uncached tracks...`);
-      for (let i = 0; i < missing.length; i += 3) {
-        await Promise.all(missing.slice(i, i + 3).map(f => getTrackMeta(f)));
-        state.library = state.library.map(t => {
-          const cached = metaCache[t.path.split('/').pop()];
-          if (cached) { t.title = cached.title; t.artist = cached.artist; }
-          return t;
-        });
-        state.queue = [...state.library];
-        broadcastStatus();
-        await new Promise(r => setTimeout(r, 500));
-      }
-      console.log('[META] Title fetch complete.');
+      (async () => {
+        console.log(`[META] Fetching titles for ${missing.length} uncached tracks in background...`);
+        for (let i = 0; i < missing.length; i += 3) {
+          const chunk = missing.slice(i, i + 3);
+          await Promise.all(chunk.map(f => getTrackMeta(f)));
+          
+          // Re-map title/artist from cache
+          state.library = state.library.map(t => {
+            const f = path.basename(t.path);
+            if (metaCache[f]) {
+              return { ...t, title: metaCache[f].title, artist: metaCache[f].artist };
+            }
+            return t;
+          });
+          state.queue = [...state.library];
+          saveMetaCache();
+          broadcastStatus();
+        }
+        console.log('[META] Background scan complete.');
+      })();
     }
   } catch(e) { console.error('Scan error', e); }
 }
