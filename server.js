@@ -76,18 +76,23 @@ function loadState() {
       state.currentMusicIdx = saved.currentMusicIdx || 0;
       state.volume         = saved.volume         || 80;
       state.schedule       = saved.schedule       || [];
+      state.micDuckLevel   = saved.micDuckLevel   || 30;
+      state.micGate        = saved.micGate        || 0.05;
     }
-  } catch(e) {}
+  } catch(e) { console.error('[STATE] Failed to load:', e.message); }
 }
 function saveState() {
   try {
-    fs.writeFileSync(STATE_FILE, JSON.stringify({
+    const data = JSON.stringify({
       isPlaying:       state.isPlaying,
       currentMusicIdx: state.currentMusicIdx,
       volume:          state.volume,
-      schedule:        state.schedule
-    }));
-  } catch(e) {}
+      schedule:        state.schedule,
+      micDuckLevel:    state.micDuckLevel,
+      micGate:         state.micGate
+    });
+    fs.writeFileSync(STATE_FILE, data);
+  } catch(e) { console.error('[STATE] Failed to save:', e.message); }
 }
 
 // ─── METADATA CACHE ──────────────────────────────────────────────────────────
@@ -229,8 +234,19 @@ let trackStartTime = 0;
 let overlayProc = null;
 let activeOverlayStream = new PassThrough();
 
+function stopOverlay() {
+  if (overlayProc) {
+    console.log('[ENGINE] Stopping Overlay Broadcast...');
+    try { overlayProc.kill('SIGKILL'); } catch(e) {}
+    overlayProc = null;
+  }
+  state.overlayActive = false;
+  state.overlayTitle = '';
+  broadcastStatus();
+}
+
 function startOverlay(filePath) {
-  if (overlayProc) { try { overlayProc.kill(); } catch(e) {} }
+  stopOverlay(); // ensure clean state
   console.log(`[ENGINE] Starting Overlay: ${filePath}`);
   activeOverlayStream = new PassThrough();
   
@@ -744,6 +760,11 @@ app.post('/api/news/broadcast', (req, res) => {
   const item = state.newsLibrary.find(n => n.id === id);
   if (!item) return res.status(404).json({ error: 'News item not found' });
   startOverlay(item.path);
+  res.json({ ok: true });
+});
+
+app.post('/api/news/stop', (req, res) => {
+  stopOverlay();
   res.json({ ok: true });
 });
 

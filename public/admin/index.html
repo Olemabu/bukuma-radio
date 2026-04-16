@@ -1476,16 +1476,19 @@ function renderNewsLibrary(newsLibrary, overlayActive) {
     return;
   }
   list.innerHTML = newsLibrary.map(item => `
-    <div class="track-item" style="padding: 8px 10px;">
+    <div class="track-item" style="padding: 8px 10px; border-left: 2px solid ${overlayActive ? 'var(--accent)' : 'transparent'}">
       <div class="track-meta">
         <div class="t-title" style="font-size:11px;">${escHtml(item.title)}</div>
-        <div class="t-artist" style="font-size:9px; color:var(--accent);">Ready for Broadcast</div>
+        <div class="t-artist" style="font-size:9px; color:${overlayActive ? 'var(--accent)' : 'var(--text-dim)'};">
+          ${overlayActive ? '● ON AIR' : 'Ready for Broadcast'}
+        </div>
       </div>
       <div style="display:flex; gap:6px;">
         <button class="btn btn-sm" onclick="openScheduleModal('${item.id}', '${escAttr(item.title)}')" title="Schedule">🕓</button>
-        <button class="btn btn-sm btn-play" onclick="broadcastNews('${item.id}')" ${overlayActive ? 'disabled style="opacity:0.5"' : ''}>
-          ${overlayActive ? 'ON AIR' : '📢 BROADCAST'}
-        </button>
+        ${overlayActive ? 
+          `<button class="btn btn-sm btn-skip" onclick="stopBroadcast()">⏹ STOP</button>` :
+          `<button class="btn btn-sm btn-play" onclick="broadcastNews('${item.id}')">📢 BROADCAST</button>`
+        }
       </div>
     </div>
   `).join('');
@@ -1567,6 +1570,10 @@ function broadcastNews(id) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id })
   }).catch(console.error);
+}
+
+function stopBroadcast() {
+  fetch('/api/news/stop', { method: 'POST' }).catch(console.error);
 }
 
 // ── Playlist Management [NEW] ────────────────────────────────────────────────
