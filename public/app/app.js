@@ -101,7 +101,6 @@ function updateUI() {
       DE.artist.textContent = lastRadioTrack.artist;
     }
     DE.dialTitle.innerHTML = 'Agum Bukuma<br>Radio';
-  }
   } else {
     if (!localPlaylist.length) {
       DE.title.textContent  = 'No Music Loaded';
@@ -171,7 +170,7 @@ function drawWave() {
 // ── Playback ─────────────────────────────────────────────────────────────────────────────
 // Connect to the live radio stream — call this to begin listening
 function startRadioStream() {
-  const url = '/api/stream?' + Date.now();
+  const url = '/stream?' + Date.now();
   DE.audio.src = url;
   currentStreamUrl = url;
   radioRetryDelay = 2000; // reset back-off
