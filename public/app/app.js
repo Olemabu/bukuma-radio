@@ -157,6 +157,17 @@ function drawWave() {
   ctx.clearRect(0, 0, DE.canvas.width, DE.canvas.height);
   if (!isPlaying || !isVisualizerInit) return;
   analyser.getByteFrequencyData(dataArray);
+  
+  // ── Feedback Loop ──
+  // Calculate a simple VU level (max volume in current chunk) and send to server
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    let max = 0;
+    for (let i = 0; i < dataArray.length; i++) if (dataArray[i] > max) max = dataArray[i];
+    const vu = Math.round((max / 255) * 100);
+    // Send feedback ping with local timestamp to calculate RTT latency on server
+    ws.send(JSON.stringify({ type: 'feedback', vu, timestamp: Date.now() }));
+  }
+
   const bw = (DE.canvas.width / dataArray.length) * 2;
   let x = 0;
   for (let i = 0; i < dataArray.length; i++) {
