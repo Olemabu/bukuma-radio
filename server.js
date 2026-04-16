@@ -235,6 +235,13 @@ function startMaster() {
   });
 }
 
+function restartMixer() {
+  console.log('[ENGINE] Manual Mixer Restart triggered...');
+  if (masterProc) masterProc.kill();
+  if (heartbeatProc) heartbeatProc.kill();
+  // Init sequence will auto-restart them
+}
+
 // ─── ENGINE: MUSIC PLAYER ────────────────────────────────────────────────────
 let musicProc     = null;
 let trackStartTime = 0;
@@ -594,8 +601,21 @@ setInterval(() => {
 // ─── HTTP STREAM ─────────────────────────────────────────────────────────────
 app.get('/stream', (req, res) => {
   res.setHeader('Content-Type', 'audio/mpeg');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Transfer-Encoding', 'chunked');
+  
+  // ICY Metadata support (helps some players)
+  res.setHeader('icy-name', 'Agum Bukuma Radio');
+  res.setHeader('icy-genre', 'Community');
+  res.setHeader('icy-metaint', '0');
+
+  // Stream Flush: Send a tiny burst if possible to wake up the browser player
+  // We'll add the client to the set for real-time data
   streamClients.add(res);
-  req.on('close', () => streamClients.delete(res));
+  
+  req.on('close', () => {
+    streamClients.delete(res);
+  });
 });
 
 // ─── API ROUTES ──────────────────────────────────────────────────────────────
