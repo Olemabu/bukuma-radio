@@ -390,15 +390,15 @@ function startHeartbeat() {
     // The heartbeat is our master clock.
     const finalBuffer = Buffer.alloc(chunk.length);
     
-    // Pull audio directly from source streams
-    const mChunk = (musicProc && musicProc.stdout.readable) ? musicProc.stdout.read(chunk.length) : null;
+    // Pull audio directly from source streams (using non-blocking .read())
+    const mChunk   = (musicProc)   ? musicProc.stdout.read(chunk.length) : null;
     const micChunk = (state.micMode !== 'OFF') ? activeMicStream.read(chunk.length) : null;
-    const overChunk = (state.overlayActive) ? activeOverlayStream.read(chunk.length) : null;
+    const overChunk = (state.overlayActive)   ? activeOverlayStream.read(chunk.length) : null;
 
     // Sidechain Logic (Ducking)
     let triggerRMS = 0;
-    const activeTrigger = (micChunk && micChunk.length >= 2) ? micChunk : (overChunk && overChunk.length >= 2 ? overChunk : null);
-    if (activeTrigger) {
+    const activeTrigger = (micChunk) ? micChunk : (overChunk ? overChunk : null);
+    if (activeTrigger && activeTrigger.length >= 2) {
       let sumSq = 0;
       for (let i = 0; i < activeTrigger.length; i += 2) {
         const s = activeTrigger.readInt16LE(i) / 32768;

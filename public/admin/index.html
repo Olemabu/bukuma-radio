@@ -741,6 +741,14 @@
         <button class="btn btn-skip" onclick="skipTrack()">⏭ SKIP</button>
       </div>
 
+      <!-- New: Independent News Stop Control -->
+      <div id="newsControlBar" style="display:none; margin-bottom: 20px; padding: 15px; border: 1px solid var(--danger); border-radius: 8px; background: rgba(255,71,87,0.05);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:11px; font-weight:700; color:var(--danger);">NEWS BROADCAST LIVE</div>
+          <button class="btn btn-sm btn-skip" onclick="stopBroadcast()" style="padding: 5px 15px;">⏹ STOP NEWS</button>
+        </div>
+      </div>
+
       <!-- Volume + Duck + Gate -->
       <div class="slider-group">
         <div class="slider-row">
@@ -1069,6 +1077,9 @@ function updateOnAirDisplay(data) {
   if (data.newsLibrary) {
     renderNewsLibrary(data.newsLibrary, data.overlayActive);
   }
+
+  // News Control Bar [NEW]
+  document.getElementById('newsControlBar').style.display = overlayOn ? 'block' : 'none';
 
   // News Recorder [NEW]
   updateRecorderUI(data.isRecording);
