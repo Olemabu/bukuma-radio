@@ -445,7 +445,8 @@ function startHeartbeat() {
 
     // Smooth volume transition
     const attackCoeff = 0.3, releaseCoeff = 0.05;
-    const prevVol = heartbeatProc._smoothVol !== undefined ? heartbeatProc._smoothVol : baseVol;
+    // FIX: Fallback to baseVol immediately if prev is undefined to avoid starting at 0
+    const prevVol = (heartbeatProc._smoothVol !== undefined) ? heartbeatProc._smoothVol : baseVol;
     const smoothVol = (targetVol > prevVol) ? prevVol + attackCoeff * (targetVol - prevVol) : prevVol + releaseCoeff * (targetVol - prevVol);
     heartbeatProc._smoothVol = smoothVol;
 
@@ -866,7 +867,10 @@ setInterval(() => {
   loadState();
   loadMetaCache();
   startMaster();
-  startHeartbeat(); // Start the heartbeat mixer
+  startHeartbeat(); 
+  
+  // Ensure we have some initial volume state
+  if (heartbeatProc) heartbeatProc._smoothVol = state.volume / 100;
   
   // Await the first scan so state.queue is populated before we try to play
   await scanLibrary();
