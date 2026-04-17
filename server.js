@@ -238,8 +238,12 @@ function startMaster() {
 function restartMixer() {
   console.log('[ENGINE] Manual Mixer Restart triggered...');
   if (masterProc) masterProc.kill();
-  if (heartbeatProc) heartbeatProc.kill();
-  // Init sequence will auto-restart them
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+  // Init sequence / interval will handle restarts
+  setTimeout(startHeartbeat, 500);
 }
 
 // ─── ENGINE: MUSIC PLAYER ────────────────────────────────────────────────────
