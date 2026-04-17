@@ -506,9 +506,19 @@ function startMicFilter() {
   // Accept raw PCM at 48000 Hz (standard browser WebAudio rate).
   // The old 22050 rate caused distortion when browsers defaulted to 48 kHz.
   // Output: 44100 Hz stereo to feed the master mixer directly.
+  // Implementation of 250ms Jitter Buffer and Soft-Knee Compression
+  // -thread_queue_size 4096 gives us the headroom for internet jitter.
   const args = [
+    '-thread_queue_size', '4096',
     '-f', 's16le', '-ar', '48000', '-ac', '1', '-i', 'pipe:0',
-    '-af', 'agate=threshold=0.03:range=0.1,bass=g=4:f=100,treble=g=3:f=5000,compand=attacks=0.1:decays=1:points=-90/-90|-45/-30|-20/-10|0/-3,loudnorm=I=-16:TP=-1.5,volume=1.8',
+    '-af', [
+      'highpass=f=80', // cut rumble
+      'anequalizer=c0 f=125 w=100 g=3|c0 f=3000 w=500 g=2', // radio warmth + clarity
+      'agate=threshold=0.03:range=0.1', 
+      'compand=attacks=0.05:decays=0.5:points=-90/-90|-30/-15|-10/-5|0/-1', // smooth vocal texture
+      'loudnorm=I=-16:TP=-1.5',
+      'volume=1.5'
+    ].join(','),
     '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
   ];
 
