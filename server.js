@@ -388,28 +388,27 @@ async function playTrack() {
 }
 
 // ─── ENGINE: CONTINUOUS HEARTBEAT & MIXER ────────────────────────────────────
-let heartbeatProc = null;
+let heartbeatInterval = null;
 
 function startHeartbeat() {
-  if (heartbeatProc) return;
-  console.log('[ENGINE] Starting Continuous Heartbeat Mixer...');
-  
-  // FFmpeg null source generates master 44.1kHz stereo signal 24/7.
-  heartbeatProc = spawn('ffmpeg', [
-    '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo',
-    '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
-  ]);
+  if (heartbeatInterval) return;
+  console.log('[ENGINE] Starting High-Precision Heartbeat Mixer...');
 
-  heartbeatProc.stdout.on('data', chunk => {
-    if (!masterProc || !masterProc.stdin) return;
-    
-    // The heartbeat is our master clock.
-    const finalBuffer = Buffer.alloc(chunk.length);
+  const sampleRate = 44100;
+  const channels = 2;
+  const bytesPerSample = 2;
+  const chunkSize = 4096; // ~46ms of audio per pulse
+  
+  heartbeatInterval = setInterval(() => {
+    if (!masterProc || !masterProc.stdin || !masterProc.stdin.writable) return;
+
+    const chunk = Buffer.alloc(chunkSize);
+    const finalBuffer = Buffer.alloc(chunkSize);
     
     // Pull audio directly from source streams (using non-blocking .read())
-    const mChunk   = (musicProc)   ? musicProc.stdout.read(chunk.length) : null;
-    const micChunk = (state.micMode !== 'OFF') ? activeMicStream.read(chunk.length) : null;
-    const overChunk = (state.overlayActive)   ? activeOverlayStream.read(chunk.length) : null;
+    const mChunk   = (musicProc)   ? musicProc.stdout.read(chunkSize) : null;
+    const micChunk = (state.micMode !== 'OFF') ? activeMicStream.read(chunkSize) : null;
+    const overChunk = (state.overlayActive)   ? activeOverlayStream.read(chunkSize) : null;
 
     // Sidechain Logic (Ducking)
     let triggerRMS = 0;
@@ -445,38 +444,44 @@ function startHeartbeat() {
 
     // Smooth volume transition
     const attackCoeff = 0.3, releaseCoeff = 0.05;
-    // FIX: Fallback to baseVol immediately if prev is undefined to avoid starting at 0
-    const prevVol = (heartbeatProc._smoothVol !== undefined) ? heartbeatProc._smoothVol : baseVol;
-    const smoothVol = (targetVol > prevVol) ? prevVol + attackCoeff * (targetVol - prevVol) : prevVol + releaseCoeff * (targetVol - prevVol);
-    heartbeatProc._smoothVol = smoothVol;
+    if (state._smoothVol === undefined) state._smoothVol = baseVol;
+    state._smoothVol = (targetVol > state._smoothVol) 
+      ? state._smoothVol + attackCoeff * (targetVol - state._smoothVol) 
+      : state._smoothVol + releaseCoeff * (targetVol - state._smoothVol);
+    
+    const smoothVol = state._smoothVol;
 
     // Mixing Loop
-    for (let i = 0; i < chunk.length; i += 2) {
+    let masterRMS = 0;
+    for (let i = 0; i < chunkSize; i += 2) {
       let mSample = (mChunk && i < mChunk.length) ? mChunk.readInt16LE(i) * smoothVol : 0;
       let micSample = (micChunk && i < micChunk.length) ? micChunk.readInt16LE(i) : 0;
       let overSample = (overChunk && i < overChunk.length) ? overChunk.readInt16LE(i) : 0;
 
       const out = Math.max(-32768, Math.min(32767, Math.round(mSample + micSample + overSample)));
       finalBuffer.writeInt16LE(out, i);
+      masterRMS += (out / 32768) ** 2;
     }
 
-    if (!masterProc.stdin.writable) return;
-    
+    // Silence Guard: If playing but RMS is 0 for too long, reset mixer
+    masterRMS = Math.sqrt(masterRMS / (chunkSize / 2));
+    if (state.isPlaying && masterRMS < 0.0001) {
+      state._silenceCount = (state._silenceCount || 0) + 1;
+      if (state._silenceCount > 100) { // ~5 seconds
+        console.warn('[GUARD] Silence detected, restarting master...');
+        state._silenceCount = 0;
+        restartMixer();
+      }
+    } else {
+      state._silenceCount = 0;
+    }
+
     try {
       masterProc.stdin.write(finalBuffer);
     } catch (e) {
-      console.error('[HEARTBEAT] Mixer Flush Error:', e.message);
+      console.error('[MIXER] Write Error:', e.message);
     }
-  });
-
-  heartbeatProc.on('error', err => {
-    console.error('[HEARTBEAT] Process Spawn Error:', err.message);
-  });
-
-  heartbeatProc.on('exit', () => {
-    heartbeatProc = null;
-    setTimeout(startHeartbeat, 1000);
-  });
+  }, Math.floor((chunkSize / (sampleRate * channels * bytesPerSample)) * 1000));
 }
 
 // ─── MIC FILTER (FFmpeg gate/comp/AGC) ───────────────────────────────────────
