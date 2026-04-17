@@ -512,12 +512,14 @@ function startMicFilter() {
     '-thread_queue_size', '4096',
     '-f', 's16le', '-ar', '48000', '-ac', '1', '-i', 'pipe:0',
     '-af', [
-      'highpass=f=80', // cut rumble
-      'anequalizer=c0 f=125 w=100 g=3|c0 f=3000 w=500 g=2', // radio warmth + clarity
-      'agate=threshold=0.03:range=0.1', 
-      'compand=attacks=0.05:decays=0.5:points=-90/-90|-30/-15|-10/-5|0/-1', // smooth vocal texture
+      'asubcut=f=60', // absolute silence for floor rumble
+      'highpass=f=120', // dry out the boxy room mid-bass
+      'afftdn=nf=-25', // FFT-based noise reduction (strips room hum/air)
+      'agate=threshold=0.04:range=0.1:attack=20:release=150', // tighter gate for room echo
+      'anequalizer=c0 f=125 w=100 g=3|c0 f=3000 w=500 g=2', // radio warmth
+      'compand=attacks=0.02:decays=0.3:points=-90/-90|-40/-20|-10/-5|0/-1', // tighter vocal compression
       'loudnorm=I=-16:TP=-1.5',
-      'volume=1.5'
+      'volume=1.8'
     ].join(','),
     '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
   ];
