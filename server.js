@@ -875,7 +875,7 @@ setInterval(() => {
   startHeartbeat(); 
   
   // Ensure we have some initial volume state
-  if (heartbeatProc) heartbeatProc._smoothVol = state.volume / 100;
+  if (state._smoothVol === undefined) state._smoothVol = state.volume / 100;
   
   // Await the first scan so state.queue is populated before we try to play
   await scanLibrary();
