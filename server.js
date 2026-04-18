@@ -230,6 +230,9 @@ function startMaster() {
   masterProc.stdin.on('drain', () => { if (musicProc) musicProc.stdout.resume(); });
   masterProc.on('exit', () => {
     console.log('[ENGINE] Master Mixer exited. Restarting...');
+    // Force disconnect all streaming listeners so they immediately trigger reconnect
+    streamClients.forEach(res => { try { res.end(); } catch(e) {} });
+    streamClients.clear();
     masterProc = null;
     setTimeout(startMaster, 1000);
   });
@@ -321,7 +324,16 @@ function stopNewsRecording() {
   
   const args = [
     '-f', 's16le', '-ar', '48000', '-ac', '1', '-i', rawPath,
-    '-af', 'agate=threshold=0.03:range=0.1,compand=attacks=0.1:decays=1:points=-90/-90|-45/-30|-20/-10|0/-3,loudnorm=I=-16:TP=-1.5:LRA=11',
+    '-af', [
+      'asubcut=cutoff=60', // sub-bass rumble removal
+      'highpass=f=120', // room mud removal
+      'afftdn=nf=-25', // FFT-based noise reduction
+      'agate=threshold=0.05:range=0.05:attack=10:release=100', // snap-gate for echo
+      'anequalizer=c0 f=100 w=50 g=4|c0 f=3500 w=1000 g=3|c0 f=10000 w=2000 g=2', // radio shine EQ
+      'compand=attacks=0.01:decays=0.1:points=-90/-90|-40/-15|-10/-4|0/-1', // aggressive radio compression
+      'loudnorm=I=-14:TP=-1.0', // loud broadcast standard
+      'volume=2.0' // final gain boost
+    ].join(','),
     '-y', outPath
   ];
   
@@ -516,7 +528,7 @@ function startMicFilter() {
     '-thread_queue_size', '4096',
     '-f', 's16le', '-ar', '48000', '-ac', '1', '-i', 'pipe:0',
     '-af', [
-      'asubcut=f=60', // absolute silence for floor rumble
+      'asubcut=cutoff=60', // absolute silence for floor rumble
       'highpass=f=120', // dry out the boxy room mid-bass
       'afftdn=nf=-25', // FFT-based noise reduction (strips room hum/air)
       'agate=threshold=0.04:range=0.1:attack=20:release=150', // tighter gate for room echo

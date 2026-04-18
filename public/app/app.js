@@ -34,6 +34,8 @@ let lastOverlayActive = false;
 let lastOverlayTitle  = '';
 let serverIsPlaying = true; // optimistic: assume server is on-air until told otherwise
 let currentStreamUrl = '';
+let lastRadioTrack = { title: 'STATION IDLE', artist: 'Connecting...' };
+let lastMicMode = 'OFF';
 let wsRetryDelay = 3000;
 let stallTimer  = null;
 let radioRetryDelay = 2000; // exponential back-off for stream errors
@@ -46,6 +48,11 @@ function connectWS() {
   ws.onopen = () => {
     wsRetryDelay = 3000;
     ws.send(JSON.stringify({ action: 'getStatus' }));
+    // If we're supposed to be listening to radio but it's stalled, poke it
+    if (appMode === 'radio' && isPlaying && (DE.audio.paused || DE.audio.readyState < 2)) {
+      console.log('[WS] Reconnected & Resyncing stream...');
+      startRadioStream();
+    }
   };
 
   ws.onmessage = e => {
@@ -65,13 +72,9 @@ function connectWS() {
         // Update server playing state (used to know if stream is live)
         if (typeof d.isPlaying === 'boolean') serverIsPlaying = d.isPlaying;
 
-        // Server stopped: reflect in UI only — never touch audio element from WS handler
-        if (d.isPlaying === false && appMode === 'radio' && isPlaying) {
-          // Server stopped broadcasting — update UI to show idle but keep connection
-          // so when server resumes, the stream automatically recovers
-          isPlaying = false;
-          updateUI();
-        }
+        // Note: We no longer set isPlaying = false here. 
+        // We keep the client in "Listening Mode" so it auto-recovers when the server resumes.
+        
         if (appMode === 'radio') updateUI();
       }
     } catch(e) {}
@@ -306,3 +309,21 @@ updateUI();
 document.body.addEventListener('touchstart', () => {
   if (!window.audioEnabled) { DE.audio.load(); window.audioEnabled = true; }
 }, { once: true });
+
+// ── Watchdog ─────────────────────────────────────────────────────────────────────────────
+// Recover from mobile background suspension or network glitches
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    console.log('[WATCHDOG] App visible, checking health...');
+    if (ws && ws.readyState !== WebSocket.OPEN && ws.readyState !== WebSocket.CONNECTING) {
+      connectWS();
+    }
+    if (appMode === 'radio' && isPlaying) {
+      // If audio is stalled or paused when it should be playing radio
+      if (DE.audio.paused || DE.audio.error || DE.audio.readyState < 2) {
+        console.log('[WATCHDOG] Radio stalled in background, force reconnecting...');
+        startRadioStream();
+      }
+    }
+  }
+});
