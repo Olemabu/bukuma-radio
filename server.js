@@ -337,7 +337,7 @@ function stopNewsRecording() {
       'anequalizer=c0 f=100 w=50 g=4|c0 f=3500 w=1000 g=3|c0 f=10000 w=2000 g=2', // radio shine EQ
       'compand=attacks=0.01:decays=0.1:points=-90/-90|-40/-15|-10/-4|0/-1', // aggressive radio compression
       'loudnorm=I=-14:TP=-1.0', // loud broadcast standard
-      'volume=2.0' // final gain boost
+      'volume=2.7' // increased gain as requested (+35%)
     ].join(','),
     '-y', outPath
   ];
@@ -542,8 +542,8 @@ function startMicFilter() {
       'agate=threshold=0.04:range=0.1:attack=20:release=150', // tighter gate for room echo
       'anequalizer=c0 f=125 w=100 g=3|c0 f=3000 w=500 g=2', // radio warmth
       'compand=attacks=0.02:decays=0.3:points=-90/-90|-40/-20|-10/-5|0/-1', // tighter vocal compression
-      'loudnorm=I=-16:TP=-1.5',
-      'volume=1.8'
+      'loudnorm=I=-14:TP=-1.0',
+      'volume=2.7' // increased gain as requested
     ].join(','),
     '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
   ];

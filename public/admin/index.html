@@ -1030,6 +1030,7 @@ function updateOnAirDisplay(data) {
     document.getElementById('trackTitle').textContent  = data.currentTrack.title  || 'Unknown Track';
     document.getElementById('trackArtist').textContent = data.currentTrack.artist || 'Community Radio';
     document.getElementById('trackArt').textContent    = '🎵';
+    document.getElementById('trackArtist').style.color = 'var(--text-dim)';
   } else {
     document.getElementById('trackTitle').textContent  = 'STATION STANDBY';
     document.getElementById('trackArtist').textContent = 'Awaiting signal…';
