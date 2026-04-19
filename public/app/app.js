@@ -38,7 +38,9 @@ let lastRadioTrack = { title: 'STATION IDLE', artist: 'Connecting...' };
 let lastMicMode = 'OFF';
 let wsRetryDelay = 3000;
 let stallTimer  = null;
+let lastHeartbeatPos  = 0;
 let radioRetryDelay = 2000; // exponential back-off for stream errors
+const MAX_RETRY_DELAY = 10000; // 10s max gap for perpetual radio
 
 // ── WebSocket ────────────────────────────────────────────────────────────────────────
 function connectWS() {
@@ -188,7 +190,11 @@ function startRadioStream() {
   DE.audio.src = url;
   currentStreamUrl = url;
   radioRetryDelay = 2000; // reset back-off
-  DE.audio.play().catch(() => {});
+  DE.audio.play().catch(err => {
+    console.warn('[AUDIO] Auto-play blocked or failed:', err.message);
+    // If blocked, we stay in isPlaying=true state, and updateUI will show we are "trying"
+    updateUI();
+  });
 }
 
 function togglePlayback() {
@@ -196,6 +202,7 @@ function togglePlayback() {
     DE.audio.pause();
     if (appMode === 'radio') { DE.audio.src = ''; currentStreamUrl = ''; }
     isPlaying = false;
+    localStorage.removeItem('bukuma_listening');
   } else {
     if (appMode === 'radio') {
       startRadioStream();
@@ -205,6 +212,7 @@ function togglePlayback() {
       DE.audio.play().catch(() => {});
     }
     isPlaying = true;
+    localStorage.setItem('bukuma_listening', 'true');
   }
   updateUI();
 }
@@ -231,7 +239,7 @@ DE.audio.addEventListener('error', () => {
   setTimeout(() => {
     if (appMode === 'radio' && isPlaying) startRadioStream();
   }, radioRetryDelay);
-  radioRetryDelay = Math.min(radioRetryDelay * 1.5, 15000);
+  radioRetryDelay = Math.min(radioRetryDelay * 1.5, MAX_RETRY_DELAY);
 });
 
 // FIX: 'ended' on radio stream means server dropped — reconnect, don't stay silent
@@ -310,8 +318,9 @@ document.body.addEventListener('touchstart', () => {
   if (!window.audioEnabled) { DE.audio.load(); window.audioEnabled = true; }
 }, { once: true });
 
-// ── Watchdog ─────────────────────────────────────────────────────────────────────────────
-// Recover from mobile background suspension or network glitches
+// ── Perpetual Watchdogs ─────────────────────────────────────────────────────────────
+
+// 1. Recover from mobile background suspension or network glitches
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     console.log('[WATCHDOG] App visible, checking health...');
@@ -319,11 +328,41 @@ document.addEventListener('visibilitychange', () => {
       connectWS();
     }
     if (appMode === 'radio' && isPlaying) {
-      // If audio is stalled or paused when it should be playing radio
       if (DE.audio.paused || DE.audio.error || DE.audio.readyState < 2) {
         console.log('[WATCHDOG] Radio stalled in background, force reconnecting...');
         startRadioStream();
       }
     }
+  }
+});
+
+// 2. Instant Network Recovery (WiFi/LTE regain)
+window.addEventListener('online', () => {
+  console.log('[WATCHDOG] Network signal restored, reconnecting...');
+  if (appMode === 'radio' && isPlaying) startRadioStream();
+  if (ws && ws.readyState !== WebSocket.OPEN) connectWS();
+});
+
+// 3. Stalling Heartbeat (Clock Monitor)
+setInterval(() => {
+  if (appMode === 'radio' && isPlaying && !DE.audio.paused) {
+    const currentPos = DE.audio.currentTime;
+    if (currentPos > 0 && currentPos === lastHeartbeatPos) {
+      console.warn('[WATCHDOG] Audio clock frozen, forcing refresh...');
+      startRadioStream();
+    }
+    lastHeartbeatPos = currentPos;
+  }
+}, 5000);
+
+// 4. Session Persistence (Auto-Resume on reload)
+window.addEventListener('load', () => {
+  if (localStorage.getItem('bukuma_listening') === 'true') {
+    console.log('[INIT] Perpetual session found, resuming...');
+    // Opt-in to radio mode if we were listening to it
+    appMode = 'radio';
+    isPlaying = true; 
+    startRadioStream();
+    updateUI();
   }
 });
