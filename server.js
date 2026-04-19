@@ -265,6 +265,11 @@ function stopOverlay() {
   }
   state.overlayActive = false;
   state.overlayTitle = '';
+  // Drain any remaining audio data to ensure clean slate for next broadcast
+  if (activeOverlayStream) {
+    let chunk;
+    while ((chunk = activeOverlayStream.read()) !== null) {}
+  }
   broadcastStatus();
 }
 
@@ -448,10 +453,12 @@ function startHeartbeat() {
       const gate = state.micGate || 0.05;
       const duckFloor = (state.micDuckLevel !== undefined ? state.micDuckLevel : 30) / 100;
       
-      if (triggerRMS > gate || state.overlayActive) {
-        const duckDepth = state.overlayActive ? 1 : Math.min(1, (triggerRMS - gate) / 0.1);
+      if (triggerRMS > gate) {
+        // Dynamic ducking depth based on how much the voice exceeds the gate
+        const duckDepth = Math.min(1, (triggerRMS - gate) / 0.1);
         targetVol = isPaused ? 0 : baseVol * (1 - duckDepth * (1 - duckFloor));
       } else {
+        // Voice is below gate (silence/breaths): music restores to background level
         targetVol = isPaused ? 0 : baseVol;
       }
     } else {
@@ -459,7 +466,8 @@ function startHeartbeat() {
     }
 
     // Smooth volume transition
-    const attackCoeff = 0.3, releaseCoeff = 0.05;
+    // Fast volume transition (attack=recovery, release=ducking)
+    const attackCoeff = 0.8, releaseCoeff = 0.4;
     if (state._smoothVol === undefined) state._smoothVol = baseVol;
     state._smoothVol = (targetVol > state._smoothVol) 
       ? state._smoothVol + attackCoeff * (targetVol - state._smoothVol) 
