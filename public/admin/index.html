@@ -1259,6 +1259,8 @@ function stopMic() {
     micStream = null;
   }
   console.log('[MIC] Stopped.');
+  // NEW: Tell the server to turn off mic mode so the display returns to music
+  setMic('OFF');
 }
 
 // ── On-Air Message ────────────────────────────────────────────────────────────
