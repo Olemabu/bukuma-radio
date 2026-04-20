@@ -63,6 +63,7 @@ let state = {
   newsLibrary:   [],       // tracking our mastered news items
   overlayActive: false,    // true when a news item or stinger is playing
   overlayTitle:  '',       // title of current overlay
+  newsVolume:    100,      // separate volume for news/overlay (0-200)
   isRecording:   false,    // true when capturing mic to a news item
   schedule:      []        // list of { id, newsId, time, dayOfWeek }
 };
@@ -78,6 +79,7 @@ function loadState() {
       state.schedule       = saved.schedule       || [];
       state.micDuckLevel   = saved.micDuckLevel   || 30;
       state.micGate        = saved.micGate        || 0.05;
+      state.newsVolume      = saved.newsVolume      || 100;
     }
   } catch(e) { console.error('[STATE] Failed to load:', e.message); }
 }
@@ -87,6 +89,7 @@ function saveState() {
       isPlaying:       state.isPlaying,
       currentMusicIdx: state.currentMusicIdx,
       volume:          state.volume,
+      newsVolume:      state.newsVolume,
       schedule:        state.schedule,
       micDuckLevel:    state.micDuckLevel,
       micGate:         state.micGate
@@ -477,10 +480,11 @@ function startHeartbeat() {
 
     // Mixing Loop
     let masterRMS = 0;
+    const newsVol = state.newsVolume / 100;
     for (let i = 0; i < chunkSize; i += 2) {
       let mSample = (mChunk && i < mChunk.length) ? mChunk.readInt16LE(i) * smoothVol : 0;
       let micSample = (micChunk && i < micChunk.length) ? micChunk.readInt16LE(i) : 0;
-      let overSample = (overChunk && i < overChunk.length) ? overChunk.readInt16LE(i) : 0;
+      let overSample = (overChunk && i < overChunk.length) ? overChunk.readInt16LE(i) * newsVol : 0;
 
       const out = Math.max(-32768, Math.min(32767, Math.round(mSample + micSample + overSample)));
       finalBuffer.writeInt16LE(out, i);
@@ -705,6 +709,15 @@ app.post('/api/mic', (req, res) => {
 app.post('/api/volume', (req, res) => {
   state.volume = req.body.volume;
   saveState(); broadcastStatus();
+  res.json({ ok: true });
+});
+
+app.post('/api/news/volume', (req, res) => {
+  const vol = parseInt(req.body.volume);
+  if (!isNaN(vol) && vol >= 0 && vol <= 200) {
+    state.newsVolume = vol;
+    saveState(); broadcastStatus();
+  }
   res.json({ ok: true });
 });
 

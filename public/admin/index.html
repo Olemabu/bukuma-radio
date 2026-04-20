@@ -758,6 +758,12 @@
           <span class="slider-val" id="volVal">80%</span>
         </div>
         <div class="slider-row">
+          <span class="slider-label">News Volume</span>
+          <input type="range" class="ctrl-slider" id="newsVolSlider" min="0" max="200" value="100"
+                 oninput="setNewsVolume(this.value)" />
+          <span class="slider-val" id="newsVolVal">100%</span>
+        </div>
+        <div class="slider-row">
           <span class="slider-label">Duck Level</span>
           <input type="range" class="ctrl-slider" id="duckSlider" min="0" max="100" value="30"
                  oninput="setDuckLevel(this.value)" />
@@ -1062,6 +1068,7 @@ function updateOnAirDisplay(data) {
 
   // Sliders (sync from server without triggering API calls)
   syncSlider('volSlider',  'volVal',  data.volume || 80,                    v => v + '%');
+  syncSlider('newsVolSlider', 'newsVolVal', data.newsVolume || 100, v => v + '%');
   syncSlider('duckSlider', 'duckVal', data.micDuckLevel !== undefined ? data.micDuckLevel : 30, v => v + '%');
   syncSlider('gateSlider', 'gateVal', Math.round((data.micGate || 0.05) * 100), v => (v / 100).toFixed(2));
 
@@ -1164,6 +1171,15 @@ function setVolume(val) {
   document.getElementById('volVal').textContent = val + '%';
   document.getElementById('volDisplay').textContent = val + '%';
   fetch('/api/volume', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ volume: parseInt(val) })
+  }).catch(console.error);
+}
+
+function setNewsVolume(val) {
+  document.getElementById('newsVolVal').textContent = val + '%';
+  fetch('/api/news/volume', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ volume: parseInt(val) })
