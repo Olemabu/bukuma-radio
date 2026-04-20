@@ -141,6 +141,11 @@
             </div>
         </div>
 
+        <div style="margin-bottom:15px; display:flex; gap:8px;">
+            <button class="btn btn-sm btn-skip" style="flex:1; font-size:9px;" onclick="document.getElementById('newsUploadInput').click()">📤 UPLOAD ARCHIVE</button>
+            <input type="file" id="newsUploadInput" style="display:none" accept=".mp3,audio/*" onchange="handleNewsUpload(this)" multiple>
+        </div>
+
         <div class="news-list" id="newsList">
             <!-- News items pumped here -->
         </div>

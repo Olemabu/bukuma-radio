@@ -334,6 +334,14 @@ input[type="range"].heavy-slider::-webkit-slider-thumb {
 }
 
 /* ── News Library ───────────────────────────────────────────────────── */
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
 .news-item {
   display: flex;
   align-items: center;

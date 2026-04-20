@@ -324,3 +324,92 @@ function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function escAttr(s) { return String(s).replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
 
 window.addEventListener('load', initStatusWS);
+
+// ── Schedule Management ──────────────────────────────────────────────────────────
+function renderSchedule(schedule) {
+  const list = document.getElementById('scheduleList');
+  if (!list || !schedule) return;
+  if (!schedule.length) {
+    list.innerHTML = '<div style="padding:10px; text-align:center; opacity:0.5;">No items scheduled</div>';
+    return;
+  }
+  const dayMap = { mon:'Monday', tue:'Tuesday', wed:'Wednesday', thu:'Thursday', fri:'Friday', sat:'Saturday', sun:'Sunday' };
+  list.innerHTML = schedule.map(s => {
+    const newsItem = serverState.newsLibrary ? serverState.newsLibrary.find(n => n.id === s.newsId) : null;
+    return `
+      <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:6px; border-left:2px solid var(--accent3); margin-bottom:4px;">
+        <div style="flex:1;">
+          <div style="font-weight:700; color:var(--text); font-size:11px;">${s.time} - ${dayMap[s.dayOfWeek]}</div>
+          <div style="font-size:9px; opacity:0.7;">${newsItem ? escHtml(newsItem.title) : 'Archived News'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openScheduleModal(newsId, title) {
+  const modal = document.createElement('div');
+  modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;";
+  modal.innerHTML = `
+    <div class="card" style="width:100%; max-width:400px; padding:25px; border:1px solid var(--accent);">
+      <div class="card-title">Schedule Broadcast</div>
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:20px;">Item: ${title}</div>
+      
+      <label style="display:block; font-size:10px; color:var(--accent); margin-bottom:5px;">DAY OF WEEK</label>
+      <select id="schDay" class="btn" style="width:100%; margin-bottom:15px; background:rgba(255,255,255,0.05); text-align:left; padding:10px;">
+        <option value="mon">Monday</option><option value="tue">Tuesday</option><option value="wed">Wednesday</option>
+        <option value="thu">Thursday</option><option value="fri">Friday</option><option value="sat">Saturday</option>
+        <option value="sun">Sunday</option>
+      </select>
+
+      <label style="display:block; font-size:10px; color:var(--accent); margin-bottom:5px;">TIME (24h)</label>
+      <input type="time" id="schTime" class="btn" value="12:00" style="width:100%; margin-bottom:25px; background:rgba(255,255,255,0.05); text-align:left; padding:10px;">
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn" style="flex:1;" onclick="this.closest('div').parentElement.parentElement.remove()">CANCEL</button>
+        <button class="btn btn-play" style="flex:1;" id="saveSchBtn">SET SCHEDULE</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.querySelector('#saveSchBtn').onclick = () => {
+    const day = modal.querySelector('#schDay').value;
+    const time = modal.querySelector('#schTime').value;
+    fetch('/api/news/schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newsId, day, time })
+    }).then(() => modal.remove()).catch(console.error);
+  };
+}
+
+function clearSchedule() {
+  if (confirm('Clear all scheduled broadcasts?')) fetch('/api/news/schedule/clear', { method: 'POST' });
+}
+
+// ── Playlist Management ──────────────────────────────────────────────────────
+function openPlaylistModal() { document.getElementById('playlistModal').classList.add('open'); }
+function closePlaylistModal() { document.getElementById('playlistModal').classList.remove('open'); }
+
+function renderPlaylistSelector(library) {
+  const container = document.getElementById('plTrackSelector');
+  if (!container) return;
+  container.innerHTML = library.map(t => `
+    <div style="display:flex; align-items:center; gap:10px; padding:6px; border-bottom:1px solid rgba(255,255,255,0.05);">
+      <input type="checkbox" class="pl-track-check" value="${t.id}" style="width:16px; height:16px;">
+      <div style="font-size:11px;">${escHtml(t.title)} - <span style="color:var(--text-dim)">${escHtml(t.artist)}</span></div>
+    </div>
+  `).join('');
+}
+
+function savePlaylist() {
+  const name = document.getElementById('plName').value.trim();
+  const checks = document.querySelectorAll('.pl-track-check:checked');
+  const trackIds = Array.from(checks).map(c => c.value);
+  if (!name || !trackIds.length) return alert('Enter name and select tracks');
+  fetch('/api/playlists/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, trackIds })
+  }).then(r => r.json()).then(res => { if (res.ok) { alert('Playlist created!'); closePlaylistModal(); } });
+}
