@@ -7,37 +7,154 @@
     <link rel="stylesheet" href="/css/glass.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Outfit', sans-serif; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top right, #1e3a8a, #0f172a); }
-        .container { display: flex; flex-direction: column; align-items: center; gap: 2rem; z-index: 10; }
-        .station-header { text-align: center; }
-        .station-name { font-size: 3rem; font-weight: 900; margin: 0; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 10px 20px rgba(0,242,254,0.2); }
-        .portal-card { width: 350px; text-align: center; }
-        .on-air-tag { background: rgba(255, 61, 0, 0.2); border: 1px solid rgba(255, 61, 0, 0.4); color: #ff3d00; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 900; letter-spacing: 2px; display: inline-block; margin-bottom: 1rem; box-shadow: 0 0 15px rgba(255, 61, 0, 0.2); }
-        .track-title { font-size: 1.5rem; font-weight: 700; margin: 10px 0 5px; color: #fff; }
-        .track-artist { font-size: 0.9rem; opacity: 0.7; margin-bottom: 1rem; }
+        :root { --glass-accent: #00f2fe; }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            min-height: 100dvh; 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: radial-gradient(circle at top right, #1e3a8a, #0f172a); 
+            color: #fff;
+            overflow-x: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 1.5rem; 
+            width: 100%;
+            max-width: 450px;
+            z-index: 10; 
+        }
+        .station-header { text-align: center; width: 100%; }
+        .station-name { 
+            font-size: clamp(1.8rem, 10vw, 3.2rem); 
+            line-height: 1.1;
+            font-weight: 900; 
+            margin: 0 0 5px 0; 
+            background: linear-gradient(to right, #00f2fe, #4facfe); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            text-shadow: 0 10px 20px rgba(0,242,254,0.2); 
+            text-transform: uppercase;
+        }
+        .station-sub {
+            opacity: 0.5; 
+            letter-spacing: 4px; 
+            font-weight: 300; 
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            margin-bottom: 0.5rem;
+        }
+
+        .portal-card { 
+            width: 100%; 
+            max-width: 380px; 
+            text-align: center; 
+            padding: 30px 20px;
+        }
+        .on-air-tag { 
+            background: rgba(255, 61, 0, 0.1); 
+            border: 1px solid rgba(255, 61, 0, 0.3); 
+            color: #ff3d00; 
+            padding: 6px 16px; 
+            border-radius: 20px; 
+            font-size: 10px; 
+            font-weight: 900; 
+            letter-spacing: 2px; 
+            display: inline-block; 
+            margin-bottom: 1.5rem; 
+            box-shadow: 0 0 15px rgba(255, 61, 0, 0.1); 
+            transition: all 0.3s;
+        }
+        .track-title { 
+            font-size: clamp(1.2rem, 5vw, 1.6rem); 
+            font-weight: 700; 
+            margin: 10px 0 5px; 
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .track-artist { font-size: clamp(0.8rem, 3vw, 0.95rem); opacity: 0.7; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; }
         
-        .progress-box { width: 100%; margin: 10px 0 20px; text-align: left; }
+        .progress-box { width: 100%; margin: 10px 0 25px; text-align: left; }
         .progress-bar-container { width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05); }
         .progress-fill { height: 100%; width: 0%; background: var(--glass-accent); box-shadow: 0 0 10px var(--glass-accent); transition: width 0.3s linear; }
-        .progress-time { display: flex; justify-content: space-between; font-size: 9px; opacity: 0.5; margin-top: 5px; font-weight: 700; }
+        .progress-time { display: flex; justify-content: space-between; font-size: 10px; opacity: 0.5; margin-top: 8px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-        .main-button { width: 120px; height: 120px; border-radius: 50%; border: none; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 2.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 40px rgba(0,0,0,0.3), inset 0 2px 5px rgba(255,255,255,0.2); margin: 0 auto; }
-        .main-button:hover { transform: scale(1.1) translateY(-5px); background: rgba(255,255,255,0.15); box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 30px rgba(0,242,254,0.3); }
-        .main-button:active { transform: scale(0.95); }
-        .main-button.playing { background: var(--glass-accent); color: #000; box-shadow: 0 0 50px rgba(0,242,254,0.6); }
+        .main-button { 
+            width: clamp(100px, 25vw, 130px); 
+            height: clamp(100px, 25vw, 130px); 
+            border-radius: 50%; 
+            border: none; 
+            background: rgba(255,255,255,0.05); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.15); 
+            color: #fff; 
+            font-size: 2.2rem; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3), inset 0 2px 5px rgba(255,255,255,0.1); 
+            margin: 0 auto; 
+        }
+        .main-button:hover { transform: scale(1.08) translateY(-5px); background: rgba(255,255,255,0.08); box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 30px rgba(0,242,254,0.2); }
+        .main-button:active { transform: scale(0.96); }
+        .main-button.playing { background: var(--glass-accent); color: #000; box-shadow: 0 0 50px rgba(0,242,254,0.4); border-color: rgba(0,0,0,0.1); }
 
-        .viz-container { height: 60px; display: flex; align-items: flex-end; gap: 4px; margin-top: 2rem; }
-        .viz-bar { flex: 1; background: var(--glass-accent); width: 4px; height: 10px; border-radius: 2px; transition: height 0.1s; opacity: 0.4; }
+        .viz-container { height: 40px; display: flex; align-items: flex-end; justify-content: center; gap: 4px; margin-top: 2rem; width: 100%; }
+        .viz-bar { flex: 0 0 4px; background: var(--glass-accent); height: 10px; border-radius: 2px; transition: height 0.1s; opacity: 0.4; }
         
-        .volume-box { position: absolute; bottom: 40px; width: 250px; display: flex; align-items: center; gap: 1rem; }
-        .volume-icon { font-size: 1.2rem; opacity: 0.5; }
+        .volume-box { 
+            width: 100%; 
+            max-width: 280px; 
+            display: flex; 
+            align-items: center; 
+            gap: 1rem; 
+            padding: 12px 20px; 
+            border-radius: 50px; 
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-top: 1rem;
+        }
+        .volume-icon { font-size: 1rem; opacity: 0.5; }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        @media (max-height: 700px) {
+            .container { gap: 1rem; }
+            .portal-card { padding: 20px 15px; }
+            .viz-container { display: none; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="station-header">
             <h1 class="station-name">AGUM BUKUMA</h1>
-            <p style="opacity: 0.5; letter-spacing: 4px; font-weight: 300;">COMMUNITY RADIO</p>
+            <p class="station-sub">COMMUNITY RADIO</p>
         </div>
 
         <div class="glass-card portal-card">
@@ -58,7 +175,7 @@
             <button class="main-button" id="playBtn" onclick="toggleTuneIn()">
                 <span id="playIcon">▶</span>
             </button>
-            <p style="margin-top: 1.5rem; font-size: 11px; opacity: 0.4; font-weight: 700; letter-spacing: 2px;">CONNECTION PORTAL</p>
+            <p style="margin-top: 1.5rem; font-size: 10px; opacity: 0.4; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">CONNECTION PORTAL</p>
 
             <div class="viz-container" id="viz">
                 <div class="viz-bar"></div><div class="viz-bar"></div><div class="viz-bar"></div>
@@ -67,9 +184,9 @@
             </div>
         </div>
 
-        <div class="volume-box glass-card" style="padding: 15px 25px; border-radius: 50px; flex-direction: row; position: relative; bottom: 0;">
+        <div class="volume-box glass-card">
             <span class="volume-icon">🔈</span>
-            <input type="range" id="volSlider" min="0" max="100" value="80" style="flex: 1;" oninput="updateVolume(this.value)">
+            <input type="range" id="volSlider" min="0" max="100" value="80" oninput="updateVolume(this.value)">
             <span class="volume-icon">🔊</span>
         </div>
     </div>
