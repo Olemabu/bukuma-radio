@@ -16,6 +16,12 @@
   <!-- ── Global Header ────────────────────────────────────────────────── -->
   <header class="app-header">
     <div class="logo">Bukuma Station Console</div>
+    
+    <nav class="chamber-nav">
+        <button class="chamber-btn active" id="btn-ops" onclick="switchChamber('ops')">MISSION CONTROL</button>
+        <button class="chamber-btn" id="btn-archives" onclick="switchChamber('archives')">THE ARCHIVES</button>
+    </nav>
+
     <div class="status-row">
       <div id="statusPill" class="status-pill offline">
         <div class="dot"></div>
@@ -25,159 +31,163 @@
     </div>
   </header>
 
-  <main class="bento-grid">
+  <main>
+    <!-- ── CHAMBER: MISSION CONTROL ───────────────────────────────────── -->
+    <div id="chamber-ops" class="chamber active bento-grid">
+        <!-- ── Card: Broadcast Center Hub (Span 12) ───────────────────────── -->
+        <section class="card span-12 broadcast-hub">
+          <div class="broadcast-inner">
+            <div class="hub-art" id="trackArt">📻</div>
+            <div class="hub-info">
+              <h1 class="hub-title" id="trackTitle">AWAITING SIGNAL</h1>
+              <div class="hub-artist" id="trackArtist">STATION STANDBY</div>
+              
+              <div class="hub-seek">
+                <span class="label-caps" id="seekStart">0:00</span>
+                <div class="seek-bar-wrap">
+                  <input type="range" class="seek-bar" id="seekBar" min="0" max="100" value="0"
+                         oninput="onSeekInput(this.value)"
+                         onchange="onSeekCommit(this.value)" />
+                </div>
+                <span class="label-caps" id="seekEnd">0:00</span>
+              </div>
+            </div>
+            
+            <div class="hub-metrics">
+                <div class="metric-item">
+                    <span class="label-caps">Listener VU</span>
+                    <span class="metric-val" id="vuDisplay">0%</span>
+                </div>
+                <div class="metric-item">
+                    <span class="label-caps">Latency</span>
+                    <span class="metric-val" id="latDisplay">0ms</span>
+                </div>
+            </div>
+          </div>
+        </section>
 
-    <!-- ── Card: Broadcast Center Hub (Span 12) ───────────────────────── -->
-    <section class="card span-12 broadcast-hub">
-      <div class="broadcast-inner">
-        <div class="hub-art" id="trackArt">📻</div>
-        <div class="hub-info">
-          <h1 class="hub-title" id="trackTitle">AWAITING SIGNAL</h1>
-          <div class="hub-artist" id="trackArtist">STATION STANDBY</div>
+        <!-- ── Card: Control Hub (Span 4) ────────────────────────────────── -->
+        <section class="card span-4">
+          <div class="card-title">Tactical Console</div>
           
-          <div class="hub-seek">
-            <span class="label-caps" id="seekStart">0:00</span>
-            <div class="seek-bar-wrap">
-              <input type="range" class="seek-bar" id="seekBar" min="0" max="100" value="0"
-                     oninput="onSeekInput(this.value)"
-                     onchange="onSeekCommit(this.value)" />
-            </div>
-            <span class="label-caps" id="seekEnd">0:00</span>
+          <div class="btn-grid">
+            <button class="btn btn-play" id="playBtn" onclick="playStation()">▶ PLAY</button>
+            <button class="btn" onclick="stopStation()">■ STOP</button>
+            <button class="btn" onclick="skipTrack()">⏭ SKIP</button>
           </div>
-        </div>
-        
-        <div class="hub-metrics">
-            <div class="metric-item">
-                <span class="label-caps">Listener VU</span>
-                <span class="metric-val" id="vuDisplay">0%</span>
-            </div>
-            <div class="metric-item">
-                <span class="label-caps">Latency</span>
-                <span class="metric-val" id="latDisplay">0ms</span>
-            </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- ── Card: Control Hub (Span 4) ────────────────────────────────── -->
-    <section class="card span-4">
-      <div class="card-title">Tactical Console</div>
-      
-      <div class="btn-grid">
-        <button class="btn btn-play" id="playBtn" onclick="playStation()">▶ PLAY</button>
-        <button class="btn" onclick="stopStation()">■ STOP</button>
-        <button class="btn" onclick="skipTrack()">⏭ SKIP</button>
-      </div>
+          <div class="slider-stack">
+            <div class="slider-field">
+              <div class="slider-meta">
+                <span class="label-caps">Music Vol</span>
+                <span class="label-caps" id="volVal">80%</span>
+              </div>
+              <input type="range" class="heavy-slider" id="volSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" />
+            </div>
 
-      <div class="slider-stack">
-        <div class="slider-field">
-          <div class="slider-meta">
-            <span class="label-caps">Music Vol</span>
-            <span class="label-caps" id="volVal">80%</span>
+            <div class="slider-field">
+              <div class="slider-meta">
+                <span class="label-caps">News Vol</span>
+                <span class="label-caps" id="newsVolVal">100%</span>
+              </div>
+              <input type="range" class="heavy-slider" id="newsVolSlider" min="0" max="200" value="100" oninput="setNewsVolume(this.value)" />
+            </div>
+
+            <div class="slider-field">
+              <div class="slider-meta">
+                <span class="label-caps">Mic Ducking</span>
+                <span class="label-caps" id="duckVal">30%</span>
+              </div>
+              <input type="range" class="heavy-slider" id="duckSlider" min="0" max="100" value="30" oninput="setDuckLevel(this.value)" />
+            </div>
           </div>
-          <input type="range" class="heavy-slider" id="volSlider" min="0" max="100" value="80" oninput="setVolume(this.value)" />
-        </div>
+        </section>
 
-        <div class="slider-field">
-          <div class="slider-meta">
-            <span class="label-caps">News Vol</span>
-            <span class="label-caps" id="newsVolVal">100%</span>
+        <!-- ── Card: Microphone (Span 4) ──────────────────────────────────── -->
+        <section class="card span-4 mic-hub">
+          <div class="card-title">Microphone Intelligence</div>
+          
+          <div class="mic-mode-selector">
+            <button id="micOff"  class="mode-btn active-off" onclick="setMic('OFF')">OFF</button>
+            <button id="micDuck" class="mode-btn" onclick="setMic('DUCK')">DUCK</button>
+            <button id="micSolo" class="mode-btn" onclick="setMic('SOLO')">SOLO</button>
           </div>
-          <input type="range" class="heavy-slider" id="newsVolSlider" min="0" max="200" value="100" oninput="setNewsVolume(this.value)" />
-        </div>
 
-        <div class="slider-field">
-          <div class="slider-meta">
-            <span class="label-caps">Mic Ducking</span>
-            <span class="label-caps" id="duckVal">30%</span>
+          <button class="big-mic-btn" onclick="startMic()">🎙 OPEN BROADCAST CHANNEL</button>
+          <button class="btn btn-danger" style="margin-top:10px;" onclick="stopMic()">✕ CUT MIC</button>
+
+          <div class="mic-monitor">
+              <div class="mic-bar" id="micVU"></div>
           </div>
-          <input type="range" class="heavy-slider" id="duckSlider" min="0" max="100" value="30" oninput="setDuckLevel(this.value)" />
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <!-- ── Card: Microphone (Span 4) ──────────────────────────────────── -->
-    <section class="card span-4 mic-hub">
-      <div class="card-title">Microphone Intelligence</div>
-      
-      <div class="mic-mode-selector">
-        <button id="micOff"  class="mode-btn active-off" onclick="setMic('OFF')">OFF</button>
-        <button id="micDuck" class="mode-btn" onclick="setMic('DUCK')">DUCK</button>
-        <button id="micSolo" class="mode-btn" onclick="setMic('SOLO')">SOLO</button>
-      </div>
-
-      <button class="big-mic-btn" onclick="startMic()">🎙 OPEN BROADCAST CHANNEL</button>
-      <button class="btn btn-danger" style="margin-top:10px;" onclick="stopMic()">✕ CUT MIC</button>
-
-      <div class="mic-monitor">
-          <div class="mic-bar" id="micVU"></div>
-      </div>
-    </section>
-
-    <!-- ── Card: Broadcast Message (Span 4) ──────────────────────────── -->
-    <section class="card span-4">
-      <div class="card-title">On-Air Status Message</div>
-      <div style="display:flex; flex-direction:column; gap:12px; height:100%;">
-          <textarea id="oamInput" style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:12px; color:#fff; padding:15px; font-family:inherit; resize:none;" placeholder="Emergency announcement or greeting..."></textarea>
-          <div style="display:flex; gap:10px;">
-              <button class="btn btn-play" style="flex:2;" onclick="setOnAirMessage()">SET ASSET</button>
-              <button class="btn" style="flex:1;" onclick="clearOnAirMessage()">CLEAR</button>
+        <!-- ── Card: Broadcast Message (Span 4) ──────────────────────────── -->
+        <section class="card span-4">
+          <div class="card-title">On-Air Status Message</div>
+          <div style="display:flex; flex-direction:column; gap:12px; height:100%;">
+              <textarea id="oamInput" style="flex:1; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:12px; color:#fff; padding:15px; font-family:inherit; resize:none;" placeholder="Emergency announcement or greeting..."></textarea>
+              <div style="display:flex; gap:10px;">
+                  <button class="btn btn-play" style="flex:2;" onclick="setOnAirMessage()">SET ASSET</button>
+                  <button class="btn" style="flex:1;" onclick="clearOnAirMessage()">CLEAR</button>
+              </div>
           </div>
-      </div>
-    </section>
+        </section>
+    </div>
 
-    <!-- ── Card: News Center (Span 6) ────────────────────────────────── -->
-    <section class="card span-6">
-        <div class="card-title">
-            News Archive
-            <button class="btn btn-sm" onclick="toggleNewsRecording()" id="recordNewsBtn" style="border-color:var(--danger); color:var(--danger);">⏺ REC REPORT</button>
-        </div>
-        
-        <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px; padding:12px; background:rgba(255,255,255,0.03); border-radius:12px;">
-            <div id="recordIndicator" style="width:10px; height:10px; border-radius:50%; background:var(--danger); opacity:0.2;"></div>
-            <div id="recordStatus" style="font-size:11px; font-weight:700; color:var(--text-dim);">Ready to record…</div>
-            <div id="newsControlBar" style="display:none; flex:1; justify-content:flex-end;">
-                <button class="btn btn-sm btn-danger" onclick="stopBroadcast()">⏹ STOP ACTIVE NEWS</button>
+    <!-- ── CHAMBER: THE ARCHIVES ───────────────────────────────────────── -->
+    <div id="chamber-archives" class="chamber bento-grid">
+        <!-- ── Card: News Center (Span 6) ────────────────────────────────── -->
+        <section class="card span-6">
+            <div class="card-title">
+                News Archive
+                <button class="btn btn-sm" onclick="toggleNewsRecording()" id="recordNewsBtn" style="border-color:var(--danger); color:var(--danger);">⏺ REC REPORT</button>
             </div>
-        </div>
-
-        <div style="margin-bottom:15px; display:flex; gap:8px;">
-            <button class="btn btn-sm btn-skip" style="flex:1; font-size:9px;" onclick="document.getElementById('newsUploadInput').click()">📤 UPLOAD ARCHIVE</button>
-            <input type="file" id="newsUploadInput" style="display:none" accept=".mp3,audio/*" onchange="handleNewsUpload(this)" multiple>
-        </div>
-
-        <div class="news-list" id="newsList">
-            <!-- News items pumped here -->
-        </div>
-        
-        <div style="margin-top:auto; border-top:1px solid var(--border); padding-top:20px;">
-            <div class="label-caps" style="margin-bottom:12px;">Automated Schedule</div>
-            <div id="scheduleList" style="font-size:11px; color:var(--text-dim);">
-                Searching for upcoming reports…
+            
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:20px; padding:12px; background:rgba(255,255,255,0.03); border-radius:12px;">
+                <div id="recordIndicator" style="width:10px; height:10px; border-radius:50%; background:var(--danger); opacity:0.2;"></div>
+                <div id="recordStatus" style="font-size:11px; font-weight:700; color:var(--text-dim);">Ready to record…</div>
+                <div id="newsControlBar" style="display:none; flex:1; justify-content:flex-end;">
+                    <button class="btn btn-sm btn-danger" onclick="stopBroadcast()">⏹ STOP ACTIVE NEWS</button>
+                </div>
             </div>
-        </div>
-    </section>
 
-    <!-- ── Card: Music Library (Span 6) ──────────────────────────────── -->
-    <section class="card span-6">
-        <div class="card-title">
-            Music Library
-            <span class="label-caps" id="libCount">0 tracks</span>
-        </div>
-
-        <div style="margin-bottom:15px;">
-            <div style="padding:20px; border:2px dashed var(--border); border-radius:15px; text-align:center; cursor:pointer;" onclick="document.getElementById('fileInput').click()">
-                <div style="font-size:1.5rem; margin-bottom:5px;">📀</div>
-                <div class="label-caps">Drop Audio Asset</div>
-                <input type="file" id="fileInput" hidden multiple onchange="handleFileUpload(this)">
+            <div style="margin-bottom:15px; display:flex; gap:8px;">
+                <button class="btn btn-sm btn-skip" style="flex:1; font-size:9px;" onclick="document.getElementById('newsUploadInput').click()">📤 UPLOAD ARCHIVE</button>
+                <input type="file" id="newsUploadInput" style="display:none" accept=".mp3,audio/*" onchange="handleNewsUpload(this)" multiple>
             </div>
-        </div>
 
-        <div class="track-list" id="trackList">
-            <!-- Tracks pumped here -->
-        </div>
-    </section>
+            <div class="news-list" id="newsList">
+                <!-- News items pumped here -->
+            </div>
+            
+            <div style="margin-top:auto; border-top:1px solid var(--border); padding-top:20px;">
+                <div class="label-caps" style="margin-bottom:12px;">Automated Schedule</div>
+                <div id="scheduleList" style="font-size:11px; color:var(--text-dim);">
+                    Searching for upcoming reports…
+                </div>
+            </div>
+        </section>
 
+        <!-- ── Card: Music Library (Span 6) ──────────────────────────────── -->
+        <section class="card span-6">
+            <div class="card-title">
+                Music Library
+                <span class="label-caps" id="libCount">0 tracks</span>
+            </div>
+
+            <div style="margin-bottom:15px;">
+                <div style="padding:20px; border:2px dashed var(--border); border-radius:15px; text-align:center; cursor:pointer;" onclick="document.getElementById('fileInput').click()">
+                    <div style="font-size:1.5rem; margin-bottom:5px;">📀</div>
+                    <div class="label-caps">Drop Audio Asset</div>
+                    <input type="file" id="fileInput" hidden multiple onchange="handleFileUpload(this)">
+                </div>
+            </div>
+
+            <div class="track-list" id="trackList">
+                <!-- Tracks pumped here -->
+            </div>
+        </section>
+    </div>
   </main>
 
   <!-- ── Modals ───────────────────────────────────────────────────────── -->

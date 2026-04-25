@@ -65,7 +65,9 @@ let state = {
   overlayTitle:  '',       // title of current overlay
   newsVolume:    100,      // separate volume for news/overlay (0-200)
   isRecording:   false,    // true when capturing mic to a news item
-  schedule:      []        // list of { id, newsId, time, dayOfWeek }
+  schedule:      [],       // list of { id, newsId, time, dayOfWeek }
+  micHoldTime:   1000,     // ms to keep music ducked after speech ends
+  activeOverlayId: null    // ID of the currently playing news item
 };
 
 // ─── PERSIST STATE ───────────────────────────────────────────────────────────
@@ -268,6 +270,7 @@ function stopOverlay() {
   }
   state.overlayActive = false;
   state.overlayTitle = '';
+  state.activeOverlayId = null;
   // Drain any remaining audio data to ensure clean slate for next broadcast
   if (activeOverlayStream) {
     let chunk;
@@ -300,6 +303,7 @@ function startOverlay(filePath) {
   
   const item = state.newsLibrary.find(n => n.path === filePath);
   state.overlayTitle = item ? item.title : 'News Broadcast';
+  state.activeOverlayId = item ? item.id : null;
   state.overlayActive = true;
   broadcastStatus();
 }
@@ -457,24 +461,30 @@ function startHeartbeat() {
       const duckFloor = (state.micDuckLevel !== undefined ? state.micDuckLevel : 30) / 100;
       
       if (triggerRMS > gate) {
+        state._micLastActive = Date.now();
         // Dynamic ducking depth based on how much the voice exceeds the gate
         const duckDepth = Math.min(1, (triggerRMS - gate) / 0.1);
         targetVol = isPaused ? 0 : baseVol * (1 - duckDepth * (1 - duckFloor));
       } else {
-        // Voice is below gate (silence/breaths): music restores to background level
-        targetVol = isPaused ? 0 : baseVol;
+        // Voice is below gate (silence/breaths): check if we are in "hold" period
+        const inHold = (Date.now() - (state._micLastActive || 0)) < state.micHoldTime;
+        if (inHold) {
+          targetVol = isPaused ? 0 : baseVol * duckFloor;
+        } else {
+          targetVol = isPaused ? 0 : baseVol;
+        }
       }
     } else {
       targetVol = isPaused ? 0 : baseVol;
     }
 
     // Smooth volume transition
-    // Fast volume transition (attack=recovery, release=ducking)
-    const attackCoeff = 0.8, releaseCoeff = 0.4;
+    // Fast ducking (down), slow recovery (up)
+    const recoveryCoeff = 0.05, duckingCoeff = 0.8;
     if (state._smoothVol === undefined) state._smoothVol = baseVol;
     state._smoothVol = (targetVol > state._smoothVol) 
-      ? state._smoothVol + attackCoeff * (targetVol - state._smoothVol) 
-      : state._smoothVol + releaseCoeff * (targetVol - state._smoothVol);
+      ? state._smoothVol + recoveryCoeff * (targetVol - state._smoothVol) 
+      : state._smoothVol + duckingCoeff * (targetVol - state._smoothVol);
     
     const smoothVol = state._smoothVol;
 
