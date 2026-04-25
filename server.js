@@ -24,7 +24,7 @@ app.use(express.json());
 
 // Prioritize /data for Railway volumes, but fallback to local ./data
 let DATA_DIR = path.join(__dirname, 'data');
-if (fs.existsSync('/data')) DATA_DIR = '/data';
+if (process.platform !== 'win32' && fs.existsSync('/data')) DATA_DIR = '/data';
 
 const MUSIC_DIR  = path.join(DATA_DIR, 'downloads');
 const NEWS_DIR   = path.join(DATA_DIR, 'news');
@@ -67,7 +67,9 @@ let state = {
   isRecording:   false,    // true when capturing mic to a news item
   schedule:      [],       // list of { id, newsId, time, dayOfWeek }
   micHoldTime:   1000,     // ms to keep music ducked after speech ends
-  activeOverlayId: null    // ID of the currently playing news item
+  activeOverlayId: null,   // ID of the currently playing news item
+  playbackMode:  'REPEAT_ALL', // LINEAR | REPEAT_ONE | REPEAT_ALL
+  shuffle:       false      // true if queue is randomized
 };
 
 // ─── PERSIST STATE ───────────────────────────────────────────────────────────
@@ -94,7 +96,9 @@ function saveState() {
       newsVolume:      state.newsVolume,
       schedule:        state.schedule,
       micDuckLevel:    state.micDuckLevel,
-      micGate:         state.micGate
+      micGate:         state.micGate,
+      playbackMode:    state.playbackMode,
+      shuffle:         state.shuffle
     });
     fs.writeFileSync(STATE_FILE, data);
   } catch(e) { console.error('[STATE] Failed to save:', e.message); }
@@ -219,6 +223,7 @@ function startMaster() {
   console.log('[ENGINE] Initializing Master Mixer...');
   masterProc = spawn('ffmpeg', [
     '-f', 's16le', '-ar', '44100', '-ac', '2', '-i', 'pipe:0',
+    '-af', 'alimiter=level_in=1:level_out=0.9:limit=0.95:attack=5:release=50',
     '-f', 'mp3', '-b:a', '192k', '-ar', '44100', '-ac', '2',
     '-content_type', 'audio/mpeg', 'pipe:1'
   ]);
@@ -389,7 +394,11 @@ async function playTrack() {
   broadcastStatus();
   saveState();
 
-  const thisProc = spawn('ffmpeg', ['-re', '-i', track.path, '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1']);
+  const thisProc = spawn('ffmpeg', [
+    '-re', '-i', track.path,
+    '-af', 'loudnorm=I=-14:TP=-1.5:LRA=11',
+    '-f', 's16le', '-ar', '44100', '-ac', '2', 'pipe:1'
+  ]);
   musicProc = thisProc;
 
   thisProc.stderr.on('data', d => {
@@ -398,21 +407,39 @@ async function playTrack() {
     console.log(`[MUSIC-FF] ${msg.trim()}`);
   });
 
-  // Data processing moved to heartbeatProc.stdout handler
-  thisProc.on('exit', (code, signal) => {
-    if (musicProc !== thisProc) return;
-    musicProc = null;
-    if (!state.isPlaying) return;
-    const elapsed   = (Date.now() - thisStartTime) / 1000;
-    const playDelay = elapsed < 3 ? 3000 : 1000;
-    console.log(`[ENGINE] Track ended after ${elapsed.toFixed(1)}s. Next in ${playDelay}ms...`);
-    setTimeout(() => {
-      if (state.isPlaying) {
-        state.currentMusicIdx = (state.currentMusicIdx + 1) % state.queue.length;
-        playTrack();
-      }
-    }, playDelay);
-  });
+    thisProc.on('exit', (code, signal) => {
+      if (musicProc !== thisProc) return;
+      musicProc = null;
+      if (!state.isPlaying) return;
+
+      const elapsed   = (Date.now() - thisStartTime) / 1000;
+      const playDelay = elapsed < 3 ? 3000 : 1000;
+      console.log(`[ENGINE] Track ended. Mode: ${state.playbackMode}`);
+
+      setTimeout(() => {
+        if (!state.isPlaying) return;
+        
+        if (state.playbackMode === 'REPEAT_ONE') {
+          // Play same track again
+          playTrack();
+        } else if (state.playbackMode === 'REPEAT_ALL') {
+          // Move to next, loop back if at end
+          state.currentMusicIdx = (state.currentMusicIdx + 1) % state.queue.length;
+          playTrack();
+        } else {
+          // LINEAR: stop at end
+          if (state.currentMusicIdx < state.queue.length - 1) {
+            state.currentMusicIdx++;
+            playTrack();
+          } else {
+            console.log('[ENGINE] Queue finished (Linear mode).');
+            state.isPlaying = false;
+            state.currentTrack = null;
+            broadcastStatus();
+          }
+        }
+      }, playDelay);
+    });
 }
 
 // ─── ENGINE: CONTINUOUS HEARTBEAT & MIXER ────────────────────────────────────
@@ -505,7 +532,7 @@ function startHeartbeat() {
     masterRMS = Math.sqrt(masterRMS / (chunkSize / 2));
     if (state.isPlaying && masterRMS < 0.0001) {
       state._silenceCount = (state._silenceCount || 0) + 1;
-      if (state._silenceCount > 100) { // ~5 seconds
+      if (state._silenceCount > 1000) { // ~45 seconds (increased for high-cpu filters)
         console.warn('[GUARD] Silence detected, restarting master...');
         state._silenceCount = 0;
         restartMixer();
@@ -738,6 +765,40 @@ app.post('/api/mic-duck', (req, res) => {
     broadcastStatus();
   }
   res.json({ ok: true, micDuckLevel: state.micDuckLevel });
+});
+
+// NEW: Playback Modes
+app.post('/api/playback-mode', (req, res) => {
+  const modes = ['LINEAR', 'REPEAT_ONE', 'REPEAT_ALL'];
+  if (modes.includes(req.body.mode)) {
+    state.playbackMode = req.body.mode;
+    saveState(); broadcastStatus();
+  }
+  res.json({ ok: true, mode: state.playbackMode });
+});
+
+app.post('/api/shuffle', (req, res) => {
+  state.shuffle = !!req.body.shuffle;
+  
+  if (state.shuffle) {
+    // Shuffle the queue (Fisher-Yates)
+    for (let i = state.queue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [state.queue[i], state.queue[j]] = [state.queue[j], state.queue[i]];
+    }
+  } else {
+    // Restore default library order
+    state.queue = [...state.library];
+  }
+  
+  // Re-sync currentMusicIdx to keep current track playing if possible
+  if (state.currentTrack) {
+    const newIdx = state.queue.findIndex(t => t.id === state.currentTrack.id);
+    if (newIdx !== -1) state.currentMusicIdx = newIdx;
+  }
+
+  saveState(); broadcastStatus();
+  res.json({ ok: true, shuffle: state.shuffle });
 });
 
 // NEW: Expose the mic gate threshold so the admin UI slider can tune it live

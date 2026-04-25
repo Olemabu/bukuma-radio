@@ -54,7 +54,7 @@ function updateOnAirDisplay(data) {
 
   // Play button label
   const playBtn = document.getElementById('playBtn');
-  if (playBtn) playBtn.innerHTML = data.isPlaying ? '■ STOPPING' : '▶ PLAYING';
+  if (playBtn) playBtn.innerHTML = data.isPlaying ? '■ STOP' : '▶ PLAY';
 
   // Hub Info
   const micOn = (data.micMode === 'SOLO' || data.micMode === 'DUCK');
@@ -99,6 +99,37 @@ function updateOnAirDisplay(data) {
         document.getElementById('seekStart').textContent = formatTime(data.elapsedTime);
         document.getElementById('seekEnd').textContent   = formatTime(data.duration);
     }
+  }
+
+  // Next Track Label
+  const nextTrackLabel = document.getElementById('nextTrackLabel');
+  if (nextTrackLabel) {
+    if (data.queue && data.queue.length > 0) {
+        const nextIdx = (data.currentMusicIdx + 1) % data.queue.length;
+        const next = data.queue[nextIdx];
+        nextTrackLabel.textContent = next ? `${next.artist} - ${next.title}` : 'END OF QUEUE';
+    } else {
+        nextTrackLabel.textContent = 'NO QUEUE';
+    }
+  }
+
+  // Playback Mode Buttons Sync
+  const repeatBtn = document.getElementById('repeatBtn');
+  if (repeatBtn) {
+    repeatBtn.classList.toggle('active-mode', data.playbackMode !== 'LINEAR');
+    if (data.playbackMode === 'REPEAT_ONE') {
+        repeatBtn.textContent = '🔂 LOOP: ONE';
+    } else if (data.playbackMode === 'REPEAT_ALL') {
+        repeatBtn.textContent = '🔁 LOOP: ALL';
+    } else {
+        repeatBtn.textContent = '🔁 LOOP: OFF';
+    }
+  }
+
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  if (shuffleBtn) {
+    shuffleBtn.classList.toggle('active-mode', data.shuffle);
+    shuffleBtn.textContent = data.shuffle ? '🔀 SHUFFLE: ON' : '🔀 SHUFFLE: OFF';
   }
 
   // Stats / Metrics
@@ -178,9 +209,33 @@ function syncSlider(sliderId, valId, serverVal, formatter) {
   }
 }
 
-function playStation() { fetch('/api/play', { method: 'POST' }).catch(console.error); }
-function stopStation() { fetch('/api/stop', { method: 'POST' }).catch(console.error); }
+function playStation() {
+    if (serverState.isPlaying) {
+        fetch('/api/stop', { method: 'POST' }).catch(console.error);
+    } else {
+        fetch('/api/play', { method: 'POST' }).catch(console.error);
+    }
+}
 function skipTrack()   { fetch('/api/skip', { method: 'POST' }).catch(console.error); }
+
+function togglePlaybackMode() {
+    const modes = ['LINEAR', 'REPEAT_ONE', 'REPEAT_ALL'];
+    let nextIdx = (modes.indexOf(serverState.playbackMode) + 1) % modes.length;
+    const nextMode = modes[nextIdx];
+    fetch('/api/playback-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: nextMode })
+    });
+}
+
+function toggleShuffle() {
+    fetch('/api/shuffle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shuffle: !serverState.shuffle })
+    });
+}
 
 function onSeekInput(pct) {
   seekDragging = true;
